@@ -18,10 +18,13 @@ help: ## Komut listesi
 dev: .env ## Tüm ortamı ayağa kaldırır (postgres+redis+api+worker+frontend)
 	$(COMPOSE) up -d --build
 	@$(MAKE) --no-print-directory wait-healthy
+	@$(MAKE) --no-print-directory migrate
 	@echo ""
 	@echo "  Kavun ayakta:"
 	@echo "    Frontend : http://localhost:3000"
 	@echo "    API      : http://localhost:8000/docs"
+	@echo ""
+	@echo "  Demo veri için: make seed-demo"
 	@echo ""
 
 .PHONY: wait-healthy
@@ -91,7 +94,23 @@ check: lint typecheck test ## CI'nin çalıştırdığı her şey
 
 .PHONY: migrate
 migrate: ## Alembic migration'larını uygular
-	$(COMPOSE) run --rm api alembic upgrade head
+	$(COMPOSE) exec -T api alembic upgrade head
+
+.PHONY: seed
+seed: ## Çekirdek veriyi kurar (tenant, marka, kanal, mağaza)
+	$(COMPOSE) exec -T api python -m app.cli seed
+
+.PHONY: seed-demo
+seed-demo: ## Demo tenant'ını gerçekçi örnek veriyle doldurur
+	$(COMPOSE) exec -T api python -m app.cli seed-demo
+
+.PHONY: wipe-demo
+wipe-demo: ## Demo verisini siler (gerçek tenant'a dokunmaz)
+	$(COMPOSE) exec -T api python -m app.cli wipe-demo
+
+.PHONY: revision
+revision: $(VENV) ## Yeni migration üretir: make revision m="açıklama"
+	cd $(BACKEND) && .venv/bin/alembic revision --autogenerate -m "$(m)"
 
 .PHONY: shell
 shell: ## API konteynerinde kabuk

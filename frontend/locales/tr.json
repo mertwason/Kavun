@@ -15,8 +15,8 @@
   "roadmap": {
     "title": "Kurulum durumu",
     "subtitle": "Faz 1 iskeleti ayakta. Ekranlar sıradaki görevlerle geliyor.",
-    "done": "Proje iskeleti, Docker ortamı ve CI hattı",
-    "next": "Sıradaki: veri modeli, migration'lar ve demo veri (KVN-02)"
+    "done": "Proje iskeleti, Docker ortamı, CI hattı ve veri modeli",
+    "next": "Sıradaki: tenancy ve marka izolasyonu (KVN-03)"
   },
   "workspace": {
     "alessi": "Alessi",

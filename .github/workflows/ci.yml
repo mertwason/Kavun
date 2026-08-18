@@ -128,6 +128,12 @@ jobs:
           docker compose logs --tail=100
           exit 1
 
+      - name: Migration'lar uygulanır
+        run: docker compose exec -T api alembic upgrade head
+
+      - name: Demo veri yüklenir
+        run: docker compose exec -T api python -m app.cli seed-demo
+
       - name: Frontend erişilebilir mi
         run: |
           for i in $(seq 1 60); do

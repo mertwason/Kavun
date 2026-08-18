@@ -40,7 +40,7 @@ sistem sertifika deposuna eklenir. Bu dizinler boşken kurulum davranışı değ
 
 ```bash
 make help        # tüm komutlar
-make dev         # ortamı ayağa kaldır
+make dev         # ortamı ayağa kaldır (migration'lar otomatik uygulanır)
 make down        # durdur          (make clean → volume'ları da siler)
 make logs        # logları izle
 make check       # CI'nin çalıştırdığı her şey: lint + typecheck + test + frontend build
@@ -48,8 +48,29 @@ make test        # pytest + coverage
 make lint        # ruff + para/float kuralı
 make typecheck   # mypy --strict
 make migrate     # alembic upgrade head
+make revision m="açıklama"   # yeni migration üret (autogenerate)
+make seed        # çekirdek veri: mokka tenant, 2 marka, kanallar, mağazalar
+make seed-demo   # demo veri: 50 SKU, ~210 sipariş, iade, fatura, tarife, alert
+make wipe-demo   # demo verisini sil (gerçek tenant'a dokunmaz)
 make gen-api     # OpenAPI şemasından frontend tipleri
 ```
+
+### Veri: gerçek mi, demo mu
+
+İki tenant birbirinden tamamen ayrıdır:
+
+| Tenant  | Ne içerir                                   | Komut            |
+|---------|---------------------------------------------|------------------|
+| `mokka` | Gerçek yapı (marka, kanal, mağaza); veri yok | `make seed`      |
+| `demo`  | Gerçekçi örnek veri — tüm ekranlar dolu      | `make seed-demo` |
+
+`make seed-demo` deterministiktir (sabit tohum) ve her çalıştırmada demo tenant'ını
+sıfırlayıp yeniden kurar; gerçek tenant'a asla dokunmaz. Temizlik: `make wipe-demo`.
+
+Demo veri seti: 2 marka (Alessi/Kahveji), 50 SKU, ~210 sipariş (iptal/iade/negatif marj
+örnekleri dahil), açılış stoku ve stok hareketleri, komisyon tarifeleri (kategori + ürün
+bazlı), 2 alış faturası, 1 ithalat dosyası (EUR + kur farkı), uyarılar, taslak ürünler ve
+fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ — onlar kâr motorunun işidir (KVN-07).
 
 ## Proje yapısı
 
@@ -66,7 +87,8 @@ kavun/
 │   │   ├── schemas/         # Pydantic
 │   │   ├── workers/         # Celery görevleri
 │   │   ├── alerts/          # uyarı motoru
-│   │   └── cli.py           # replay, seed komutları
+│   │   ├── seeds/           # çekirdek + demo veri
+│   │   └── cli.py           # seed, wipe-demo, replay komutları
 │   ├── alembic/             # migration'lar
 │   ├── tools/               # lint kuralları (para/float yasağı)
 │   └── tests/
@@ -83,7 +105,8 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
    lint kuralıyla CI'da zorlanır. Bilinçli istisna: satır sonuna `# allow-float: <gerekçe>`.
 2. **Ham veri değişmez.** API yanıtları önce `raw_events`'e yazılır; normalize tablolar
    `replay` komutuyla yeniden üretilebilir.
-3. **Marka izolasyonu fail-closed.** Brand filtresi olmayan sorgu `BrandScopeViolation` fırlatır.
+3. **Marka izolasyonu fail-closed.** İşlem verisi taşıyan her tabloda `brand_id NOT NULL`;
+   brand filtresi olmayan sorgu `BrandScopeViolation` fırlatır (KVN-03).
 4. **Preview asla kırılmaz.** Her commit'te uygulama açılır durumda olmalı; yarım özellik
    feature-flag arkasına alınır.
 
@@ -97,5 +120,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-02 — veri modeli,
-Alembic migration'ları ve demo seed** (`make seed-demo`).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-03 — tenancy ve
+brand-scope middleware** (marka filtresi olmayan sorgu `BrandScopeViolation` fırlatır).
