@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %14** ▓▓▓░░░░░░░░░░░░░░░░░
-Son güncelleme: 2026-08-18 16:05 · Aktif görev: KVN-04
+**TOPLAM: %17** ▓▓▓░░░░░░░░░░░░░░░░░
+Son güncelleme: 2026-08-18 19:05 · Aktif görev: KVN-05
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -9,7 +9,7 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-01 | Proje iskeleti + Docker Compose + CI (ruff/mypy/pytest)     | 4       | ✅ Bitti    |
 | KVN-02 | Veri modeli + Alembic migration'lar + seed                  | 5       | ✅ Bitti    |
 | KVN-03 | Tenancy + Brand-scope middleware (fail-closed)              | 5       | ✅ Bitti    |
-| KVN-04 | Credential vault (Fernet) + mağaza yönetimi                 | 3       | ⏳ Sırada   |
+| KVN-04 | Credential vault (Fernet) + mağaza yönetimi                 | 3       | ✅ Bitti    |
 | KVN-05 | Trendyol connector — orders/products/commissions sync       | 8       | ⏳ Sırada   |
 | KVN-06 | raw_events + normalize pipeline + replay komutu             | 6       | ⏳ Sırada   |
 | KVN-07 | Kâr motoru — çekirdek hesap (KDV netleştirme dahil)         | 8       | ⏳ Sırada   |
@@ -27,11 +27,48 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 14
+Toplam ağırlık: 100 · Biten ağırlık: 17
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-18 — KVN-04 bitti
+
+**Ne bitti:** Credential kasası ve mağaza yönetimi. Testler: 109 test yeşil, coverage %98.
+
+**Ne kuruldu:**
+- **Kasa** (`app/core/crypto.py`): Fernet şifreleme, `KAVUN_ENCRYPTION_KEY` virgülle ayrılmış
+  çoklu anahtar destekliyor (ilki şifreler, tümü çözer) → kesintisiz anahtar rotasyonu.
+  Anahtar yoksa fail-closed: `VaultUnavailableError`, uçlar 503; düz metin asla yazılmaz.
+- **Mağaza servisi** (`app/services/stores.py`): credential erişimi HER ZAMAN mağaza
+  üzerinden çözülüyor. `store_credentials` tablosunda `brand_id` yok (mağazanın çocuğu);
+  bu yolla KVN-03'ün "dolaylı tablo" riski credential'lar için kapatıldı.
+- **API** (`/{brand}/stores/...`): mağaza CRUD + credential kaydet/döndür/sil.
+  Yazma yetkisi rol bazlı (mağaza: admin+editor, credential: yalnızca admin).
+- `make dev` artık `.env` yoksa şifreleme anahtarını kendisi üretiyor;
+  `python -m app.cli generate-key` ile de üretilebiliyor.
+
+**Sızıntı testleri (CLAUDE.md §2):**
+- DB'de düz metin yok (ciphertext'te secret aranıyor)
+- Hiçbir API yanıtı credential içermiyor (liste, durum, kaydetme yanıtları taranıyor)
+- Kaydetme akışının logları secret içermiyor
+- `CredentialWrite.__repr__/__str__` değerleri maskeliyor (exception/log'a düşse bile)
+- Aynı secret her seferinde farklı ciphertext üretiyor (Fernet IV)
+- Yabancı anahtarla çözme denemesi hata veriyor ve hata mesajı içerik sızdırmıyor
+
+Canlı ortamda da doğrulandı: kaydedilen credential DB'de `gAAAAA...` Fernet token'ı olarak
+duruyor, `LIKE '%CANLI-SECRET%'` sorgusu 0 satır dönüyor, API loglarında secret geçmiyor.
+
+**Kararlar / notlar:**
+- Credential durumu yanıtı yalnızca `configured/created_at/rotated_at` döner — maskeli
+  önizleme (son 4 hane) bile eklenmedi; ihtiyaç doğarsa bilinçli bir karar olarak eklenir.
+- Kanal başına zorunlu alanlar şemada tanımlı (Trendyol: api_key/api_secret/seller_id,
+  spec §4). Eksik/boş alan 422 ile reddediliyor — yarım credential sessizce kaydedilmiyor.
+
+**Bilinen risk:** Şifreleme anahtarı şu an `.env` dosyasında düz duruyor (tek makine,
+internal kullanım). Üretimde bir secret manager'a (ör. ops.mokka vault) taşınmalı; kod
+tarafında değişiklik gerekmez, yalnızca env kaynağı değişir.
 
 ### 2026-08-18 — KVN-03 bitti
 

@@ -12,6 +12,7 @@ import sys
 from collections.abc import Sequence
 
 from app.core.config import get_settings
+from app.core.crypto import generate_key
 from app.core.db import SessionLocal, check_database
 from app.main import API_VERSION
 from app.seeds.base import seed_base
@@ -26,6 +27,7 @@ def _build_parser() -> argparse.ArgumentParser:
     sub.add_parser("seed", help="Çekirdek veriyi kurar (tenant, marka, kanal, mağaza)")
     sub.add_parser("seed-demo", help="Demo tenant'ını gerçekçi örnek veriyle doldurur")
     sub.add_parser("wipe-demo", help="Demo tenant'ını ve tüm verisini siler")
+    sub.add_parser("generate-key", help="Yeni bir KAVUN_ENCRYPTION_KEY üretir")
     return parser
 
 
@@ -73,6 +75,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "version":
         print(json.dumps({"app": settings.app_name, "version": API_VERSION}))
+        return 0
+
+    if args.command == "generate-key":
+        print(generate_key())
         return 0
 
     if args.command == "seed":

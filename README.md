@@ -28,9 +28,17 @@ Tek komut Postgres, Redis, API, Celery worker ve frontend'i ayağa kaldırır:
 İlk çalıştırmada `.env` dosyası `.env.example`'dan üretilir. Gerçek secret'lar (`KAVUN_ENCRYPTION_KEY`,
 mağaza API anahtarları) `.env` içine yazılır ve repoya **commit edilmez**.
 
+`make dev` ilk çalıştırmada `KAVUN_ENCRYPTION_KEY`'i kendisi üretir. Elle üretmek için:
+
 ```bash
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+docker compose exec api python -m app.cli generate-key
 ```
+
+**Anahtar rotasyonu:** `KAVUN_ENCRYPTION_KEY` virgülle ayrılmış birden fazla anahtar kabul
+eder — ilki şifrelemede kullanılır, tümü çözmede denenir. Yeni anahtarı listenin başına
+ekleyin, kayıtları `POST /{brand}/stores/{id}/credentials/rotate` ile taşıyın, sonra eski
+anahtarı listeden çıkarın. Anahtar tanımlı değilse credential uçları 503 döner —
+düz metin ASLA yazılmaz.
 
 TLS trafiğini inceleyen kurumsal ağların arkasındaysanız kurumun kök sertifikasını
 `backend/certs/` ve `frontend/certs/` altına `*.crt` olarak koyun — imajlar derlenirken
@@ -87,6 +95,7 @@ kavun/
 │   │   ├── schemas/         # Pydantic
 │   │   ├── workers/         # Celery görevleri
 │   │   ├── alerts/          # uyarı motoru
+│   │   ├── services/        # iş mantığı (mağaza, credential kasası)
 │   │   ├── seeds/           # çekirdek + demo veri
 │   │   └── cli.py           # seed, wipe-demo, replay komutları
 │   ├── alembic/             # migration'lar
@@ -104,6 +113,14 @@ POST /auth/sso-exchange     # ops.mokka SSO token'ı → Kavun token'ı
 POST /auth/dev-login        # yalnızca local/ci; diğer ortamlarda 404
 POST /auth/switch-brand     # workspace değiştir (yetkisiz marka → 403)
 GET  /auth/me               # kullanıcı, yetkili markalar, aktif workspace, modül bayrakları
+
+GET  /{brand}/stores                        # mağaza listesi + sync ve credential durumu
+POST /{brand}/stores                        # mağaza ekle (admin/editor)
+PATCH /{brand}/stores/{id}                  # mağaza güncelle
+GET  /{brand}/stores/{id}/credentials       # credential durumu (içerik ASLA dönmez)
+POST /{brand}/stores/{id}/credentials       # credential kaydet (Fernet ile şifreli, admin)
+POST /{brand}/stores/{id}/credentials/rotate# anahtar rotasyonu
+DEL  /{brand}/stores/{id}/credentials       # credential sil
 
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
@@ -146,5 +163,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-04 — credential
-vault (Fernet) ve mağaza yönetimi**.
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-05 — Trendyol
+connector** (orders / products / commissions senkronu).

@@ -147,6 +147,98 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/stores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Mağaza listesi + sync durumu
+         * @description Aktif markanın mağazaları. Credential içeriği değil, yalnızca durumu döner.
+         */
+        get: operations["list_stores__brand_slug__stores_get"];
+        put?: never;
+        /**
+         * Mağaza ekle
+         * @description Aktif markaya mağaza ekler.
+         */
+        post: operations["create_store__brand_slug__stores_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/stores/{store_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Mağaza güncelle
+         * @description Yalnızca gönderilen alanları değiştirir.
+         */
+        patch: operations["update_store__brand_slug__stores__store_id__patch"];
+        trace?: never;
+    };
+    "/{brand_slug}/stores/{store_id}/credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Credential durumu (içerik dönmez)
+         * @description Credential var mı, ne zaman güncellendi.
+         */
+        get: operations["credential_status__brand_slug__stores__store_id__credentials_get"];
+        put?: never;
+        /**
+         * Credential kaydet (şifreli)
+         * @description Credential'ı Fernet ile şifreleyip kaydeder; içerik yanıtta dönmez (spec §3.6).
+         */
+        post: operations["save_credentials__brand_slug__stores__store_id__credentials_post"];
+        /**
+         * Credential sil
+         * @description Kayıtlı credential'ı siler.
+         */
+        delete: operations["delete_credentials__brand_slug__stores__store_id__credentials_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/stores/{store_id}/credentials/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Credential'ı güncel anahtarla yeniden şifrele
+         * @description Anahtar rotasyonu: içerik değişmez, kayıt yeni anahtarla saklanır.
+         */
+        post: operations["rotate_credentials__brand_slug__stores__store_id__credentials_rotate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/products": {
         parameters: {
             query?: never;
@@ -268,6 +360,37 @@ export interface components {
             open_alert_count: number;
         };
         /**
+         * ChannelCode
+         * @description Satış kanalları (spec §5.1, §12C.9).
+         * @enum {string}
+         */
+        ChannelCode: "trendyol" | "hepsiburada" | "n11" | "shopify" | "manual";
+        /**
+         * CredentialStatus
+         * @description Credential durumu — içerik ASLA dönmez.
+         */
+        CredentialStatus: {
+            /** Configured */
+            configured: boolean;
+            /** Created At */
+            created_at?: string | null;
+            /** Rotated At */
+            rotated_at?: string | null;
+        };
+        /**
+         * CredentialWrite
+         * @description Credential kaydı. Alanlar kanala göre doğrulanır; içerik şifreli saklanır.
+         */
+        CredentialWrite: {
+            /**
+             * Values
+             * @description Kanala özgü alanlar (ör. Trendyol: api_key, api_secret, seller_id)
+             */
+            values: {
+                [key: string]: string;
+            };
+        };
+        /**
          * DevLoginRequest
          * @description Yalnızca local/ci ortamında geçerli geliştirme girişi.
          */
@@ -371,6 +494,56 @@ export interface components {
              * @description Açılışta seçilecek workspace
              */
             brand?: string | null;
+        };
+        /**
+         * StoreCreate
+         * @description Yeni mağaza.
+         */
+        StoreCreate: {
+            channel: components["schemas"]["ChannelCode"];
+            /** Name */
+            name: string;
+            /** External Seller Id */
+            external_seller_id?: string | null;
+            /** Service Fee Per Order */
+            service_fee_per_order?: number | string | null;
+        };
+        /**
+         * StoreSummary
+         * @description Mağaza listesi satırı (spec §8: `GET /stores` + sync durumu).
+         */
+        StoreSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            channel: components["schemas"]["ChannelCode"];
+            /** External Seller Id */
+            external_seller_id: string | null;
+            /** Is Active */
+            is_active: boolean;
+            /** Service Fee Per Order */
+            service_fee_per_order: string | null;
+            /** Last Synced At */
+            last_synced_at: string | null;
+            credentials: components["schemas"]["CredentialStatus"];
+        };
+        /**
+         * StoreUpdate
+         * @description Mağaza güncelleme — yalnızca gönderilen alanlar değişir.
+         */
+        StoreUpdate: {
+            /** Name */
+            name?: string | null;
+            /** External Seller Id */
+            external_seller_id?: string | null;
+            /** Service Fee Per Order */
+            service_fee_per_order?: number | string | null;
+            /** Is Active */
+            is_active?: boolean | null;
         };
         /**
          * SwitchBrandRequest
@@ -617,6 +790,259 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HoldingSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_stores__brand_slug__stores_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_store__brand_slug__stores_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_store__brand_slug__stores__store_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                store_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    credential_status__brand_slug__stores__store_id__credentials_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                store_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_credentials__brand_slug__stores__store_id__credentials_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                store_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_credentials__brand_slug__stores__store_id__credentials_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                store_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rotate_credentials__brand_slug__stores__store_id__credentials_rotate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                store_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialStatus"];
                 };
             };
             /** @description Validation Error */

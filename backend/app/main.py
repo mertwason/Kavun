@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import auth, health, holding, workspace
+from app.api import auth, health, holding, stores, workspace
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.scoping import BrandScopeViolation
@@ -54,6 +54,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(holding.router)
     # Workspace router'ı en sonda: `/{brand_slug}` yakalayıcı olduğundan sabit
     # yollar (auth, holding, healthz) ondan önce eşleşmelidir.
+    app.include_router(stores.router)
     app.include_router(workspace.router)
     return app
 

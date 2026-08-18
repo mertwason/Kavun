@@ -52,8 +52,12 @@ logs: ## Servis loglarını izler
 ps: ## Servis durumları
 	$(COMPOSE) ps
 
-.env: ## .env yoksa .env.example'dan üretir
+.env: ## .env yoksa .env.example'dan üretir (+ şifreleme anahtarı)
 	@test -f .env || (cp .env.example .env && echo ".env oluşturuldu (.env.example'dan)")
+	@grep -q '^KAVUN_ENCRYPTION_KEY=.\+' .env || ( \
+		key=$$(python3 -c "import base64,os;print(base64.urlsafe_b64encode(os.urandom(32)).decode())"); \
+		sed -i.bak "s|^KAVUN_ENCRYPTION_KEY=.*|KAVUN_ENCRYPTION_KEY=$$key|" .env && rm -f .env.bak; \
+		echo "KAVUN_ENCRYPTION_KEY üretildi (.env)" )
 
 # ------------------------------------------------------------ yerel geliştirme
 
