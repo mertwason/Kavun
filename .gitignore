@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.egg-info/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+npm-debug.log*
+
+# Ortam
+.env
+.env.local
+
+# Yüklenen dosyalar (fatura PDF'leri, xlsx) — repoya girmez
+uploads/
+storage/
+
+# Editör / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Kurumsal kök sertifikalar yerelde kalır (bkz. backend/certs/README.md)
+backend/certs/*.crt
+frontend/certs/*.crt
+
+# TypeScript artefaktı
+frontend/tsconfig.tsbuildinfo

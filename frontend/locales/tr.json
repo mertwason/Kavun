@@ -1,0 +1,26 @@
+{
+  "app": {
+    "name": "Kavun",
+    "tagline": "Pazaryeri kârlılık ve mutabakat platformu",
+    "owner": "Mokka Teknoloji"
+  },
+  "system": {
+    "apiStatusTitle": "Sistem durumu",
+    "apiOnline": "API ayakta",
+    "apiOffline": "API'ye ulaşılamıyor",
+    "apiChecking": "Kontrol ediliyor…",
+    "apiDocs": "API dokümanı",
+    "environment": "Ortam"
+  },
+  "roadmap": {
+    "title": "Kurulum durumu",
+    "subtitle": "Faz 1 iskeleti ayakta. Ekranlar sıradaki görevlerle geliyor.",
+    "done": "Proje iskeleti, Docker ortamı ve CI hattı",
+    "next": "Sıradaki: veri modeli, migration'lar ve demo veri (KVN-02)"
+  },
+  "workspace": {
+    "alessi": "Alessi",
+    "kahveji": "Kahveji",
+    "holding": "Holding"
+  }
+}

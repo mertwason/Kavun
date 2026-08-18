@@ -1,0 +1,93 @@
+name: kavun
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kavun}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kavun}
+      POSTGRES_DB: ${POSTGRES_DB:-kavun}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kavun} -d ${POSTGRES_DB:-kavun}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: ./backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-kavun}:${POSTGRES_PASSWORD:-kavun}@postgres:5432/${POSTGRES_DB:-kavun}
+      REDIS_URL: redis://redis:6379/0
+      ENVIRONMENT: local
+      KAVUN_ENCRYPTION_KEY: ${KAVUN_ENCRYPTION_KEY:-}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-degistir}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+      - api_venv:/app/.venv
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/healthz || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  worker:
+    build:
+      context: ./backend
+    command: celery -A app.workers.celery_app.celery_app worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-kavun}:${POSTGRES_PASSWORD:-kavun}@postgres:5432/${POSTGRES_DB:-kavun}
+      REDIS_URL: redis://redis:6379/0
+      ENVIRONMENT: local
+      KAVUN_ENCRYPTION_KEY: ${KAVUN_ENCRYPTION_KEY:-}
+    volumes:
+      - ./backend:/app
+      - api_venv:/app/.venv
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      # Sunucu tarafı render API'ye compose ağı üzerinden ulaşır.
+      KAVUN_API_URL: http://api:8000
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  api_venv:
+  frontend_node_modules:
+  frontend_next:
