@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
 **TOPLAM: %4** ▓░░░░░░░░░░░░░░░░░░░
-Son güncelleme: 2026-08-18 14:35 · Aktif görev: KVN-02
+Son güncelleme: 2026-08-18 14:25 · Aktif görev: KVN-02
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -40,7 +40,8 @@ Tailwind, `docs/`). `make dev` tek komutla Postgres + Redis + API + worker + fro
 kaldırıyor; frontend hot-reload açık, preview http://localhost:3000, API http://localhost:8000/docs.
 CI hattı üç iş halinde kuruldu: backend (ruff lint+format, `mypy --strict`, pytest coverage ≥ %80),
 frontend (tsc, eslint, next build) ve `docker compose up` sonrası API/frontend uçlarını gerçekten
-çağıran smoke testi. Testler: 18 test yeşil, backend coverage %91.
+çağıran smoke testi. Testler: 18 test yeşil, backend coverage %91. İlk CI koşusu GitHub'da
+üç işin üçünde de yeşil (run #1).
 
 **Kararlar / notlar:**
 - Para disiplini (CLAUDE.md §1) lint kuralı olarak yazıldı: `backend/tools/check_money_float.py`
