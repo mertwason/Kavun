@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %25** ▓▓▓▓▓░░░░░░░░░░░░░░░
-Son güncelleme: 2026-08-18 22:40 · Aktif görev: KVN-06
+**TOPLAM: %31** ▓▓▓▓▓▓░░░░░░░░░░░░░░
+Son güncelleme: 2026-08-18 23:20 · Aktif görev: KVN-07
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -11,7 +11,7 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-03 | Tenancy + Brand-scope middleware (fail-closed)              | 5       | ✅ Bitti    |
 | KVN-04 | Credential vault (Fernet) + mağaza yönetimi                 | 3       | ✅ Bitti    |
 | KVN-05 | Trendyol connector — orders/products/commissions sync       | 8       | ✅ Bitti    |
-| KVN-06 | raw_events + normalize pipeline + replay komutu             | 6       | ⏳ Sırada   |
+| KVN-06 | raw_events + normalize pipeline + replay komutu             | 6       | ✅ Bitti    |
 | KVN-07 | Kâr motoru — çekirdek hesap (KDV netleştirme dahil)         | 8       | ⏳ Sırada   |
 | KVN-08 | Kâr motoru — edge-case test paketi (8 senaryo)              | 6       | ⏳ Sırada   |
 | KVN-09 | Dashboard + SKU marj listesi + sipariş detayı (waterfall)   | 7       | ⏳ Sırada   |
@@ -27,11 +27,49 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 25
+Toplam ağırlık: 100 · Biten ağırlık: 31
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-18 — KVN-06 bitti
+
+**Ne bitti:** Normalize pipeline, `replay` komutu ve zamanlanmış işler. Testler:
+164 test yeşil, coverage %96.
+
+**Ne kuruldu:**
+- `services/normalize.py`: ham olay → `orders`, `order_lines`, `shipments`,
+  `product_channel_map`. Upsert anahtarları: sipariş `(tenant, store, external_order_id)`,
+  satır `(order_id, external_line_id)`, eşleme `(store_id, external_product_id)`.
+- `python -m app.cli normalize` (işlenmemiş olaylar) ve
+  `python -m app.cli replay --channel trendyol --from 2026-08-01 [--store] [--to] [--dry-run]`
+- Celery zinciri: sync başarılıysa normalize otomatik tetiklenir; beat programı
+  `normalize_pending` 15 dk, `ensure_raw_event_partitions` 02:30.
+
+**Kabul kriteri (spec §3.2) kanıtlandı — testte VE canlı ortamda:** normalize tablolar
+tamamen silindi, `replay` ham olaylardan birebir aynı siparişleri/satırları/gönderileri
+geri kurdu; `raw_events` hiç değişmedi.
+
+**Kararlar / notlar:**
+- **Normalize ürün YARATMAZ.** Katalog Kavun'un doğruluk kaynağıdır (fiyat listesi
+  Excel'i, KVN-10); kanal ürün olayı yalnızca `product_channel_map` eşlemesini kurar.
+  Eşleşmeyen sipariş satırı düşürülmez, `product_id` boş kalır — kâr motoru maliyetsiz
+  satırı raporlayabilsin.
+- **KDV oranı katalogdan alınır**, kanaldan değil: ürün eşleşmişse `products.vat_rate`
+  kullanılır. Trendyol'un `vatBaseAmount` alanının birimi dokümanda net değil
+  (`TODO(verify)`), eşleşmeyen satırda geri düşüş olarak kullanılıyor.
+- **Kesinleşmiş maliyet ezilmez:** `cost_state=actual` olan gönderinin maliyeti yeniden
+  normalize'de güncellenmez (spec §3.4). Testi var.
+- Replay, etkilenen satırların `line_profit` kayıtlarını da siler; kâr motoru (KVN-07)
+  yeniden hesaplayacak. Sahte kâr kaydı bırakılmaz.
+- KVN-02'de not edilen partition riski kapatıldı: `ensure_raw_event_partitions` job'ı
+  gelecek ayların partition'larını açıyor, sync de yazmadan önce ayın partition'ını
+  garanti ediyor.
+
+**Bilinen risk:** Normalize şu an tüm ham olayları tek turda (limit 5.000) işliyor.
+Gerçek hacimde (yüz binlerce olay) job süresi uzayabilir; KVN-20 kabul turunda
+toplu işleme/batch boyutu ölçülmeli.
 
 ### 2026-08-18 — KVN-05 bitti
 

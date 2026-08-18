@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from celery import Celery
+from celery.schedules import crontab
 
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
@@ -27,6 +28,21 @@ celery_app.conf.update(
     task_track_started=True,
     worker_hijack_root_logger=False,
 )
+
+
+# Zamanlanmış işler (spec §9). Sipariş senkronu mağaza bazında tetiklendiğinden
+# beat yalnızca zincirin ortak adımlarını çalıştırır; kanal bazlı sync programı
+# mağaza sayısı arttığında KVN-20'de gözden geçirilecek.
+celery_app.conf.beat_schedule = {
+    "normalize-pending": {
+        "task": "kavun.normalize_pending",
+        "schedule": crontab(minute="*/15"),
+    },
+    "ensure-raw-event-partitions": {
+        "task": "kavun.ensure_raw_event_partitions",
+        "schedule": crontab(hour=2, minute=30),
+    },
+}
 
 
 @celery_app.task(name="kavun.ping")

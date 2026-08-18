@@ -263,8 +263,17 @@ async def test_tenant_isolation_of_raw_events(db_session: Session, store: Store)
     assert tenant is not None and tenant.id == store.tenant_id
 
 
-def test_sync_task_is_registered_with_worker() -> None:
-    """Worker görevi tanıyor olmalı — `include` unutulursa job sessizce düşer."""
+def test_worker_tasks_are_registered() -> None:
+    """Worker görevleri tanıyor olmalı — `include` unutulursa job sessizce düşer.
+
+    Worker açılışta `import_default_modules()` çağırır; test aynı yolu izler.
+    """
     from app.workers.celery_app import celery_app
 
-    assert "kavun.sync_store" in celery_app.tasks
+    celery_app.loader.import_default_modules()
+    registered = set(celery_app.tasks)
+    assert {
+        "kavun.sync_store",
+        "kavun.normalize_pending",
+        "kavun.ensure_raw_event_partitions",
+    } <= registered

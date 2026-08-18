@@ -63,6 +63,22 @@ make wipe-demo   # demo verisini sil (gerçek tenant'a dokunmaz)
 make gen-api     # OpenAPI şemasından frontend tipleri
 ```
 
+### Ham veri, normalize ve replay
+
+Kanaldan gelen her yanıt önce `raw_events`'e yazılır (değişmez); domain tabloları ondan
+üretilir. Bu yüzden normalize veri her zaman yeniden kurulabilir:
+
+```bash
+docker compose exec api python -m app.cli normalize                       # işlenmemiş olaylar
+docker compose exec api python -m app.cli replay --channel trendyol --from 2026-08-01
+docker compose exec api python -m app.cli replay --store <uuid> --dry-run  # yalnızca sayar
+```
+
+`replay` normalize kayıtları siler ve ham olaylardan yeniden üretir; ham veriye asla
+dokunmaz. Kesinleşmiş (`actual`) kargo maliyeti yeniden normalize'de ezilmez.
+Zamanlanmış işler (Celery beat): `normalize_pending` 15 dakikada bir,
+`ensure_raw_event_partitions` her gece 02:30 (gelecek ayların partition'larını açar).
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -95,7 +111,7 @@ kavun/
 │   │   ├── schemas/         # Pydantic
 │   │   ├── workers/         # Celery görevleri
 │   │   ├── alerts/          # uyarı motoru
-│   │   ├── services/        # iş mantığı (mağaza, credential kasası)
+│   │   ├── services/        # iş mantığı (mağaza, credential kasası, sync, normalize)
 │   │   ├── seeds/           # çekirdek + demo veri
 │   │   └── cli.py           # seed, wipe-demo, replay komutları
 │   ├── alembic/             # migration'lar
@@ -161,8 +177,8 @@ tablo olarak yayımlanıyor. Bu yüzden `fetch_commission_rates()` boş liste d�
 komisyon iki gerçek kaynaktan çözülür: **hakediş** (`settlement_actual`, Faz 2) ve
 **tarife Excel yüklemesi** (KVN-14, spec §12B.2).
 
-Sync şu an ham veriyi `raw_events`'e yazar, normalize tablolara dokunmaz (spec §12.7);
-normalize pipeline ve `replay` komutu KVN-06'da gelir.
+Sync ham veriyi `raw_events`'e yazar; normalize pipeline (KVN-06) domain tablolarını
+ondan üretir ve sync sonrası otomatik zincirlenir.
 
 ## Geliştirme kuralları (özet)
 
@@ -187,5 +203,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-06 — raw_events
-normalize pipeline ve `replay` komutu**.
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-07 — kâr motoru
+çekirdek hesabı** (KDV netleştirme dahil, spec §6).

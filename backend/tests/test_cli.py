@@ -67,3 +67,73 @@ class _NonClosingSession:
 
     def __exit__(self, *exc_info: object) -> None:
         return None
+
+
+def _last_json(output: str) -> Any:
+    """CLI çıktısındaki son JSON satırını çözer.
+
+    `local` ortamında structlog konsola da yazdığı için stdout karışık olabilir;
+    komutun kendi çıktısı her zaman son JSON satırıdır.
+    """
+    for line in reversed([line for line in output.splitlines() if line.strip()]):
+        try:
+            return json.loads(line)
+        except json.JSONDecodeError:
+            continue
+    raise AssertionError(f"Çıktıda JSON yok: {output!r}")
+
+
+def test_normalize_and_replay_commands(
+    capsys: pytest.CaptureFixture[str], monkeypatch: Any, db_session: Session
+) -> None:
+    """`normalize` ve `replay` komutları uçtan uca çalışır (spec §3.2)."""
+    import json as json_module
+    from datetime import UTC, datetime
+    from pathlib import Path
+
+    from sqlalchemy import select
+
+    from app.core.context import system_scope
+    from app.models.enums import ChannelCode
+    from app.models.identity import Channel, Store
+    from app.seeds.base import seed_base
+    from app.services.sync import record_raw_events
+
+    monkeypatch.setattr(cli, "SessionLocal", lambda: _NonClosingSession(db_session))
+
+    with system_scope():
+        seed_base(db_session)
+        channel = db_session.scalar(select(Channel).where(Channel.code == ChannelCode.TRENDYOL))
+        assert channel is not None
+        store = db_session.scalar(select(Store).where(Store.channel_id == channel.id))
+        assert store is not None
+        fixture = Path(__file__).parent / "fixtures" / "trendyol" / "orders_page0.json"
+        payloads = json_module.loads(fixture.read_text(encoding="utf-8"))["content"]
+        record_raw_events(
+            db_session,
+            store,
+            "order",
+            [(str(item["orderNumber"]), item) for item in payloads],
+            fetched_at=datetime.now(UTC),
+        )
+
+    assert cli.main(["normalize"]) == 0
+    assert _last_json(capsys.readouterr().out)["orders_created"] == 2
+
+    assert cli.main(["replay", "--channel", "trendyol", "--dry-run"]) == 0
+    dry = _last_json(capsys.readouterr().out)
+    assert dry["dry_run"] is True and dry["processed_events"] == 2
+
+    assert cli.main(["replay", "--channel", "trendyol", "--from", "2026-01-01"]) == 0
+    replayed = _last_json(capsys.readouterr().out)
+    assert replayed["processed_events"] == 2
+    assert replayed["orders_created"] == 2
+
+
+def test_generate_key_command(capsys: pytest.CaptureFixture[str]) -> None:
+    """`generate-key` geçerli bir Fernet anahtarı basar."""
+    from cryptography.fernet import Fernet
+
+    assert cli.main(["generate-key"]) == 0
+    key = capsys.readouterr().out.strip().splitlines()[-1]
+    assert Fernet(key).decrypt(Fernet(key).encrypt(b"x")) == b"x"
