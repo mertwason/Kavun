@@ -1,7 +1,7 @@
 """Kavun komut satırı arayüzü.
 
 Komutlar: `version`, `check`, `generate-key`, `seed`, `seed-demo`, `wipe-demo`,
-`normalize`, `replay`.
+`normalize`, `replay`, `recompute`.
 
 Replay (spec §3.2): normalize tablolar silinip ham olaylardan yeniden üretilir.
 
@@ -25,6 +25,7 @@ from app.models.enums import ChannelCode
 from app.seeds.base import seed_base
 from app.seeds.demo import seed_demo, wipe_demo
 from app.services.normalize import normalize_pending, replay
+from app.services.profit import recompute_orders, recompute_pending
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -51,6 +52,13 @@ def _build_parser() -> argparse.ArgumentParser:
     replay_parser.add_argument(
         "--dry-run", action="store_true", help="Hiçbir şey yazmaz, sayıyı gösterir"
     )
+
+    recompute = sub.add_parser("recompute", help="Sipariş satırlarının kârını hesaplar (spec §6)")
+    recompute.add_argument("--store", help="Yalnızca bu mağaza (UUID)")
+    recompute.add_argument(
+        "--pending", action="store_true", help="Yalnızca kâr kaydı olmayan satırlar"
+    )
+    recompute.add_argument("--limit", type=int, default=5000, help="En fazla kaç sipariş")
     return parser
 
 
@@ -84,6 +92,21 @@ def _run_replay(args: argparse.Namespace) -> int:
             dry_run=args.dry_run,
         )
     print(json.dumps({"dry_run": args.dry_run, **summary.as_dict()}, ensure_ascii=False))
+    return 0
+
+
+def _run_recompute(args: argparse.Namespace) -> int:
+    with SessionLocal() as session:
+        summary = (
+            recompute_pending(session, limit=args.limit)
+            if args.pending
+            else recompute_orders(
+                session,
+                store_id=uuid.UUID(args.store) if args.store else None,
+                limit=args.limit,
+            )
+        )
+    print(json.dumps(summary.as_dict(), ensure_ascii=False))
     return 0
 
 
@@ -151,6 +174,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "replay":
         return _run_replay(args)
+
+    if args.command == "recompute":
+        return _run_recompute(args)
 
     database = check_database()
     print(json.dumps({"environment": settings.environment, "database": database}))

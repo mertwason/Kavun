@@ -58,7 +58,8 @@ make typecheck   # mypy --strict
 make migrate     # alembic upgrade head
 make revision m="açıklama"   # yeni migration üret (autogenerate)
 make seed        # çekirdek veri: mokka tenant, 2 marka, kanallar, mağazalar
-make seed-demo   # demo veri: 50 SKU, ~210 sipariş, iade, fatura, tarife, alert
+make seed-demo   # demo veri: 50 SKU, ~210 sipariş, iade, fatura, tarife, alert (+ kâr hesabı)
+make recompute   # kâr kaydı olmayan satırların kârını hesaplar
 make wipe-demo   # demo verisini sil (gerçek tenant'a dokunmaz)
 make gen-api     # OpenAPI şemasından frontend tipleri
 ```
@@ -77,7 +78,39 @@ docker compose exec api python -m app.cli replay --store <uuid> --dry-run  # yal
 `replay` normalize kayıtları siler ve ham olaylardan yeniden üretir; ham veriye asla
 dokunmaz. Kesinleşmiş (`actual`) kargo maliyeti yeniden normalize'de ezilmez.
 Zamanlanmış işler (Celery beat): `normalize_pending` 15 dakikada bir,
-`ensure_raw_event_partitions` her gece 02:30 (gelecek ayların partition'larını açar).
+`recompute_pending_profits` 30 dakikada bir, `ensure_raw_event_partitions` her gece 02:30
+(gelecek ayların partition'larını açar).
+
+### Kâr hesabı
+
+```bash
+docker compose exec api python -m app.cli recompute --pending        # kâr kaydı olmayan satırlar
+docker compose exec api python -m app.cli recompute --store <uuid>   # bir mağazanın tamamı
+```
+
+Motor (`app/engine/profit.py`) saf fonksiyondur — DB'ye dokunmaz, girdi → çıktı. Sonuç
+`line_profit`'e yazılır; değişen her alan `profit_revisions`'a append-only loglanır
+(geçmiş kayıt güncellenmez, düzeltme kaydı atılır).
+
+**KDV modeli.** Spec §6.1'in formülü brüt (KDV dahil) tabanlıdır, dolayısıyla çıkarılan
+her maliyet KDV dahil olmalıdır. Kavun'da satış, komisyon, kargo ve hizmet bedeli KDV
+**dahil**; stok maliyeti (WAC) KDV **hariç** durur — motor stok maliyetine KDV'yi ekler ve
+eklediği KDV'yi indirilecek KDV sayar. Aynı hesap net tabandan da yapılır ve iki yol her
+satırda karşılaştırılır; tutmazsa `profit.cross_check_failed` loglanır.
+
+**İade modeli (spec §6.1'den bilinçli sapma).** Spec hem "satış geliri sıfırlanır" hem de
+"iade_maliyeti = refund + …" diyor; ikisi birlikte aynı zararı iki kez sayar. Motor tek
+model uygular: iade edilen adedin geliri, komisyonu ve satış KDV'si birlikte geri çevrilir;
+`refund_amount` ayrıca gider yazılmaz (hakediş mutabakatı için saklanır). Gerçek kayıp
+kalemleri sayılır — gidiş + dönüş kargosu, ve mal hurdaysa (`restocked=False`) o adedin
+maliyeti.
+
+**Paylaştırma.** Paket kargosu satırlara desi ağırlıklı, hizmet bedeli tutar ağırlıklı
+dağıtılır; artık kuruş son parçaya eklenir, böylece parçaların toplamı her zaman dağıtılan
+tutara eşittir.
+
+Maliyet veya komisyon oranı bulunamayan satırda motor uydurma değer kullanmaz: kalem sıfır
+kalır ve satır `maliyet_yok` / `komisyon_orani_yok` uyarısıyla işaretlenir.
 
 ### Veri: gerçek mi, demo mu
 
@@ -94,7 +127,8 @@ sıfırlayıp yeniden kurar; gerçek tenant'a asla dokunmaz. Temizlik: `make wip
 Demo veri seti: 2 marka (Alessi/Kahveji), 50 SKU, ~210 sipariş (iptal/iade/negatif marj
 örnekleri dahil), açılış stoku ve stok hareketleri, komisyon tarifeleri (kategori + ürün
 bazlı), 2 alış faturası, 1 ithalat dosyası (EUR + kur farkı), uyarılar, taslak ürünler ve
-fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ — onlar kâr motorunun işidir (KVN-07).
+fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ; `make seed-demo` sonrası
+`python -m app.cli recompute --pending` ile motor tarafından hesaplanır.
 
 ## Proje yapısı
 
@@ -113,7 +147,7 @@ kavun/
 │   │   ├── alerts/          # uyarı motoru
 │   │   ├── services/        # iş mantığı (mağaza, credential kasası, sync, normalize)
 │   │   ├── seeds/           # çekirdek + demo veri
-│   │   └── cli.py           # seed, wipe-demo, replay komutları
+│   │   └── cli.py           # seed, wipe-demo, replay, recompute komutları
 │   ├── alembic/             # migration'lar
 │   ├── tools/               # lint kuralları (para/float yasağı)
 │   └── tests/
@@ -203,5 +237,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-07 — kâr motoru
-çekirdek hesabı** (KDV netleştirme dahil, spec §6).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-08 — kâr motoru
+edge-case test paketi** (8 senaryo, spec §6.3).

@@ -105,8 +105,13 @@ seed: ## Çekirdek veriyi kurar (tenant, marka, kanal, mağaza)
 	$(COMPOSE) exec -T api python -m app.cli seed
 
 .PHONY: seed-demo
-seed-demo: ## Demo tenant'ını gerçekçi örnek veriyle doldurur
+seed-demo: ## Demo tenant'ını gerçekçi örnek veriyle doldurur (kâr hesabı dahil)
 	$(COMPOSE) exec -T api python -m app.cli seed-demo
+	@$(MAKE) --no-print-directory recompute
+
+.PHONY: recompute
+recompute: ## Kâr kaydı olmayan satırların kârını hesaplar (spec §6)
+	$(COMPOSE) exec -T api python -m app.cli recompute --pending
 
 .PHONY: wipe-demo
 wipe-demo: ## Demo verisini siler (gerçek tenant'a dokunmaz)

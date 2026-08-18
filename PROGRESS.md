@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %31** ▓▓▓▓▓▓░░░░░░░░░░░░░░
-Son güncelleme: 2026-08-18 23:20 · Aktif görev: KVN-07
+**TOPLAM: %39** ▓▓▓▓▓▓▓▓░░░░░░░░░░░░
+Son güncelleme: 2026-08-18 23:50 · Aktif görev: KVN-08
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -12,8 +12,8 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-04 | Credential vault (Fernet) + mağaza yönetimi                 | 3       | ✅ Bitti    |
 | KVN-05 | Trendyol connector — orders/products/commissions sync       | 8       | ✅ Bitti    |
 | KVN-06 | raw_events + normalize pipeline + replay komutu             | 6       | ✅ Bitti    |
-| KVN-07 | Kâr motoru — çekirdek hesap (KDV netleştirme dahil)         | 8       | ⏳ Sırada   |
-| KVN-08 | Kâr motoru — edge-case test paketi (8 senaryo)              | 6       | ⏳ Sırada   |
+| KVN-07 | Kâr motoru — çekirdek hesap (KDV netleştirme dahil)         | 8       | ✅ Bitti    |
+| KVN-08 | Kâr motoru — edge-case test paketi (8 senaryo)              | 6       | 🔄 Yapılıyor|
 | KVN-09 | Dashboard + SKU marj listesi + sipariş detayı (waterfall)   | 7       | ⏳ Sırada   |
 | KVN-10 | Excel round-trip — fiyat listesi export/import + diff       | 6       | ⏳ Sırada   |
 | KVN-11 | Taslak ürün akışı                                           | 3       | ⏳ Sırada   |
@@ -27,11 +27,65 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 31
+Toplam ağırlık: 100 · Biten ağırlık: 39
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-18 — KVN-07 bitti
+
+**Ne bitti:** Kâr motoru çekirdek hesabı (KDV netleştirme dahil, spec §6). Testler:
+196 test yeşil, motor coverage %100 (`engine/profit.py`, `engine/vat.py`,
+`engine/allocation.py` — CLAUDE.md §3 eşiği %90), genel coverage %96.
+
+**Ne kuruldu:**
+- `engine/vat.py` — brüt↔net dönüşümleri, 4 haneye `ROUND_HALF_UP` yuvarlama
+- `engine/allocation.py` — ağırlıklı paylaştırma; artık kuruş son parçaya eklenir,
+  parçaların toplamı her zaman dağıtılan tutara eşittir
+- `engine/profit.py` — saf hesap: `LineInput` → `ProfitBreakdown` (+ `waterfall`
+  adımları, sipariş detayı ekranı için hazır)
+- `services/commission.py` — komisyon çözümleme hiyerarşisi (spec §12B.1)
+- `services/profit.py` — girdi toplama, `line_profit` yazımı, `profit_revisions`
+  append-only revizyon logu
+- `python -m app.cli recompute [--pending] [--store]` + `make recompute`;
+  `make seed-demo` artık kâr hesabını da çalıştırıyor
+- Celery: `recompute_pending_profits` 30 dakikada bir; normalize sonrası otomatik zincir
+
+**Kabul kriteri kanıtlandı — testte VE canlı ortamda:** demo veride 177 sipariş /
+229 satır hesaplandı, uydurma değer uyarısı (`maliyet_yok`, `komisyon_orani_yok`) çıkmadı;
+18 iptal satırı sıfır maliyetle geçti. Sonuç dağılımı gerçekçi: 34 negatif marjlı satır,
+marj aralığı %−127 … %+40.
+
+**Karar 1 — KDV modeli (spec §6.1 yorumu).** Spec'in formülü brüt tabanlı, dolayısıyla
+çıkarılan her maliyet KDV dahil olmalı. Kavun'da satış/komisyon/kargo/hizmet bedeli KDV
+**dahil**, stok maliyeti (WAC) KDV **hariç** duruyor (spec §12C: ithalat KDV'si maliyete
+girmez). Motor stok maliyetine KDV'yi ekliyor ve eklediği KDV'yi indirilecek KDV sayıyor.
+Aynı kâr net tabandan da hesaplanıp her satırda karşılaştırılıyor; tutmazsa
+`profit.cross_check_failed` loglanıyor (şimdiye kadar hiç tetiklenmedi).
+
+**Karar 2 — iade modeli (spec §6.1'den BİLİNÇLİ SAPMA).** Spec hem "satış geliri
+sıfırlanır" hem de "iade_maliyeti = refund + ..." diyor; ikisi birlikte uygulanırsa aynı
+zarar iki kez sayılır (1.000 TL'lik iade edilen üründe satır −1.000 TL görünür, oysa
+gerçek kayıp kargodur). Motor tek tutarlı model uyguluyor: iade edilen adedin geliri,
+komisyonu ve satış KDV'si birlikte geri çevriliyor; `refund_amount` ayrıca gider
+yazılmıyor ama girdide taşınıyor (hakediş mutabakatında, Faz 2, platformun iade ettiği
+tutarla karşılaştırılacak). Gerçek kayıplar sayılıyor: gidiş + dönüş kargosu ve mal
+hurdaysa (`restocked=False`) o adedin maliyeti (spec §12C.4). **Mert'in onayı gerekiyor —
+spec §6.1 buna göre düzeltilmeli.**
+
+**Karar 3 — paylaştırma:** paket kargosu satırlara desi ağırlıklı, hizmet bedeli tutar
+ağırlıklı (spec §6.3.6). Desi bilinmiyorsa eşit bölünüyor.
+
+**Karar 4 — uydurma değer yok:** maliyet ya da komisyon oranı bulunamayan satırda kalem
+sıfır kalıyor ve satır uyarıyla işaretleniyor. KVN-05'te doğrulandığı gibi Trendyol
+komisyon oranı API'si yok; gerçek veride oranlar tarife Excel'inden (KVN-14) gelecek.
+
+**Bilinen risk:** Reklam payı (`ad_alloc`) girdide var ama Faz 4'e kadar sıfır — dashboard'da
+"reklam" adımı boş görünecek. `is_final` yalnızca kargo maliyeti kesinleştiğinde true;
+komisyonun kesinleşmesi hakedişe (Faz 2) bağlı, yani Faz 1'de hiçbir satır tam kesin değil.
+Edge-case paketi (KVN-08) değişim/çift kargo, kampanya satıcı payı, ceza kalemleri ve
+Hypothesis property testlerini ekleyecek.
 
 ### 2026-08-18 — KVN-06 bitti
 

@@ -38,6 +38,10 @@ celery_app.conf.beat_schedule = {
         "task": "kavun.normalize_pending",
         "schedule": crontab(minute="*/15"),
     },
+    "recompute-pending-profits": {
+        "task": "kavun.recompute_pending_profits",
+        "schedule": crontab(minute="*/30"),
+    },
     "ensure-raw-event-partitions": {
         "task": "kavun.ensure_raw_event_partitions",
         "schedule": crontab(hour=2, minute=30),

@@ -15,6 +15,7 @@ from app.core.db import SessionLocal
 from app.core.logging import get_logger
 from app.models.partitions import ensure_monthly_partition, month_bounds
 from app.services.normalize import normalize_pending
+from app.services.profit import recompute_pending
 from app.services.sync import load_store_for_sync, sync_store
 from app.workers.celery_app import celery_app
 
@@ -41,6 +42,14 @@ def normalize_pending_task(store_id: str | None = None) -> dict[str, Any]:
     """İşlenmemiş ham olayları domain tablolarına aktarır (KVN-06)."""
     with SessionLocal() as session:
         summary = normalize_pending(session, store_id=uuid.UUID(store_id) if store_id else None)
+    return summary.as_dict()
+
+
+@celery_app.task(name="kavun.recompute_pending_profits")
+def recompute_pending_profits_task() -> dict[str, Any]:
+    """Kâr kaydı olmayan satırların kârını hesaplar (spec §9)."""
+    with SessionLocal() as session:
+        summary = recompute_pending(session)
     return summary.as_dict()
 
 

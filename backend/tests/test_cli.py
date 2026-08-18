@@ -129,6 +129,21 @@ def test_normalize_and_replay_commands(
     assert replayed["processed_events"] == 2
     assert replayed["orders_created"] == 2
 
+    # Normalize edilen satırların kârı hesaplanabilir (KVN-07).
+    assert cli.main(["recompute", "--pending"]) == 0
+    pending = _last_json(capsys.readouterr().out)
+    assert pending["lines"] > 0
+    assert pending["created"] == pending["lines"]
+
+    # İkinci tur `--pending` ile boş döner, tam tur aynı satırları yeniden hesaplar.
+    assert cli.main(["recompute", "--pending"]) == 0
+    assert _last_json(capsys.readouterr().out)["lines"] == 0
+
+    assert cli.main(["recompute"]) == 0
+    full = _last_json(capsys.readouterr().out)
+    assert full["lines"] == pending["lines"]
+    assert full["updated"] == pending["lines"]
+
 
 def test_generate_key_command(capsys: pytest.CaptureFixture[str]) -> None:
     """`generate-key` geçerli bir Fernet anahtarı basar."""
