@@ -191,6 +191,26 @@ export interface paths {
         patch: operations["update_store__brand_slug__stores__store_id__patch"];
         trace?: never;
     };
+    "/{brand_slug}/stores/{store_id}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Senkronu elle tetikle
+         * @description Sync job'ını kuyruğa alır (spec §8). Credential yoksa 409 döner.
+         */
+        post: operations["trigger_sync__brand_slug__stores__store_id__sync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/stores/{store_id}/credentials": {
         parameters: {
             query?: never;
@@ -554,6 +574,21 @@ export interface components {
             brand: string;
         };
         /**
+         * SyncStatus
+         * @description Senkron tetikleme yanıtı (spec §8).
+         */
+        SyncStatus: {
+            /**
+             * Store Id
+             * Format: uuid
+             */
+            store_id: string;
+            /** Task Id */
+            task_id: string;
+            /** Queued */
+            queued: boolean;
+        };
+        /**
          * TokenResponse
          * @description Giriş yanıtı.
          */
@@ -901,6 +936,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StoreSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trigger_sync__brand_slug__stores__store_id__sync_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                store_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncStatus"];
                 };
             };
             /** @description Validation Error */

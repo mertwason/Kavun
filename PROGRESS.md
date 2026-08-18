@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %17** ▓▓▓░░░░░░░░░░░░░░░░░
-Son güncelleme: 2026-08-18 19:05 · Aktif görev: KVN-05
+**TOPLAM: %25** ▓▓▓▓▓░░░░░░░░░░░░░░░
+Son güncelleme: 2026-08-18 22:40 · Aktif görev: KVN-06
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -10,7 +10,7 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-02 | Veri modeli + Alembic migration'lar + seed                  | 5       | ✅ Bitti    |
 | KVN-03 | Tenancy + Brand-scope middleware (fail-closed)              | 5       | ✅ Bitti    |
 | KVN-04 | Credential vault (Fernet) + mağaza yönetimi                 | 3       | ✅ Bitti    |
-| KVN-05 | Trendyol connector — orders/products/commissions sync       | 8       | ⏳ Sırada   |
+| KVN-05 | Trendyol connector — orders/products/commissions sync       | 8       | ✅ Bitti    |
 | KVN-06 | raw_events + normalize pipeline + replay komutu             | 6       | ⏳ Sırada   |
 | KVN-07 | Kâr motoru — çekirdek hesap (KDV netleştirme dahil)         | 8       | ⏳ Sırada   |
 | KVN-08 | Kâr motoru — edge-case test paketi (8 senaryo)              | 6       | ⏳ Sırada   |
@@ -27,11 +27,68 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 17
+Toplam ağırlık: 100 · Biten ağırlık: 25
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-18 — KVN-05 bitti
+
+**Ne bitti:** Trendyol connector'ı, sync servisi ve manuel tetikleme ucu. Testler:
+148 test yeşil, coverage %97.
+
+**Doğrulama (spec §12.2 — tahmin YOK):** tüm uçlar ve alan adları
+developers.trendyol.com'dan doğrulandı:
+- Siparişler `GET /order/sellers/{sellerId}/orders` — `size` max 200, tarih aralığı
+  max 2 hafta, 3 ay geriye, 1.000 istek/dk
+- Ürünler (onaylı, **V2**) `GET /product/sellers/{sellerId}/products/approved` —
+  `size` max 100, 10.000 üstü `nextPageToken`
+- Hakediş (Faz 2) `GET /finance/che/sellers/{sellerId}/settlements` — `commissionRate`
+  ve `commissionAmount` burada; aralık max 15 gün
+- Kimlik: Basic + `User-Agent: {SellerID} - SelfIntegration` (başlık yoksa 403)
+
+**Ne kuruldu:**
+- `connectors/base.py`: sabit adapter arayüzü + `Raw*` DTO'ları (spec §4)
+- `connectors/http.py`: ortak istemci — JSON `parse_float=Decimal` (httpx'in `.json()`
+  tutarları float'a çevirirdi), 429/5xx'te üstel geri çekilme + jitter, `Retry-After`
+  desteği, dakikalık hız sınırına göre pas
+- `connectors/trendyol.py`: sayfalama + iki haftalık pencere bölme, statü normalizasyonu,
+  varyant bazlı ürün ayrıştırma
+- `services/sync.py`: çekilen ham veri `raw_events`'e yazılır, normalize tablolara
+  dokunulmaz (spec §12.7 dry-run); yazmadan önce ayın partition'ı garanti edilir
+- `POST /{brand}/stores/{id}/sync` + Celery `kavun.sync_store` görevi
+
+**Kritik bulgu — komisyon oranı API'si YOK.** Trendyol'un pazaryeri servislerinde
+ürün/kategori komisyon oranı döndüren bir uç bulunmuyor (doküman indeksinde yok; oranlar
+Satıcı Yardım Merkezi'nde dönemsel tablo olarak yayımlanıyor). Spec §12B.1'deki
+`api_product`/`api_category` kaynakları Trendyol için **doldurulamaz**.
+`fetch_commission_rates()` uydurma oran üretmek yerine boş liste döner; komisyon iki
+gerçek kaynaktan çözülecek: hakediş (`settlement_actual`, Faz 2) ve tarife Excel
+yüklemesi (KVN-14). Bu, KVN-13/14'ün önemini artırıyor — KVN-07 kâr motoru komisyonu
+tarife tablosundan çözmek zorunda.
+
+**Canlı testte yakalanan hata:** worker `kavun.sync_store` görevini "unregistered" sayıyordu
+(Celery `include` eksikti). Düzeltildi + görev kaydının regresyon testi yazıldı. Uçtan uca
+zincir doğrulandı: API → Redis → worker → connector → yapılandırılmış özet log. (Gerçek
+Trendyol credential'ı olmadığı ve sandbox dışarı çıkamadığı için çağrı beklendiği gibi
+`ConnectorError` ile bitti; yeniden denemeler ve hata özeti loglandı, credential loglara
+sızmadı.)
+
+**Kararlar / notlar:**
+- Fixture'lar dokümandaki yanıt şemasından üretildi (canlı trafikten kaydedilmiş DEĞİL —
+  gerçek mağaza credential'ı yok). `tests/fixtures/trendyol/README.md` bunu açıkça yazıyor;
+  ilk gerçek senkrondan sonra `raw_events`'teki örnek yanıtla değiştirilecek.
+- V2 onaylı-ürün yanıtında `vatRate` ve `dimensionalWeight` YOK (onaysız ürün filtresinde
+  var). `TODO(verify)` ile işaretlendi; Faz 1'de bu iki alan fiyat listesi Excel'inden
+  (KVN-10) beslenecek.
+- Faz 2 uçları (iade, hakediş, kargo faturası) sahte veri döndürmüyor; `NotImplementedError`
+  ile açıkça "yazılmadı" diyor (spec §12.1).
+
+**Bilinen risk:** Product V1 servisleri 10 Ağustos 2026'da geçersiz oldu, Order V2 için son
+tarih 15 Ekim 2026. Ürün tarafında zaten V2 kullanılıyor; sipariş ucu hâlâ V1 şemasında
+(doküman V1.0.0 diyor). Ekim'den önce Order V2 farkları gözden geçirilmeli — KVN-20 kabul
+turuna madde olarak eklenmeli.
 
 ### 2026-08-18 — KVN-04 bitti
 

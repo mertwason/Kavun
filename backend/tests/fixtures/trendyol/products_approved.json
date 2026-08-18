@@ -1,0 +1,64 @@
+{
+  "totalElements": 2,
+  "totalPages": 1,
+  "page": 0,
+  "size": 100,
+  "nextPageToken": null,
+  "content": [
+    {
+      "contentId": 700001,
+      "productMainId": "KHV-BLD",
+      "title": "Kahveji Espresso Blend",
+      "description": "Espresso harmanı",
+      "creationDate": 1782864000000,
+      "lastModifiedDate": 1786320000000,
+      "brand": {"id": 501, "name": "Kahveji"},
+      "category": {"id": 4021, "name": "Kahve/Harman"},
+      "images": ["https://cdn.example/1.jpg"],
+      "attributes": [{"attributeId": 47, "attributeName": "Menşei", "attributeValues": ["Etiyopya"]}],
+      "variants": [
+        {
+          "variantId": 900101,
+          "supplierId": 998877,
+          "barcode": "8690584683940",
+          "stockCode": "KHV-BLD-ESP",
+          "onSale": true,
+          "price": 1190.00,
+          "listPrice": 1290.00,
+          "stock": 110,
+          "locked": false,
+          "archived": false
+        },
+        {
+          "variantId": 900102,
+          "supplierId": 998877,
+          "barcode": "8690584683943",
+          "stockCode": "KHV-BLD-250",
+          "onSale": true,
+          "price": 329.00,
+          "listPrice": 349.00,
+          "stock": 175,
+          "locked": false,
+          "archived": false
+        }
+      ]
+    },
+    {
+      "contentId": 700002,
+      "productMainId": "KHV-V60",
+      "title": "V60 Dripper 02 Seramik",
+      "brand": {"id": 501, "name": "Kahveji"},
+      "category": {"id": 4088, "name": "Ekipman/Demleme"},
+      "variants": [
+        {
+          "variantId": 900201,
+          "barcode": "8690584111333",
+          "stockCode": "KHV-V60-02",
+          "onSale": true,
+          "price": 890.00,
+          "stock": 42
+        }
+      ]
+    }
+  ]
+}

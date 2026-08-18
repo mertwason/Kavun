@@ -121,6 +121,7 @@ GET  /{brand}/stores/{id}/credentials       # credential durumu (içerik ASLA d�
 POST /{brand}/stores/{id}/credentials       # credential kaydet (Fernet ile şifreli, admin)
 POST /{brand}/stores/{id}/credentials/rotate# anahtar rotasyonu
 DEL  /{brand}/stores/{id}/credentials       # credential sil
+POST /{brand}/stores/{id}/sync              # senkronu elle tetikle (Celery job)
 
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
@@ -139,6 +140,29 @@ Marka izolasyonu üç katmanda zorlanır:
 
 Bilinçli bypass yalnızca iki yolla: `holding_scope()` (audit'e yazılır) ve `system_scope()`
 (seed/replay/sync gibi arka plan işleri).
+
+## Trendyol entegrasyonu
+
+Uç noktalar ve alan adları developers.trendyol.com'dan doğrulandı (2026-08-18);
+tahmin edilen alan yok, doğrulanamayanlar kodda `TODO(verify)` ile işaretli.
+
+| Ne | Uç | Kısıtlar |
+|---|---|---|
+| Siparişler | `GET /order/sellers/{sellerId}/orders` | `size` max 200, tarih aralığı max 2 hafta, 3 ay geriye, 1.000 istek/dk |
+| Ürünler (onaylı, V2) | `GET /product/sellers/{sellerId}/products/approved` | `size` max 100, 10.000 üstü `nextPageToken` |
+| Hakediş (Faz 2) | `GET /finance/che/sellers/{sellerId}/settlements` | `transactionType` zorunlu, aralık max 15 gün |
+
+Kimlik: HTTP Basic (API Key : Secret) + `User-Agent: {SellerID} - SelfIntegration`
+(başlık yoksa 403). Base URL: `https://apigw.trendyol.com/integration`.
+
+**Komisyon oranları API'de yok.** Trendyol'un pazaryeri servislerinde ürün/kategori
+komisyon oranı döndüren bir uç bulunmuyor; oranlar Satıcı Yardım Merkezi'nde dönemsel
+tablo olarak yayımlanıyor. Bu yüzden `fetch_commission_rates()` boş liste döner ve
+komisyon iki gerçek kaynaktan çözülür: **hakediş** (`settlement_actual`, Faz 2) ve
+**tarife Excel yüklemesi** (KVN-14, spec §12B.2).
+
+Sync şu an ham veriyi `raw_events`'e yazar, normalize tablolara dokunmaz (spec §12.7);
+normalize pipeline ve `replay` komutu KVN-06'da gelir.
 
 ## Geliştirme kuralları (özet)
 
@@ -163,5 +187,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-05 — Trendyol
-connector** (orders / products / commissions senkronu).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-06 — raw_events
+normalize pipeline ve `replay` komutu**.

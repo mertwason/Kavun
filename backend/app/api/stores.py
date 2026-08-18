@@ -17,8 +17,10 @@ from app.schemas.store import (
     StoreCreate,
     StoreSummary,
     StoreUpdate,
+    SyncStatus,
 )
 from app.services import stores as store_service
+from app.workers.tasks import sync_store_task
 
 router = APIRouter(prefix="/{brand_slug}/stores", tags=["stores"])
 
@@ -124,6 +126,29 @@ def update_store(
 
     channel_code = store_service.get_channel_code(workspace.session, store)
     return _summary(store, channel_code, store_service.credential_status(workspace.session, store))
+
+
+@router.post(
+    "/{store_id}/sync",
+    response_model=SyncStatus,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Senkronu elle tetikle",
+)
+def trigger_sync(
+    store_id: uuid.UUID,
+    workspace: Workspace = Depends(require_role(UserRole.ADMIN, UserRole.EDITOR)),
+) -> SyncStatus:
+    """Sync job'ını kuyruğa alır (spec §8). Credential yoksa 409 döner."""
+    _require_vault()
+    store = _require_store(workspace, store_id)
+    if store_service.credential_status(workspace.session, store) is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Bu mağaza için credential kayıtlı değil",
+        )
+
+    task = sync_store_task.delay(str(store.id))
+    return SyncStatus(store_id=store.id, task_id=str(task.id), queued=True)
 
 
 @router.get(

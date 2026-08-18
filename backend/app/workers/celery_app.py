@@ -15,6 +15,8 @@ celery_app = Celery(
     "kavun",
     broker=settings.redis_url,
     backend=settings.redis_url,
+    # Görev modülleri açıkça listelenir; aksi halde worker görevi "unregistered" sayar.
+    include=["app.workers.tasks"],
 )
 celery_app.conf.update(
     task_serializer="json",

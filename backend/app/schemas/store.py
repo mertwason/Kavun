@@ -65,6 +65,14 @@ class StoreSummary(BaseModel):
     credentials: CredentialStatus
 
 
+class SyncStatus(BaseModel):
+    """Senkron tetikleme yanıtı (spec §8)."""
+
+    store_id: uuid.UUID
+    task_id: str
+    queued: bool
+
+
 class CredentialWrite(BaseModel):
     """Credential kaydı. Alanlar kanala göre doğrulanır; içerik şifreli saklanır."""
 
