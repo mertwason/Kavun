@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from decimal import Decimal
 
+import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.context import system_scope
 from app.models.catalog import CommissionRate, Product
 from app.models.enums import AlertSeverity, CommissionScope, OrderStatus
 from app.models.identity import Brand, BrandFeature, Store, Tenant, User
@@ -16,6 +19,17 @@ from app.models.transactions import Order, OrderLine, Return
 from app.seeds.base import ALESSI_FEATURES, TENANT_SLUG, seed_base
 from app.seeds.catalog_data import demo_product_count
 from app.seeds.demo import DEMO_TENANT_SLUG, _demo_barcode, seed_demo, wipe_demo
+
+
+@pytest.fixture(autouse=True)
+def system_context() -> Iterator[None]:
+    """Seed testleri sistem bağlamında koşar.
+
+    Seed ve doğrulama sorguları markalar üstü işlerdir; brand-scope guard'ı
+    (KVN-03) bu bağlamı açıkça istemeyen sorguları reddeder.
+    """
+    with system_scope():
+        yield
 
 
 def test_seed_base_creates_expected_structure(db_session: Session) -> None:

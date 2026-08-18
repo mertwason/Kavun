@@ -9,6 +9,7 @@ from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.config import get_settings
+from app.core.scoping import install_brand_scope_guard
 
 # Alembic autogenerate'in kararlı isimler üretmesi için (KVN-02).
 NAMING_CONVENTION = {
@@ -35,6 +36,10 @@ engine = create_engine(
 )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+
+# Marka izolasyonu uygulama açılışında devreye girer (spec §3A.2). Import edilen her
+# yerde (API, worker, CLI, testler) aynı guard çalışır.
+install_brand_scope_guard()
 
 
 def get_session() -> Iterator[Session]:

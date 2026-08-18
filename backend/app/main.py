@@ -2,12 +2,26 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-from app.api import health
+from app.api import auth, health, holding, workspace
 from app.core.config import Settings, get_settings
-from app.core.logging import configure_logging
+from app.core.logging import configure_logging, get_logger
+from app.core.scoping import BrandScopeViolation
+
+log = get_logger("api")
+
+
+async def _brand_scope_violation_handler(_: Request, exc: Exception) -> JSONResponse:
+    """İzolasyon ihlali kullanıcı hatası değil, kod hatasıdır: 500 döner ve loglanır.
+
+    İstemciye tablo adı gibi iç detay sızdırılmaz.
+    """
+    log.error("brand_scope.violation", error=str(exc))
+    return JSONResponse(status_code=500, content={"detail": "Sunucu hatası"})
+
 
 API_TITLE = "Kavun API"
 API_DESCRIPTION = "Pazaryeri kârlılık ve mutabakat platformu"
@@ -33,7 +47,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_exception_handler(BrandScopeViolation, _brand_scope_violation_handler)
+
     app.include_router(health.router)
+    app.include_router(auth.router)
+    app.include_router(holding.router)
+    # Workspace router'ı en sonda: `/{brand_slug}` yakalayıcı olduğundan sabit
+    # yollar (auth, holding, healthz) ondan önce eşleşmelidir.
+    app.include_router(workspace.router)
     return app
 
 

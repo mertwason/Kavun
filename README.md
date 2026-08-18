@@ -97,6 +97,32 @@ kavun/
 └── docker-compose.yml
 ```
 
+## API yüzeyi (şu ana kadar)
+
+```
+POST /auth/sso-exchange     # ops.mokka SSO token'ı → Kavun token'ı
+POST /auth/dev-login        # yalnızca local/ci; diğer ortamlarda 404
+POST /auth/switch-brand     # workspace değiştir (yetkisiz marka → 403)
+GET  /auth/me               # kullanıcı, yetkili markalar, aktif workspace, modül bayrakları
+
+GET  /{brand}/products      # marka kapsamlı ürün listesi
+GET  /{brand}/alerts        # marka kapsamlı uyarılar
+GET  /{brand}/import-files  # yalnızca `import_files` bayrağı açık markada (aksi halde 404)
+
+GET  /holding/summary       # markalar arası konsolide özet (holding_viewer, salt okunur)
+GET  /healthz  /readyz  /docs
+```
+
+Marka izolasyonu üç katmanda zorlanır:
+
+1. **Şema:** işlem verisi taşıyan her tabloda `brand_id NOT NULL`
+2. **Guard:** marka bağlamı olmayan sorgu `BrandScopeViolation` fırlatır; bağlam varsa
+   sorguya `brand_id` filtresi otomatik eklenir (`app/core/scoping.py`)
+3. **API:** yetkisiz markanın kaynağı 404 döner (403 değil — markanın varlığı sızdırılmaz)
+
+Bilinçli bypass yalnızca iki yolla: `holding_scope()` (audit'e yazılır) ve `system_scope()`
+(seed/replay/sync gibi arka plan işleri).
+
 ## Geliştirme kuralları (özet)
 
 Tam liste `CLAUDE.md` içinde; en kritik dördü:
@@ -120,5 +146,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-03 — tenancy ve
-brand-scope middleware** (marka filtresi olmayan sorgu `BrandScopeViolation` fırlatır).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-04 — credential
+vault (Fernet) ve mağaza yönetimi**.

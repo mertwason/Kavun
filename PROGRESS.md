@@ -1,14 +1,14 @@
 # KAVUN İlerleme
 
-**TOPLAM: %9** ▓▓░░░░░░░░░░░░░░░░░░
-Son güncelleme: 2026-08-18 15:10 · Aktif görev: KVN-03
+**TOPLAM: %14** ▓▓▓░░░░░░░░░░░░░░░░░
+Son güncelleme: 2026-08-18 16:05 · Aktif görev: KVN-04
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
 |--------|-------------------------------------------------------------|---------|-------------|
 | KVN-01 | Proje iskeleti + Docker Compose + CI (ruff/mypy/pytest)     | 4       | ✅ Bitti    |
 | KVN-02 | Veri modeli + Alembic migration'lar + seed                  | 5       | ✅ Bitti    |
-| KVN-03 | Tenancy + Brand-scope middleware (fail-closed)              | 5       | ⏳ Sırada   |
+| KVN-03 | Tenancy + Brand-scope middleware (fail-closed)              | 5       | ✅ Bitti    |
 | KVN-04 | Credential vault (Fernet) + mağaza yönetimi                 | 3       | ⏳ Sırada   |
 | KVN-05 | Trendyol connector — orders/products/commissions sync       | 8       | ⏳ Sırada   |
 | KVN-06 | raw_events + normalize pipeline + replay komutu             | 6       | ⏳ Sırada   |
@@ -27,11 +27,51 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 9
+Toplam ağırlık: 100 · Biten ağırlık: 14
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-18 — KVN-03 bitti
+
+**Ne bitti:** Marka izolasyonu üç katmanda zorlanıyor ve spec §3A.6'daki kabul kriterlerinin
+tamamı test olarak yazıldı. Testler: 86 test yeşil, backend coverage %98.
+
+**Ne kuruldu:**
+- **Brand-scope guard** (`app/core/scoping.py`): SQLAlchemy `do_orm_execute` dinleyicisi.
+  Marka bağlamı yoksa `BrandScopeViolation` (fail-closed); bağlam varsa sorguya
+  `brand_id` filtresi otomatik ekleniyor — hem ORM varlıklarına (`with_loader_criteria`,
+  ilişki yüklemeleri dahil) hem de üst seviye FROM tablolarına (count/aggregate sorguları).
+  Bilinçli bypass yalnızca `holding_scope()` (audit'li) ve `system_scope()` (seed/replay) ile.
+- **İstek bağlamı** (`app/core/context.py`): tenant + aktif marka `contextvars` ile taşınıyor;
+  API, worker ve CLI aynı mekanizmayı kullanıyor.
+- **Kimlik** (`app/core/security.py`, `/auth/*`): HS256 JWT; token tenant, marka rolleri,
+  aktif workspace ve holding yetkisini taşıyor. `sso-exchange` ops.mokka token'ını doğruluyor;
+  `dev-login` yalnızca local/ci'de var (üretimde 404).
+- **Workspace API'si**: `/{brand}/products`, `/{brand}/alerts`, `/{brand}/import-files`
+  (feature bayrağına bağlı) ve `/holding/summary`.
+
+**Kabul kriterleri (spec §3A.6) — hepsi testli ve canlı doğrulandı:**
+- Marka filtresi olmayan sorgu → `BrandScopeViolation` (products, orders, alerts + update,
+  Core sorgu ve alt sorgu varyantları)
+- Kahveji token'ı ile Alessi kaynağı → **404** (403 değil); yanıtta karşı markanın hiçbir
+  SKU/id'si yok
+- Tek marka yetkili kullanıcının `/holding` isteği → **403 + audit kaydı**
+- Kahveji'de `import_files` bayrağı kapalı → uç **404**; Alessi'de aynı uç 200
+
+**Kararlar / notlar:**
+- Kavun kullanıcı parolası tutmuyor: kimlik ops.mokka SSO'sundan geliyor. Parola alanı
+  uydurmak yerine SSO değişimi gerçek şekilde yazıldı, geliştirme girişi ortamla sınırlandı.
+- Guard yalnızca *okuma/güncelleme* sorgularını kısıtlar; INSERT'te izolasyonu şemadaki
+  `brand_id NOT NULL` + API katmanı sağlıyor.
+- Seed ve model testleri artık `system_scope()` içinde koşuyor — guard devrede olduğu için
+  bu bilinçli bir "markalar üstü gözlemci" beyanı.
+
+**Bilinen risk:** Guard yalnızca `brand_id` sütunu OLAN tablolara bakıyor. `sku_costs`,
+`purchase_invoice_lines` gibi ürüne/faturaya dolaylı bağlı tablolar doğrudan sorgulanırsa
+markalar arası veri görünebilir; bunların izolasyonu API katmanının join'lerine bağlı.
+KVN-04'ten itibaren bu tablolara dokunan her endpoint ürün/sipariş üzerinden join'lemeli.
 
 ### 2026-08-18 — KVN-02 bitti
 

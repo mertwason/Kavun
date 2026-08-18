@@ -35,6 +35,8 @@ class Settings(BaseSettings):
 
     # JWT (KVN-03)
     jwt_secret: str = Field(default="dev-only-degistir", repr=False)
+    # ops.mokka SSO token'larını doğrulamak için paylaşılan secret (spec §8).
+    ops_sso_secret: str | None = Field(default=None, repr=False)
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 720
 

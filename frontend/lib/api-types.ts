@@ -44,10 +44,377 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/sso-exchange": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * ops.mokka SSO → Kavun token
+         * @description ops.mokka'nın imzaladığı token'ı Kavun token'ına çevirir (spec §8).
+         */
+        post: operations["sso_exchange_auth_sso_exchange_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/dev-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Geliştirme girişi (local/ci)
+         * @description Parolasız geliştirme girişi.
+         *
+         *     Yalnızca `local` ve `ci` ortamlarında vardır; diğer ortamlarda 404 döner —
+         *     ucun varlığı bile sızdırılmaz.
+         */
+        post: operations["dev_login_auth_dev_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/switch-brand": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Workspace değiştir
+         * @description Aktif workspace'i değiştirir; yetkisiz markaya geçiş 403 döner (spec §3A.1).
+         */
+        post: operations["switch_brand_auth_switch_brand_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Oturum bilgisi
+         * @description Kullanıcı, yetkili markalar ve aktif workspace'in modül bayrakları.
+         */
+        get: operations["me_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/holding/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Marka karşılaştırmalı özet
+         * @description Markaların yan yana sayımları. Brand-scope guard'ı yalnızca burada bypass edilir.
+         */
+        get: operations["summary_holding_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Marka ürün listesi
+         * @description Aktif workspace'in ürünleri. Filtre yazılmasa bile guard markayı uygular.
+         */
+        get: operations["list_products__brand_slug__products_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Marka uyarıları
+         * @description Aktif workspace'in uyarıları (tasarım brief'i, kalıp 7).
+         */
+        get: operations["list_alerts__brand_slug__alerts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/import-files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * İthalat dosyaları (yalnızca bayrağı açık markalarda)
+         * @description `import_files` bayrağı kapalı markada bu uç 404 döner (spec §3A.4).
+         */
+        get: operations["list_import_files__brand_slug__import_files_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        /**
+         * AlertSeverity
+         * @description Uyarı seviyesi — tasarım brief'i: bilgi / dikkat / kritik.
+         * @enum {string}
+         */
+        AlertSeverity: "info" | "warning" | "critical";
+        /**
+         * AlertSummary
+         * @description Marka kapsamlı uyarı.
+         */
+        AlertSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Type */
+            type: string;
+            severity: components["schemas"]["AlertSeverity"];
+            /** Message */
+            message: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Acknowledged At */
+            acknowledged_at: string | null;
+        };
+        /**
+         * BrandAccess
+         * @description Kullanıcının bir markadaki erişimi.
+         */
+        BrandAccess: {
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            role: components["schemas"]["UserRole"];
+        };
+        /**
+         * BrandTotals
+         * @description Holding görünümü satırı — marka bazlı konsolide sayımlar.
+         */
+        BrandTotals: {
+            /** Brand */
+            brand: string;
+            /** Name */
+            name: string;
+            /** Product Count */
+            product_count: number;
+            /** Order Count */
+            order_count: number;
+            /** Open Alert Count */
+            open_alert_count: number;
+        };
+        /**
+         * DevLoginRequest
+         * @description Yalnızca local/ci ortamında geçerli geliştirme girişi.
+         */
+        DevLoginRequest: {
+            /** Email */
+            email: string;
+            /** Brand */
+            brand?: string | null;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * HoldingSummary
+         * @description Markalar arası özet (salt okunur, spec §3A.3).
+         */
+        HoldingSummary: {
+            /** Tenant */
+            tenant: string;
+            /** Brands */
+            brands: components["schemas"]["BrandTotals"][];
+        };
+        /**
+         * ImportFileSummary
+         * @description İthalat dosyası — yalnızca `import_files` bayrağı açık markalarda görünür.
+         */
+        ImportFileSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** File No */
+            file_no: string;
+            /** Beyanname No */
+            beyanname_no: string | null;
+            /** Currency */
+            currency: string;
+            /** Import Vat Paid */
+            import_vat_paid: string | null;
+        };
+        /**
+         * MeResponse
+         * @description Oturum bilgisi — frontend workspace switcher'ı bunu kullanır.
+         */
+        MeResponse: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Email */
+            email: string;
+            /** Full Name */
+            full_name: string;
+            /** Tenant */
+            tenant: string;
+            /** Active Brand */
+            active_brand: string | null;
+            /** Brands */
+            brands: components["schemas"]["BrandAccess"][];
+            /** Is Holding Viewer */
+            is_holding_viewer: boolean;
+            /** Features */
+            features: {
+                [key: string]: boolean;
+            };
+        };
+        /**
+         * ProductSummary
+         * @description Marka kapsamlı ürün özeti.
+         */
+        ProductSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Sku */
+            sku: string;
+            /** Name */
+            name: string;
+            /** Category */
+            category: string | null;
+            /** Vat Rate */
+            vat_rate: string;
+            /** Msrp */
+            msrp: string | null;
+        };
+        /**
+         * SsoExchangeRequest
+         * @description ops.mokka SSO token'ı ile Kavun token'ı değişimi.
+         */
+        SsoExchangeRequest: {
+            /** Sso Token */
+            sso_token: string;
+            /**
+             * Brand
+             * @description Açılışta seçilecek workspace
+             */
+            brand?: string | null;
+        };
+        /**
+         * SwitchBrandRequest
+         * @description Workspace değiştirme.
+         */
+        SwitchBrandRequest: {
+            /** Brand */
+            brand: string;
+        };
+        /**
+         * TokenResponse
+         * @description Giriş yanıtı.
+         */
+        TokenResponse: {
+            /** Access Token */
+            access_token: string;
+            /**
+             * Token Type
+             * @default bearer
+             */
+            token_type: string;
+            /** Active Brand */
+            active_brand?: string | null;
+        };
+        /**
+         * UserRole
+         * @description Marka bazlı yetki (spec §3A.3).
+         * @enum {string}
+         */
+        UserRole: "viewer" | "editor" | "admin";
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;
@@ -96,6 +463,275 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    sso_exchange_auth_sso_exchange_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SsoExchangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dev_login_auth_dev_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DevLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    switch_brand_auth_switch_brand_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SwitchBrandRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_holding_summary_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HoldingSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_products__brand_slug__products_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_alerts__brand_slug__alerts_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_import_files__brand_slug__import_files_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportFileSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

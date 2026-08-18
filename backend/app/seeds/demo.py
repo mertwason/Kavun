@@ -22,6 +22,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session
 
+from app.core.context import system_scope
 from app.models.catalog import (
     CommissionChange,
     CommissionRate,
@@ -674,6 +675,11 @@ def _seed_alerts_and_workspace(
 
 def seed_demo(session: Session) -> DemoSummary:
     """Demo tenant'ını sıfırdan kurar. Var olan demo verisi önce temizlenir (idempotent)."""
+    with system_scope():
+        return _seed_demo(session)
+
+
+def _seed_demo(session: Session) -> DemoSummary:
     wipe_demo(session)
 
     summary = DemoSummary()
@@ -818,6 +824,11 @@ def wipe_demo(session: Session) -> int:
     Silme sırası FK bağımlılıklarına göre elle verilir: `brand_id` FK'leri RESTRICT
     olduğundan tenant cascade'ine güvenilemez.
     """
+    with system_scope():
+        return _wipe_demo(session)
+
+
+def _wipe_demo(session: Session) -> int:
     tenant = session.scalar(select(Tenant).where(Tenant.slug == DEMO_TENANT_SLUG))
     if tenant is None:
         return 0

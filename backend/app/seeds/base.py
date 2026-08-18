@@ -11,6 +11,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.context import system_scope
 from app.models.enums import ChannelCode, UserRole
 from app.models.identity import (
     Brand,
@@ -194,6 +195,11 @@ def ensure_user(
 
 def seed_base(session: Session) -> SeedResult:
     """Gerçek çalışma için minimum veri: mokka tenant, 2 marka, kanallar, mağazalar."""
+    with system_scope():
+        return _seed_base(session)
+
+
+def _seed_base(session: Session) -> SeedResult:
     result = SeedResult()
     tenant = get_or_create_tenant(session, TENANT_SLUG, TENANT_NAME)
     result.tenant_id = str(tenant.id)

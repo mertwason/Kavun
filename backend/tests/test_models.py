@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Iterator
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
@@ -10,6 +11,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.context import system_scope
 from app.models.catalog import Product, SkuCost
 from app.models.enums import (
     ChannelCode,
@@ -21,6 +23,13 @@ from app.models.enums import (
 from app.models.identity import Brand, Channel, Store, StoreCredential, Tenant, User, UserBrandRole
 from app.models.inventory import InventoryLedger
 from app.models.transactions import Order
+
+
+@pytest.fixture(autouse=True)
+def system_context() -> Iterator[None]:
+    """Model testleri sistem bağlamında koşar (brand-scope guard'ı, KVN-03)."""
+    with system_scope():
+        yield
 
 
 @pytest.fixture
