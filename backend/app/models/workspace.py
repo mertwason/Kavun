@@ -68,6 +68,10 @@ class PricingScenario(Base, TimestampMixin):
         pg_enum(ShippingPayer, "shipping_payer"), nullable=False, default=ShippingPayer.SATICI
     )
     adet_varsayimi: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    # Spec §12A.4'e ek (KVN-12): kargo varsayımı saklanmazsa kayıtlı senaryo, kaydedildiği
+    # andakinden farklı bir kâr gösterir. Desi bazlı tarife KVN-14'te gelecek; o zamana
+    # kadar kullanıcının verdiği tahmin senaryonun parçasıdır.
+    kargo_tahmini: Mapped[Decimal | None] = mapped_column(Money, nullable=True)
     commission_mode: Mapped[CommissionMode] = mapped_column(
         pg_enum(CommissionMode, "commission_mode"), nullable=False, default=CommissionMode.CURRENT
     )

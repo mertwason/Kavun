@@ -157,6 +157,26 @@ sıfır sayılır ve `kargo_tarifesi_yok` uyarısı çıkar (desi bazlı tarife 
 Excel yüklemesinde `?as_draft=true` ile **SKU'su boş satırlar** ürün yerine taslak olarak
 alınır — ürün ağacına yarım kayıt düşmez (spec §12A.3).
 
+### Senaryo motoru ve hedef marj çözücü
+
+Senaryolar **deterministiktir**: talep tahmini, elastikiyet ya da olasılık yok. Girdi
+(fiyat, kampanya indirimi ve satıcı payı, kargoyu kim öder, adet varsayımı) → kâr motoru →
+birim kâr, marj, toplam kâr ve başabaş fiyat. En fazla 3 senaryo yan yana konur.
+
+**Hedef marj çözücü kapalı formüldür** (iterasyon yok, spec §12A.4). Türetme
+`app/engine/pricing.py` docstring'inde:
+
+    β = v/(1+v) · α = s/(1+s) · A = 1 − β − k(1−α) · B = c + (G+S)(1−α)
+    P = B / [(1−d)(A−m) + d(1−σ)(1−β)]
+
+Doğruluğu iki yoldan test edilir: çözülen fiyat motora geri verildiğinde hedef marj
+±0,01 puan tutar (kabul kriteri §12A.6) ve bu, 200 rastgele girdi üzerinde Hypothesis
+property testiyle de doğrulanır. Hedefe hiçbir fiyatta ulaşılamıyorsa (komisyon + KDV
+yapısı elvermiyorsa) fiyat uydurulmaz — çözücü bunu açıkça söyler.
+
+Senaryolar da Excel'e aktarılıp geri yüklenebilir; sonuç sütunları import'ta yok sayılır,
+dosya hesaplanmış hâliyle geri iner.
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -186,6 +206,7 @@ fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ; `make seed-demo
 | `/{marka}/orders/{id}` | Sipariş detayı — **waterfall kâr dökümü** (ürünün imza ekranı) |
 | `/{marka}/products` | Ürün çalışma alanı — fiyat listesi + Excel aktar/yükle + diff önizleme |
 | `/{marka}/drafts` | Yeni ürün değerlendir — form + anlık kâr kartı + taslak listesi |
+| `/{marka}/scenarios` | Senaryolar — karşılaştırma tablosu + hedef marj çözücü |
 
 Dönem seçimi URL'de taşınır (`?days=7|30|90|365`), böylece ekran paylaşılabilir ve geri
 tuşu çalışır. Kâr rakamlarının yanındaki amber "Tahmini" rozeti kargo/komisyon
@@ -257,6 +278,14 @@ POST /{brand}/drafts               # taslak kaydet
 POST /{brand}/drafts/{id}/promote  # ürüne dönüştür (ürün + maliyet + desi + fiyat)
 POST /{brand}/drafts/{id}/discard  # iptal et (kayıt silinmez)
 
+GET  /{brand}/scenarios            # kayıtlı senaryolar + güncel sonuçları
+POST /{brand}/scenarios/evaluate   # senaryoyu hesapla (kaydetmeden)
+POST /{brand}/scenarios            # senaryo kaydet
+POST /{brand}/scenarios/compare    # en fazla 3 senaryoyu yan yana
+POST /{brand}/scenarios/target-margin  # hedef marj için gereken fiyatı çöz
+GET  /{brand}/scenarios/export     # senaryoları xlsx indir
+POST /{brand}/scenarios/import     # senaryo dosyası → hesaplanmış dosya
+
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
 GET  /{brand}/import-files  # yalnızca `import_files` bayrağı açık markada (aksi halde 404)
@@ -321,5 +350,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-12 — senaryo motoru,
-karşılaştırma ve hedef marj çözücü** (spec §12A.4).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-13 — komisyon
+çözümleme hiyerarşisi, snapshot/diff ve etki analizi** (spec §12B).

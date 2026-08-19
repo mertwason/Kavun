@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %61** ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░
-Son güncelleme: 2026-08-19 04:25 · Aktif görev: KVN-12
+**TOPLAM: %67** ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░
+Son güncelleme: 2026-08-19 04:55 · Aktif görev: KVN-13
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -17,8 +17,8 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-09 | Dashboard + SKU marj listesi + sipariş detayı (waterfall)   | 7       | ✅ Bitti    |
 | KVN-10 | Excel round-trip — fiyat listesi export/import + diff       | 6       | ✅ Bitti    |
 | KVN-11 | Taslak ürün akışı                                           | 3       | ✅ Bitti    |
-| KVN-12 | Senaryo motoru + karşılaştırma + hedef marj çözücü          | 6       | 🔄 Yapılıyor|
-| KVN-13 | Komisyon çözümleme hiyerarşisi + snapshot/diff + etki       | 6       | ⏳ Sırada   |
+| KVN-12 | Senaryo motoru + karşılaştırma + hedef marj çözücü          | 6       | ✅ Bitti    |
+| KVN-13 | Komisyon çözümleme hiyerarşisi + snapshot/diff + etki       | 6       | 🔄 Yapılıyor|
 | KVN-14 | Tarife Excel yükleme (esnek parser)                         | 4       | ⏳ Sırada   |
 | KVN-15 | PDF fatura ayrıştırma + öğrenen SKU eşleştirme + onay       | 7       | ⏳ Sırada   |
 | KVN-16 | Inventory ledger + WAC motoru + açılış stoku                | 7       | ⏳ Sırada   |
@@ -27,11 +27,60 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 61 · **Faz 1 (KVN-01…09) tamamlandı**
+Toplam ağırlık: 100 · Biten ağırlık: 67 · **Faz 1 (KVN-01…09) tamamlandı**
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-12 bitti
+
+**Ne bitti:** Senaryo motoru, 3'lü karşılaştırma, hedef marj çözücü ve senaryo xlsx
+round-trip'i (spec §12A.4) + Senaryolar ekranı. Testler: 316 yeşil, çözücü coverage %100,
+genel %95. Ekran gerçek tarayıcıda denendi.
+
+**Kabul kriteri (§12A.6) kanıtlandı:** çözücünün verdiği fiyat motora geri verildiğinde
+hedef marjı **±0,01 puan** tutturuyor — hem sabit senaryolarda hem 200 rastgele girdide
+(Hypothesis property testi). Ölçülen sapma pratikte 0,0000.
+
+**Karar 1 — çözücü KAPALI FORMÜL (spec §12A.4 gereği, iterasyon yok).** Türetme
+`app/engine/pricing.py` docstring'inde adım adım yazılı:
+
+    β = v/(1+v) · α = s/(1+s) · A = 1 − β − k(1−α) · B = c + (G+S)(1−α)
+    P = B / [(1−d)(A−m) + d(1−σ)(1−β)]
+
+Başabaş fiyat bunun m=0 hâli. Formülün doğruluğu bağımsız olarak da doğrulandı: bu
+maliyet yapısıyla başabaş fiyat 120,00 çıkıyor — KVN-07'nin elle hesaplanmış "kâr = 0"
+senaryosuyla birebir aynı.
+
+**Karar 2 — ulaşılamayan hedefe fiyat uydurulmaz.** Payda ≤ 0 ise (komisyon + KDV yapısı
+o marja hiçbir fiyatta izin vermiyorsa) çözücü `None` döner ve UI sebebi yazar. Sonsuza
+giden bir fiyat üretmek sessiz saçmalık olurdu.
+
+**Karar 3 — kargoyu satıcı ödemiyorsa gelir yazılmaz.** `alici`/`platform` seçilince
+satıcının kargo maliyeti sıfırlanıyor ama alıcının ödediği kargo satıcı geliri
+sayılmıyor (muhafazakâr varsayım).
+
+**Karar 4 — `pricing_scenarios.kargo_tahmini` kolonu eklendi** (migration `f1820e99ff0d`).
+Kargo varsayımı saklanmayınca kayıtlı senaryo, kaydedildiği andakinden farklı bir kâr
+gösteriyordu (testte yakalandı: başabaş 120 yerine 90). Desi bazlı tarife KVN-14'te
+gelene kadar kullanıcının verdiği tahmin senaryonun parçası.
+
+**Senaryo xlsx round-trip:** export şablonu = import şablonu; `Birim Kâr`, `Marj %`,
+`Toplam Kâr`, `Başabaş Fiyat` sütunları import'ta yok sayılır (kaynak motordur), dosya
+hesaplanmış hâliyle geri iner. Bilinmeyen SKU sessizce atlanmaz, dosya reddedilir.
+
+**Canlı tarayıcı testi (Playwright):** senaryo hesaplandı → hedef marj %30 için fiyat
+çözüldü (₺2.542,29) ve ekranda motorla doğrulanan marj %30,0 göründü → senaryo kaydedildi
+→ iki senaryo yan yana karşılaştırıldı. JS hatası yok.
+
+**Yakalanan hata:** karşılaştırma tablosunda komisyon ORANI "Komisyon kaynağı" etiketiyle
+gösteriliyordu; etiket "Komisyon oranı" olarak düzeltildi.
+
+**Bilinen risk:** Senaryo hesabı iade ve reklam payı içermiyor (ikisi de gelecek dönem
+varsayımı gerektirir; spec de senaryo sütunlarında saymıyor) — yani senaryo kârı
+"iadesiz" senaryodur, gerçekleşen kârdan iyimser olabilir. Ekranda bu not yok, KVN-19'da
+eklenmeli.
 
 ### 2026-08-19 — KVN-11 bitti
 

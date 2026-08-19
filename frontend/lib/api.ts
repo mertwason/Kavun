@@ -24,6 +24,9 @@ export type ImportSummary = components["schemas"]["ImportSummaryOut"];
 export type Draft = components["schemas"]["DraftOut"];
 export type DraftInput = components["schemas"]["DraftInput"];
 export type DraftAnalysis = components["schemas"]["AnalysisOut"];
+export type ScenarioResult = components["schemas"]["ScenarioResultOut"];
+export type ScenarioInput = components["schemas"]["ScenarioInputIn"];
+export type TargetMargin = components["schemas"]["TargetMarginOut"];
 
 export type HealthStatus = {
   online: boolean;
@@ -215,4 +218,27 @@ export function promoteDraft(brand: string, draftId: string) {
 
 export function discardDraft(brand: string, draftId: string) {
   return post<Draft>(brand, `/drafts/${draftId}/discard`);
+}
+
+export function fetchScenarios(brand: string) {
+  return get<ScenarioResult[]>(brand, "/scenarios");
+}
+
+export function evaluateScenario(brand: string, input: ScenarioInput) {
+  return post<ScenarioResult>(brand, "/scenarios/evaluate", input);
+}
+
+export function saveScenario(brand: string, input: ScenarioInput) {
+  return post<ScenarioResult>(brand, "/scenarios", input);
+}
+
+export function compareScenarios(brand: string, scenarioIds: string[]) {
+  return post<ScenarioResult[]>(brand, "/scenarios/compare", { scenario_ids: scenarioIds });
+}
+
+export function solveTargetMargin(
+  brand: string,
+  input: ScenarioInput & { hedef_marj_pct: string },
+) {
+  return post<TargetMargin>(brand, "/scenarios/target-margin", input);
 }

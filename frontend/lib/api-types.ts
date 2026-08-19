@@ -503,6 +503,132 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/scenarios/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Senaryoyu hesapla (kaydetmeden)
+         * @description Deterministik hesap: girdi → kâr motoru → sonuç (spec §12A.4).
+         */
+        post: operations["evaluate_scenario__brand_slug__scenarios_evaluate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Kayıtlı senaryolar + sonuçları
+         * @description Markanın senaryoları, güncel tarife ve maliyetle yeniden hesaplanmış.
+         */
+        get: operations["list_scenarios__brand_slug__scenarios_get"];
+        put?: never;
+        /**
+         * Senaryo kaydet
+         * @description Senaryoyu kaydeder ve sonucunu döner.
+         */
+        post: operations["create_scenario__brand_slug__scenarios_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/scenarios/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * En fazla 3 senaryoyu karşılaştır
+         * @description Kayıtlı senaryolar ve/veya anlık girdiler yan yana hesaplanır (spec §12A.4).
+         */
+        post: operations["compare_scenarios__brand_slug__scenarios_compare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/scenarios/target-margin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hedef marj için gereken fiyatı çöz
+         * @description Kapalı formül çözümü — iterasyon yok (spec §12A.4).
+         */
+        post: operations["solve_target_margin__brand_slug__scenarios_target_margin_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/scenarios/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Senaryoları xlsx olarak indir
+         * @description Export edilen dosya import şablonudur; sonuç sütunları hesaplanmış gelir.
+         */
+        get: operations["export_scenarios__brand_slug__scenarios_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/scenarios/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Senaryo dosyası yükle → hesaplanmış dosya iner
+         * @description §12A.4: yüklenen senaryolar hesaplanır ve sonuç sütunlarıyla dolu dosya döner.
+         *
+         *     Kayıt oluşturmaz — dosya bir hesap makinesi gibi çalışır.
+         */
+        post: operations["import_scenarios__brand_slug__scenarios_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/products": {
         parameters: {
             query?: never;
@@ -640,6 +766,14 @@ export interface components {
              */
             file: string;
         };
+        /** Body_import_scenarios__brand_slug__scenarios_import_post */
+        Body_import_scenarios__brand_slug__scenarios_import_post: {
+            /**
+             * File
+             * @description Kavun senaryo şablonuyla üretilmiş xlsx
+             */
+            file: string;
+        };
         /**
          * BrandAccess
          * @description Kullanıcının bir markadaki erişimi.
@@ -674,11 +808,27 @@ export interface components {
          */
         ChannelCode: "trendyol" | "hepsiburada" | "n11" | "shopify" | "manual";
         /**
+         * CommissionMode
+         * @description `pricing_scenarios.commission_mode` (spec §12B.4).
+         * @enum {string}
+         */
+        CommissionMode: "current" | "pinned" | "future_tariff";
+        /**
          * CommissionSource
          * @description Komisyon çözümleme hiyerarşisi (spec §12B.1) — sıra önem taşır.
          * @enum {string}
          */
         CommissionSource: "settlement_actual" | "api_product" | "api_category" | "manual_tariff_upload" | "manual";
+        /**
+         * CompareIn
+         * @description Karşılaştırma isteği — en fazla 3 senaryo (spec §12A.4).
+         */
+        CompareIn: {
+            /** Scenario Ids */
+            scenario_ids?: string[];
+            /** Inputs */
+            inputs?: components["schemas"]["ScenarioInputIn"][];
+        };
         /**
          * CredentialStatus
          * @description Credential durumu — içerik ASLA dönmez.
@@ -1122,6 +1272,91 @@ export interface components {
             };
         };
         /**
+         * ScenarioInputIn
+         * @description Senaryo girdisi (kaydedilmemiş de olabilir).
+         */
+        ScenarioInputIn: {
+            /** Name */
+            name: string;
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /**
+             * Satis Fiyati
+             * @description Liste fiyatı, KDV dahil
+             */
+            satis_fiyati: number | string;
+            /** Kampanya Indirim Pct */
+            kampanya_indirim_pct?: number | string | null;
+            /** Kampanya Satici Pay Pct */
+            kampanya_satici_pay_pct?: number | string | null;
+            /** @default satici */
+            kargo_kim_oder: components["schemas"]["ShippingPayer"];
+            /**
+             * Adet Varsayimi
+             * @default 1
+             */
+            adet_varsayimi: number;
+            /** @default current */
+            commission_mode: components["schemas"]["CommissionMode"];
+            /** Pinned Commission Rate */
+            pinned_commission_rate?: number | string | null;
+            /** Kargo Tahmini */
+            kargo_tahmini?: number | string | null;
+        };
+        /**
+         * ScenarioResultOut
+         * @description Senaryo sonucu.
+         */
+        ScenarioResultOut: {
+            /** Scenario Id */
+            scenario_id: string | null;
+            /** Name */
+            name: string;
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Sku */
+            sku: string;
+            /** Satis Fiyati */
+            satis_fiyati: string;
+            /** Musteri Odedigi */
+            musteri_odedigi: string;
+            /** Adet */
+            adet: number;
+            /** Birim Kar */
+            birim_kar: string;
+            /** Marj Pct */
+            marj_pct: string;
+            /** Toplam Kar */
+            toplam_kar: string;
+            /** Basabas Fiyat */
+            basabas_fiyat: string | null;
+            /** Commission Rate */
+            commission_rate: string | null;
+            commission_source: components["schemas"]["CommissionSource"] | null;
+            /** Cargo Cost */
+            cargo_cost: string;
+            /** Service Fee */
+            service_fee: string;
+            /** Warnings */
+            warnings: string[];
+            /** Waterfall */
+            waterfall: {
+                [key: string]: unknown;
+            }[];
+        };
+        /**
+         * ShippingPayer
+         * @description `pricing_scenarios.kargo_kim_oder` (spec §12A.4).
+         * @enum {string}
+         */
+        ShippingPayer: "satici" | "alici" | "platform";
+        /**
          * SkuMarginOut
          * @description SKU marj listesi satırı (spec §10.2).
          */
@@ -1254,6 +1489,61 @@ export interface components {
             task_id: string;
             /** Queued */
             queued: boolean;
+        };
+        /**
+         * TargetMarginIn
+         * @description Hedef marj çözücüsü girdisi; `satis_fiyati` başlangıç değeri olarak taşınır.
+         */
+        TargetMarginIn: {
+            /** Name */
+            name: string;
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /**
+             * Satis Fiyati
+             * @description Liste fiyatı, KDV dahil
+             */
+            satis_fiyati: number | string;
+            /** Kampanya Indirim Pct */
+            kampanya_indirim_pct?: number | string | null;
+            /** Kampanya Satici Pay Pct */
+            kampanya_satici_pay_pct?: number | string | null;
+            /** @default satici */
+            kargo_kim_oder: components["schemas"]["ShippingPayer"];
+            /**
+             * Adet Varsayimi
+             * @default 1
+             */
+            adet_varsayimi: number;
+            /** @default current */
+            commission_mode: components["schemas"]["CommissionMode"];
+            /** Pinned Commission Rate */
+            pinned_commission_rate?: number | string | null;
+            /** Kargo Tahmini */
+            kargo_tahmini?: number | string | null;
+            /**
+             * Hedef Marj Pct
+             * @description Hedeflenen marj yüzdesi
+             */
+            hedef_marj_pct: number | string;
+        };
+        /**
+         * TargetMarginOut
+         * @description Çözücü sonucu.
+         */
+        TargetMarginOut: {
+            /** Target Margin Pct */
+            target_margin_pct: string;
+            /** Price */
+            price: string | null;
+            /** Reachable */
+            reachable: boolean;
+            /** Message */
+            message: string;
+            result: components["schemas"]["ScenarioResultOut"] | null;
         };
         /**
          * TokenResponse
@@ -2270,6 +2560,266 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DraftOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluate_scenario__brand_slug__scenarios_evaluate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenarioInputIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioResultOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_scenarios__brand_slug__scenarios_get: {
+        parameters: {
+            query?: {
+                product_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioResultOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_scenario__brand_slug__scenarios_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenarioInputIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioResultOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compare_scenarios__brand_slug__scenarios_compare_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompareIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioResultOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    solve_target_margin__brand_slug__scenarios_target_margin_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TargetMarginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TargetMarginOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_scenarios__brand_slug__scenarios_export_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_scenarios__brand_slug__scenarios_import_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_scenarios__brand_slug__scenarios_import_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

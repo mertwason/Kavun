@@ -6,7 +6,17 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import analytics, auth, drafts, health, holding, pricelist, stores, workspace
+from app.api import (
+    analytics,
+    auth,
+    drafts,
+    health,
+    holding,
+    pricelist,
+    scenarios,
+    stores,
+    workspace,
+)
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.scoping import BrandScopeViolation
@@ -58,6 +68,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(analytics.router)
     app.include_router(pricelist.router)
     app.include_router(drafts.router)
+    app.include_router(scenarios.router)
     app.include_router(workspace.router)
     return app
 

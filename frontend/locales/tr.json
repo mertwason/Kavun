@@ -30,7 +30,8 @@
     "skuMargins": "SKU marjları",
     "orders": "Siparişler",
     "products": "Ürün çalışma alanı",
-    "drafts": "Yeni ürün değerlendir"
+    "drafts": "Yeni ürün değerlendir",
+    "scenarios": "Senaryolar"
   },
   "period": {
     "label": "Dönem",
@@ -127,7 +128,9 @@
     "products": "Bu markada ürün yok.",
     "productsHint": "Excel şablonunu indirip doldurun ya da demo veriyi yükleyin: make seed-demo",
     "drafts": "Henüz taslak yok.",
-    "draftsHint": "Yukarıdaki formu doldurup taslak olarak kaydedin."
+    "draftsHint": "Yukarıdaki formu doldurup taslak olarak kaydedin.",
+    "scenarios": "Bu markada senaryo kurulacak ürün yok.",
+    "scenariosHint": "Önce ürün ekleyin: fiyat listesi Excel'i ya da yeni ürün değerlendirme."
   },
   "error": {
     "unreachable": "API'ye ulaşılamıyor.",
@@ -200,5 +203,41 @@
       "kargo_tarifesi_yok": "Kargo tahmini girilmedi; 0 sayıldı (desi tarifesi KVN-14'te).",
       "iptal": "İptal satırı."
     }
+  },
+  "scenarios": {
+    "title": "Fiyat senaryoları",
+    "subtitle": "Deterministik hesap: girdi → kâr motoru → sonuç. Talep tahmini yok.",
+    "product": "Ürün",
+    "name": "Senaryo adı",
+    "price": "Liste fiyatı (KDV dahil)",
+    "customerPays": "Müşterinin ödediği",
+    "discount": "Kampanya indirimi %",
+    "sellerShare": "Satıcı payı %",
+    "shipping": "Kargoyu kim öder",
+    "cargo": "Kargo maliyeti",
+    "quantity": "Adet varsayımı",
+    "unitProfit": "Birim net kâr",
+    "totalProfit": "Toplam kâr",
+    "breakEven": "Başabaş fiyat",
+    "metric": "Kalem",
+    "evaluate": "Hesapla",
+    "save": "Senaryoyu kaydet",
+    "saved": "Senaryo kaydedildi.",
+    "savedTitle": "Kayıtlı senaryolar",
+    "compare": "Karşılaştır",
+    "compareHint": "En fazla 3 senaryo seçin",
+    "targetMargin": "Hedef marj %",
+    "solve": "Hedef fiyatı çöz",
+    "solverTitle": "Hedef marj çözücü",
+    "solverAnswer": "{marj} marj için liste fiyatı {fiyat} olmalı.",
+    "solverCheck": "Motorla doğrulanan marj:",
+    "missingFields": "Ürün ve liste fiyatı zorunlu.",
+    "missingTarget": "Hedef marj, ürün ve liste fiyatı zorunlu.",
+    "payer": {
+      "satici": "Satıcı",
+      "alici": "Alıcı",
+      "platform": "Platform"
+    },
+    "commissionRate": "Komisyon oranı"
   }
 }
