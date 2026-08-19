@@ -273,7 +273,8 @@ def export_scenarios(workspace: Workspace = Depends(get_workspace)) -> Response:
         )
 
     payload = scenarios.build_scenario_workbook(results, inputs=inputs)
-    filename = f"kavun-senaryolar-{workspace.brand.slug}-{today.isoformat()}.xlsx"
+    # Marka öneki (spec §3A.2): dosya karışıklığı insan seviyesinde de önlenir.
+    filename = f"{workspace.brand.slug}-senaryolar-{today.isoformat()}.xlsx"
     return Response(
         content=payload,
         media_type=XLSX_MEDIA_TYPE,

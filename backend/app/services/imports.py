@@ -349,7 +349,7 @@ def fx_exposure(session: Session) -> list[FxExposure]:
         weighted = ZERO
         weight = ZERO
         for item in group:
-            amount = _file_goods_amount(session, import_file=item)
+            amount = file_goods_amount(session, import_file=item)
             invoiced += amount
             if item.fx_rate_beyanname is not None:
                 weighted += amount * item.fx_rate_beyanname
@@ -376,7 +376,7 @@ def fx_exposure(session: Session) -> list[FxExposure]:
     return result
 
 
-def _file_goods_amount(session: Session, *, import_file: ImportFile) -> Decimal:
+def file_goods_amount(session: Session, *, import_file: ImportFile) -> Decimal:
     """Dosyanın dövizli mal bedeli — faturalardan, yoksa `mal_bedeli` kaleminden."""
     lines = goods_lines(session, import_file_id=import_file.id)
     if lines:

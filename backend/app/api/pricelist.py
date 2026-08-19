@@ -39,7 +39,9 @@ def export_price_list(workspace: Workspace = Depends(get_workspace)) -> Response
     payload = pricelist.export_price_list(
         workspace.session, brand_name=workspace.brand.name, today=today
     )
-    filename = f"kavun-fiyat-listesi-{workspace.brand.slug}-{today.isoformat()}.xlsx"
+    # Dosya adı MARKA ile başlar: indirilenler klasöründe karışıklık insan seviyesinde de
+    # önlenir (spec §3A.2).
+    filename = f"{workspace.brand.slug}-fiyat-listesi-{today.isoformat()}.xlsx"
     return Response(content=payload, media_type=XLSX_MEDIA_TYPE, headers=_attachment(filename))
 
 

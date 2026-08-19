@@ -556,3 +556,31 @@ def test_customer_without_tier_falls_into_the_unknown_bucket(
 
     assert "—" in rows
     assert rows["—"].revenue == D("8000.0000")
+
+
+def test_foreign_brand_sku_is_rejected_in_d2b_import(
+    db_session: Session, d2b: Store, product: Product
+) -> None:
+    """§3A.2: başka markanın SKU'su `cross_brand_rejected` ile reddedilir."""
+    from app.core.context import system_scope
+    from app.models.identity import Brand
+
+    with system_scope():
+        other = db_session.scalars(select(Brand).where(Brand.id != d2b.brand_id)).first()
+        assert other is not None
+        db_session.add(
+            Product(
+                tenant_id=other.tenant_id,
+                brand_id=other.id,
+                sku="KHV-YABANCI-1",
+                name="Diğer markanın ürünü",
+                vat_rate=D("1.00"),
+            )
+        )
+        db_session.flush()
+
+    payload = _workbook([(SALE_DATE, "Kurumsal A.Ş.", "bayi", "KHV-YABANCI-1", 1, 100, 0, 20)])
+    summary = b2b.import_sales(db_session, payload=payload, store=d2b, dry_run=False)
+
+    assert summary.lines == 0
+    assert "cross_brand_rejected" in summary.errors[0].reason

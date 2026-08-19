@@ -147,6 +147,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/holding/consolidated": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Konsolide P&L, stok değeri, fire ve kur maruziyeti
+         * @description Markalar arası konsolide rapor (spec §3A.3). Salt okunur; işlem yapılamaz.
+         */
+        get: operations["consolidated_holding_consolidated_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/stores": {
         parameters: {
             query?: never;
@@ -1569,6 +1589,66 @@ export interface components {
             lines: number;
             /** Ledger Entries */
             ledger_entries: number;
+        };
+        /**
+         * ConsolidatedBrandOut
+         * @description Holding konsolide satırı — marka bazlı P&L, stok, fire ve kur (spec §3A.3).
+         */
+        ConsolidatedBrandOut: {
+            /** Brand */
+            brand: string;
+            /** Name */
+            name: string;
+            /** Product Count */
+            product_count: number;
+            /** Order Count */
+            order_count: number;
+            /** Open Alert Count */
+            open_alert_count: number;
+            /** Revenue */
+            revenue: string;
+            /** Profit */
+            profit: string;
+            /** Margin Pct */
+            margin_pct: string;
+            /** Stock Value */
+            stock_value: string;
+            /** Damage Cost */
+            damage_cost: string;
+            /** Fx Diff */
+            fx_diff: string;
+            /** Open Fx Amount */
+            open_fx_amount: string;
+        };
+        /**
+         * ConsolidatedOut
+         * @description Holding özeti: markalar + toplamlar. Salt okunur.
+         */
+        ConsolidatedOut: {
+            /** Tenant */
+            tenant: string;
+            /**
+             * Since
+             * Format: date
+             */
+            since: string;
+            /**
+             * Until
+             * Format: date
+             */
+            until: string;
+            /** Brands */
+            brands: components["schemas"]["ConsolidatedBrandOut"][];
+            /** Total Revenue */
+            total_revenue: string;
+            /** Total Profit */
+            total_profit: string;
+            /** Total Stock Value */
+            total_stock_value: string;
+            /** Total Damage Cost */
+            total_damage_cost: string;
+            /** Total Fx Diff */
+            total_fx_diff: string;
         };
         /**
          * CostItemIn
@@ -3239,6 +3319,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HoldingSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    consolidated_holding_consolidated_get: {
+        parameters: {
+            query?: {
+                since?: string | null;
+                until?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsolidatedOut"];
                 };
             };
             /** @description Validation Error */

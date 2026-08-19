@@ -326,6 +326,26 @@ fazla bir uyarı yazar. Taban **aktif markadan** okunur: `brands` marka-kapsaml�
 değildir, guard onu filtrelemez — yanlış markadan okunursa Alessi'nin tabanı Kahveji'nin
 değeriyle ölçülürdü.
 
+### Workspace izolasyonu ve holding görünümü (KVN-19)
+
+Menü **yetkiye ve bayrağa göre** kurulur: kapalı modül (Kahveji'de ithalat/D2B) menüde
+görünmez, workspace switcher yalnızca çoklu marka yetkisi olan kullanıcıya çıkar, Holding
+bağlantısı yalnızca `holding_viewer` rolüne. Aktif menü öğesi marka aksanıyla altı çizili.
+
+**İçe aktarım izolasyonu (§3A.2).** Bir workspace'ten yüklenen dosya yalnızca o markaya
+yazılır. Dosyada başka markaya ait SKU varsa satır `cross_brand_rejected` ile reddedilir,
+kalan satırlar işlenir. Bu, sessiz veri bozulmasına karşı bir kilittir: aksi halde aynı SKU
+ikinci markada yeniden yaratılır, maliyet ve stok ikiye bölünürdü. Kural fiyat listesi ve
+D2B satış yüklemesinde uygulanır; kontrol tek bir evet/hayır sorusudur (karşı markanın
+hiçbir alanı çağırana geçmez). Excel dosya adları marka önekiyle üretilir
+(`alessi-fiyat-listesi-2026-08-19.xlsx`).
+
+**Holding görünümü (§3A.3)** `/holding` altındadır ve **salt okunurdur**: konsolide P&L,
+toplam stok değeri, fire gideri, gerçekleşen kur farkı ve açık döviz pozisyonu markalar
+yan yana. Sayılar yeniden hesaplanmaz — marka içindeki motorun yazdığı kayıtlardan
+toplanır, böylece holding ile marka görünümü çelişemez. Erişim (ve her ret) audit'e
+yazılır; yetkisiz kullanıcı 403 alır.
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -362,6 +382,7 @@ fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ; `make seed-demo
 | `/{marka}/imports` | İthalat dosyaları + açık döviz pozisyonu (yalnızca bayrağı açık markada) |
 | `/{marka}/imports/{id}` | Dosya detayı — masraf kalemleri, dağıtım önizlemesi, ödemeler/kur farkı |
 | `/{marka}/d2b` | D2B satışlar — şablon indir/yükle + kademe bazlı özet (bayrağa bağlı) |
+| `/holding` | Holding görünümü — konsolide P&L, stok, fire, kur (salt okunur) |
 
 Dönem seçimi URL'de taşınır (`?days=7|30|90|365`), böylece ekran paylaşılabilir ve geri
 tuşu çalışır. Kâr rakamlarının yanındaki amber "Tahmini" rozeti kargo/komisyon
@@ -480,7 +501,8 @@ GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
 GET  /{brand}/import-files  # yalnızca `import_files` bayrağı açık markada (aksi halde 404)
 
-GET  /holding/summary       # markalar arası konsolide özet (holding_viewer, salt okunur)
+GET  /holding/summary       # markalar arası sayımlar (holding_viewer, salt okunur)
+GET  /holding/consolidated  # konsolide P&L + stok değeri + fire + kur maruziyeti
 GET  /healthz  /readyz  /docs
 ```
 
@@ -540,5 +562,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-19 — Workspace UI
-(Alessi/Kahveji modülleri + Holding)** (spec §3A, §10).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-20 — golden dataset
+doğrulama ve uçtan uca kabul turu** (spec §11).

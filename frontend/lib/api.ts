@@ -13,6 +13,8 @@ import type { components, paths } from "@/lib/api-types";
 
 const API_URL = process.env.KAVUN_API_URL ?? "http://localhost:8000";
 const DEV_USER = process.env.KAVUN_DEV_USER ?? "demo@mokkalabs.com";
+/** Holding token'ı da bir marka bağlamıyla alınır; yetki kontrolü backend'dedir. */
+const DEFAULT_HOLDING_BRAND = "kahveji";
 
 export type Dashboard = components["schemas"]["DashboardOut"];
 export type SkuMargin = components["schemas"]["SkuMarginOut"];
@@ -50,6 +52,8 @@ export type TierMargin = components["schemas"]["TierMarginOut"];
 export type DamageRow = components["schemas"]["DamageRowOut"];
 export type DisciplineViolation = components["schemas"]["ViolationOut"];
 export type DamageInput = components["schemas"]["DamageIn"];
+export type Consolidated = components["schemas"]["ConsolidatedOut"];
+export type Session = components["schemas"]["MeResponse"];
 
 export type HealthStatus = {
   online: boolean;
@@ -157,7 +161,7 @@ export async function downloadPriceList(
   return {
     ok: true,
     body: await response.arrayBuffer(),
-    filename: match ? match[1] : `kavun-fiyat-listesi-${brand}.xlsx`,
+    filename: match ? match[1] : `${brand}-fiyat-listesi.xlsx`,
   };
 }
 
@@ -441,7 +445,7 @@ export async function downloadD2bTemplate(
   return {
     ok: true,
     body: await response.arrayBuffer(),
-    filename: "kavun-d2b-sablon.xlsx",
+    filename: `${brand}-d2b-sablon.xlsx`,
   };
 }
 
@@ -466,6 +470,43 @@ export async function uploadD2bSales(
       return { ok: false, status: response.status, reason: "http-error", detail };
     }
     return { ok: true, data: (await response.json()) as B2BImportResult };
+  } catch {
+    return { ok: false, status: 0, reason: "unreachable" };
+  }
+}
+
+/** Holding konsolide raporu — marka bağlamı YOK, holding yetkisi gerekir (spec §3A.3). */
+export async function fetchConsolidated(
+  since?: string,
+): Promise<ApiResult<Consolidated>> {
+  const token = await issueToken(DEFAULT_HOLDING_BRAND);
+  if (!token) return { ok: false, status: 401, reason: "no-session" };
+  const query = since ? `?since=${encodeURIComponent(since)}` : "";
+  try {
+    const response = await fetch(`${API_URL}/holding/consolidated${query}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      return { ok: false, status: response.status, reason: "http-error" };
+    }
+    return { ok: true, data: (await response.json()) as Consolidated };
+  } catch {
+    return { ok: false, status: 0, reason: "unreachable" };
+  }
+}
+
+/** Oturum bilgisi: yetkili markalar ve holding yetkisi (spec §3A.1). */
+export async function fetchSession(brand: string): Promise<ApiResult<Session>> {
+  const token = await issueToken(brand);
+  if (!token) return { ok: false, status: 401, reason: "no-session" };
+  try {
+    const response = await fetch(`${API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!response.ok) return { ok: false, status: response.status, reason: "http-error" };
+    return { ok: true, data: (await response.json()) as Session };
   } catch {
     return { ok: false, status: 0, reason: "unreachable" };
   }

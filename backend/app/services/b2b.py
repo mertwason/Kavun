@@ -38,6 +38,7 @@ from app.models.catalog import Customer, Product
 from app.models.enums import ChannelCode, CommissionSource, OrderStatus
 from app.models.identity import Channel, Store
 from app.models.transactions import Order, OrderLine
+from app.services.isolation import CROSS_BRAND_MESSAGE, belongs_to_another_brand
 
 log = get_logger("services.b2b")
 
@@ -267,9 +268,15 @@ def import_sales(
 
         product = products.get(sku)
         if product is None:
-            summary.errors.append(
-                RowError(row_no=row.row_no, sku=sku, reason="SKU bu markada bulunamadı")
+            # İzolasyon (spec §3A.2): SKU başka markadaysa gerekçe bunu açıkça söyler.
+            reason = (
+                CROSS_BRAND_MESSAGE
+                if belongs_to_another_brand(
+                    session, sku=sku, tenant_id=store.tenant_id, brand_id=store.brand_id
+                )
+                else "SKU bu markada bulunamadı"
             )
+            summary.errors.append(RowError(row_no=row.row_no, sku=sku, reason=reason))
             continue
         if qty <= 0:
             summary.errors.append(

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 
@@ -10,7 +12,13 @@ from app.models.catalog import Product
 from app.models.identity import Brand
 from app.models.results import Alert
 from app.models.transactions import Order
-from app.schemas.workspace import BrandTotals, HoldingSummary
+from app.schemas.workspace import (
+    BrandTotals,
+    ConsolidatedBrandOut,
+    ConsolidatedOut,
+    HoldingSummary,
+)
+from app.services import holding
 
 router = APIRouter(prefix="/holding", tags=["holding"])
 
@@ -45,4 +53,29 @@ def summary(context: HoldingContext = Depends(get_holding_context)) -> HoldingSu
             )
             for brand in brands
         ],
+    )
+
+
+@router.get(
+    "/consolidated",
+    response_model=ConsolidatedOut,
+    summary="Konsolide P&L, stok değeri, fire ve kur maruziyeti",
+)
+def consolidated(
+    since: date | None = None,
+    until: date | None = None,
+    context: HoldingContext = Depends(get_holding_context),
+) -> ConsolidatedOut:
+    """Markalar arası konsolide rapor (spec §3A.3). Salt okunur; işlem yapılamaz."""
+    report = holding.consolidated(context.session, context.tenant, since=since, until=until)
+    return ConsolidatedOut(
+        tenant=report.tenant,
+        since=report.since,
+        until=report.until,
+        brands=[ConsolidatedBrandOut.model_validate(line) for line in report.brands],
+        total_revenue=report.total_revenue,
+        total_profit=report.total_profit,
+        total_stock_value=report.total_stock_value,
+        total_damage_cost=report.total_damage_cost,
+        total_fx_diff=report.total_fx_diff,
     )

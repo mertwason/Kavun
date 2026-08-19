@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %90** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░
-Son güncelleme: 2026-08-19 03:35 · Aktif görev: KVN-19
+**TOPLAM: %95** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░
+Son güncelleme: 2026-08-19 04:05 · Aktif görev: KVN-20
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -24,10 +24,10 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-16 | Inventory ledger + WAC motoru + açılış stoku                | 7       | ✅ Bitti    |
 | KVN-17 | İthalat dosyası modu + kur farkı takibi (Alessi)            | 5       | ✅ Bitti    |
 | KVN-18 | D2B kanal + fire/hasar + MSRP disiplini                     | 3       | ✅ Bitti    |
-| KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | 🔄 Yapılıyor|
-| KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
+| KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ✅ Bitti    |
+| KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | 🔄 Yapılıyor|
 
-Toplam ağırlık: **110** · Biten ağırlık: 99 · **Faz 1 (KVN-01…09) tamamlandı**
+Toplam ağırlık: **110** · Biten ağırlık: 104 · **Faz 1 (KVN-01…09) tamamlandı**
 
 > **Düzeltme (2026-08-19):** CLAUDE.md §0'daki kanonik listenin başlığı "toplam ağırlık 100"
 > diyor ama tablodaki 20 görevin ağırlıkları **110** ediyor. §0 kuralı yüzdeyi "bitmiş
@@ -39,6 +39,32 @@ Toplam ağırlık: **110** · Biten ağırlık: 99 · **Faz 1 (KVN-01…09) tama
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-19 bitti
+
+**Ne bitti:** Workspace izolasyonu ve holding görünümü (spec §3A). Menü artık yetkiye ve
+bayrağa göre kuruluyor: kapalı modül görünmüyor, workspace switcher yalnızca çoklu marka
+yetkisi olan kullanıcıya, Holding bağlantısı yalnızca `holding_viewer`'a çıkıyor; aktif
+menü öğesi marka aksanıyla vurgulanıyor. `/holding` konsolide raporu geldi: birleşik P&L,
+toplam stok değeri, fire gideri, gerçekleşen kur farkı ve açık döviz pozisyonu (KVN-18'de
+not düşülen "fire ve kur farkı ekrana inmedi" riski kapandı). Testler: 475 yeşil, holding
+servisi %99, izolasyon %93, genel %94.
+
+**Kararlar / notlar:**
+- **Sessiz veri bozulması kapatıldı (§3A.2).** Fiyat listesine başka markanın SKU'su
+  karışırsa import onu "yeni ürün" sayıp O MARKADA ikinci bir ürün yaratıyordu — aynı SKU
+  iki markada yaşar, maliyet ve stok ikiye bölünürdü. Artık satır `cross_brand_rejected`
+  ile reddediliyor, kalan satırlar işleniyor; aynı kural D2B yüklemesinde de var. Üç
+  regresyon testi yazıldı (ret mesajı, diğer satırların işlenmesi, ikinci ürün YARATILMAMASI).
+- Kontrol için tek bir guard bypass'ı gerekiyor ("bu SKU başka markada var mı?"); bypass
+  salt okuma ve **boolean** dönerek yapılıyor — karşı markanın hiçbir alanı çağırana geçmiyor.
+- Holding raporu hesap yapmıyor, **topluyor**: her sayı marka içindeki motorun yazdığı
+  kayıttan geliyor. Böylece holding ile marka ekranı çelişemez.
+- Excel dosya adları marka önekiyle üretiliyor (`alessi-fiyat-listesi-2026-08-19.xlsx`).
+
+**Bilinen risk:** Frontend'in yetkiye göre menü kurması test edilmiyor (projede frontend
+test koşucusu yok; CI yalnızca tsc/eslint/build koşuyor). Backend tarafı `/auth/me` ve
+403 + audit testleriyle korunuyor; UI davranışı tarayıcıda elle doğrulandı.
 
 ### 2026-08-19 — KVN-18 bitti
 

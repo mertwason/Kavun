@@ -40,6 +40,17 @@ export default async function HomePage() {
         ))}
       </section>
 
+      <Link
+        href="/holding"
+        className="card flex items-center justify-between p-5 transition-colors hover:bg-canvas"
+      >
+        <span className="flex flex-col">
+          <span className="font-medium">{tr.holding.title}</span>
+          <span className="text-xs text-ink-faint">{tr.holding.subtitle}</span>
+        </span>
+        <span className="text-sm text-ink-muted">{tr.holding.open}</span>
+      </Link>
+
       <Card className="p-5">
         <h2 className="text-sm font-medium text-ink-muted">{tr.system.apiStatusTitle}</h2>
         <div className="mt-3 flex items-center gap-3">

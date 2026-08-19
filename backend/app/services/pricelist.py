@@ -34,6 +34,7 @@ from app.models.enums import CostSource, DraftStatus
 from app.models.identity import Channel, Store
 from app.models.workspace import ProductDraft
 from app.services.commission import resolve_commission
+from app.services.isolation import CROSS_BRAND_MESSAGE, belongs_to_another_brand
 
 log = get_logger("services.pricelist")
 
@@ -551,6 +552,17 @@ def import_price_list(
         clean, error = _validate(row, stores, as_draft=as_draft)
         if error:
             fail(row, error)
+            continue
+        # İzolasyon (spec §3A.2): başka markanın SKU'su bu markada ürün YARATMAZ.
+        if (
+            clean["sku"]
+            and tenant_id is not None
+            and brand_id is not None
+            and belongs_to_another_brand(
+                session, sku=clean["sku"], tenant_id=tenant_id, brand_id=brand_id
+            )
+        ):
+            fail(row, CROSS_BRAND_MESSAGE)
             continue
         validated.append((row, clean))
 

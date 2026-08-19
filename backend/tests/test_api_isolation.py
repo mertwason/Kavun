@@ -285,3 +285,122 @@ def test_sso_exchange_unconfigured_returns_503(api: TestClient, monkeypatch: Any
 
     response = api.post("/auth/sso-exchange", json={"sso_token": "x.y.z"})
     assert response.status_code == 503
+
+
+# --- içe aktarım izolasyonu (spec §3A.2, kabul §3A.6) ------------------------
+
+
+def _price_list_with_foreign_sku(api: TestClient, headers: dict[str, str]) -> bytes:
+    """Kahveji fiyat listesine bir Alessi SKU'su karıştırır."""
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
+    from app.services.pricelist import FIRST_DATA_ROW, SHEET_NAME
+
+    exported = api.get("/kahveji/price-list/export", headers=headers).content
+    workbook = load_workbook(BytesIO(exported))
+    sheet = workbook[SHEET_NAME]
+    row = sheet.max_row + 1
+    for column, value in enumerate(
+        ("ALS-9090-3", "Karışmış Alessi ürünü", "Kahveji", "trendyol", 20, 3.5, 3450, 6890),
+        start=1,
+    ):
+        sheet.cell(row=max(row, FIRST_DATA_ROW), column=column, value=value)
+    buffer = BytesIO()
+    workbook.save(buffer)
+    return buffer.getvalue()
+
+
+def test_foreign_brand_sku_is_rejected_in_price_list(api: TestClient) -> None:
+    """§3A.6: Kahveji listesine karışmış Alessi SKU'su `cross_brand_rejected` alır."""
+    headers = _login(api, "demo@mokkalabs.com", "kahveji")
+    payload = _price_list_with_foreign_sku(api, headers)
+
+    response = api.post(
+        "/kahveji/price-list/import",
+        params={"dry_run": True},
+        files={"file": ("fiyat.xlsx", payload)},
+        headers=headers,
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    rejected = [row for row in body["rows"] if row["sku"] == "ALS-9090-3"]
+    assert rejected, "karışmış SKU raporlanmalı"
+    assert rejected[0]["action"] == "hata"
+    assert "cross_brand_rejected" in rejected[0]["message"]
+
+
+def test_other_rows_still_process_when_one_is_cross_brand(api: TestClient) -> None:
+    """§3A.6: karışmış satır reddedilir, kalan satırlar işlenir."""
+    headers = _login(api, "demo@mokkalabs.com", "kahveji")
+    payload = _price_list_with_foreign_sku(api, headers)
+
+    body = api.post(
+        "/kahveji/price-list/import",
+        params={"dry_run": True},
+        files={"file": ("fiyat.xlsx", payload)},
+        headers=headers,
+    ).json()
+
+    assert body["hata"] == 1
+    assert body["degisiklik_yok"] > 0
+
+
+def test_foreign_sku_does_not_create_a_product_in_this_brand(
+    api: TestClient, db_session: Session
+) -> None:
+    """Sessiz veri bozulması testi: karışmış SKU ikinci markada ürün YARATMAZ."""
+    headers = _login(api, "demo@mokkalabs.com", "kahveji")
+    payload = _price_list_with_foreign_sku(api, headers)
+
+    api.post(
+        "/kahveji/price-list/import",
+        params={"dry_run": False},
+        files={"file": ("fiyat.xlsx", payload)},
+        headers=headers,
+    )
+
+    from app.models.catalog import Product
+
+    with system_scope():
+        rows = db_session.scalars(select(Product).where(Product.sku == "ALS-9090-3")).all()
+    assert len(rows) == 1, "SKU yalnızca kendi markasında kalmalı"
+
+
+# --- holding konsolide raporu (spec §3A.3) ----------------------------------
+
+
+def test_consolidated_report_covers_both_brands(api: TestClient) -> None:
+    """Holding raporu markaları yan yana verir ve toplamları doğrudur."""
+    headers = _login(api, "demo@mokkalabs.com")
+
+    response = api.get("/holding/consolidated", params={"since": "2026-01-01"}, headers=headers)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert {row["brand"] for row in body["brands"]} == {"alessi", "kahveji"}
+    from decimal import Decimal
+
+    assert Decimal(body["total_stock_value"]) == sum(
+        Decimal(row["stock_value"]) for row in body["brands"]
+    )
+    assert Decimal(body["total_revenue"]) == sum(Decimal(row["revenue"]) for row in body["brands"])
+
+
+def test_consolidated_report_requires_holding_permission(
+    api: TestClient, db_session: Session, single_brand_user: str
+) -> None:
+    """§3A.3: konsolide rapor holding yetkisi ister; ret audit'e yazılır."""
+    headers = _login(api, single_brand_user, "kahveji")
+
+    assert api.get("/holding/consolidated", headers=headers).status_code == 403
+
+    with system_scope():
+        denied = db_session.scalar(
+            select(func.count())
+            .select_from(AuditLog)
+            .where(AuditLog.action == "holding_view_denied")
+        )
+    assert denied and denied > 0

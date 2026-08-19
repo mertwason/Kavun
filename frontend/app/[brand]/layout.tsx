@@ -10,7 +10,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { fetchImportFiles, fetchTierMargins } from "@/lib/api";
+import { BrandNav } from "@/components/brand-nav";
+import { fetchImportFiles, fetchSession, fetchTierMargins } from "@/lib/api";
 import { BRANDS, isBrandSlug } from "@/lib/brands";
 import tr from "@/locales/tr.json";
 
@@ -27,10 +28,17 @@ export default async function BrandLayout({
   const brand = BRANDS[params.brand];
 
   // Kapalı modül menüde görünmez: bayrak kapalıysa API 404 döner (spec §3A.4).
-  const [imports, tiers] = await Promise.all([
+  const [imports, tiers, session] = await Promise.all([
     fetchImportFiles(brand.slug),
     fetchTierMargins(brand.slug),
+    fetchSession(brand.slug),
   ]);
+
+  // Workspace switcher YALNIZCA çoklu marka yetkisi olan kullanıcıya görünür (spec §3A.1);
+  // tek markaya yetkili kullanıcı için diğer marka arayüzde hiç var olmaz.
+  const authorized = session.ok ? session.data.brands.map((item) => item.slug) : [];
+  const switchable = Object.values(BRANDS).filter((item) => authorized.includes(item.slug));
+  const canSeeHolding = session.ok && session.data.is_holding_viewer;
 
   const navItems = [
     { href: `/${brand.slug}`, label: tr.nav.dashboard },
@@ -62,17 +70,13 @@ export default async function BrandLayout({
             </div>
           </div>
 
-          <nav className="flex items-center gap-5 text-sm">
-            {navItems.map((item) => (
-              <Link key={item.href} href={item.href} className="text-ink-muted hover:text-ink">
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <BrandNav items={navItems} accent={brand.accent} />
 
           <div className="ml-auto flex items-center gap-3 text-xs">
-            <span className="text-ink-faint">{tr.workspace.switch}</span>
-            {Object.values(BRANDS).map((item) => (
+            {switchable.length > 1 ? (
+              <span className="text-ink-faint">{tr.workspace.switch}</span>
+            ) : null}
+            {switchable.map((item) => (
               <Link
                 key={item.slug}
                 href={`/${item.slug}`}
@@ -86,6 +90,14 @@ export default async function BrandLayout({
                 {item.name}
               </Link>
             ))}
+            {canSeeHolding ? (
+              <Link
+                href="/holding"
+                className="rounded-full px-2.5 py-1 text-ink-faint hover:text-ink"
+              >
+                {tr.nav.holding}
+              </Link>
+            ) : null}
           </div>
         </div>
       </header>

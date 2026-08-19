@@ -36,7 +36,8 @@
     "invoices": "Alış faturaları",
     "inventory": "Stok & maliyet",
     "imports": "İthalat dosyaları",
-    "d2b": "D2B satışlar"
+    "d2b": "D2B satışlar",
+    "holding": "Holding"
   },
   "period": {
     "label": "Dönem",
@@ -502,5 +503,30 @@
     "kind": "İhlal",
     "kindMsrp": "MSRP altı",
     "kindFloor": "Marj tabanı"
+  },
+  "holding": {
+    "title": "Holding görünümü",
+    "subtitle": "Markalar arası konsolide özet. Salt okunur — burada işlem yapılamaz.",
+    "period": "Son 30 gün",
+    "brand": "Marka",
+    "revenue": "Ciro",
+    "profit": "Net kâr",
+    "margin": "Marj",
+    "stockValue": "Stok değeri",
+    "damage": "Fire gideri",
+    "fxDiff": "Kur farkı",
+    "openFx": "Açık döviz",
+    "orders": "Sipariş",
+    "products": "SKU",
+    "alerts": "Açık uyarı",
+    "total": "Toplam",
+    "totalRevenue": "Toplam ciro",
+    "totalProfit": "Toplam net kâr",
+    "totalStock": "Toplam stok değeri",
+    "denied": "Holding görünümü için yetkiniz yok.",
+    "deniedHint": "Konsolide rapor yalnızca holding görüntüleyicilerine açıktır (spec §3A.3).",
+    "backHome": "Workspace seçimine dön",
+    "open": "Holding görünümünü aç",
+    "breakdown": "Marka kırılımı"
   }
 }

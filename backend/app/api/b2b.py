@@ -28,11 +28,12 @@ def download_template(
     workspace: Workspace = Depends(require_feature(B2B_FEATURE)),
 ) -> Response:
     """İndirilen dosya birebir yüklenebilir olmalıdır (KVN-10 disiplini)."""
-    del workspace
+    # Marka öneki (spec §3A.2).
+    filename = f"{workspace.brand.slug}-d2b-sablon.xlsx"
     return Response(
         content=b2b.template_workbook(),
         media_type=TEMPLATE_MEDIA,
-        headers={"Content-Disposition": 'attachment; filename="kavun-d2b-sablon.xlsx"'},
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -113,3 +113,36 @@ class HoldingSummary(BaseModel):
 
     tenant: str
     brands: list[BrandTotals]
+
+
+class ConsolidatedBrandOut(BaseModel):
+    """Holding konsolide satırı — marka bazlı P&L, stok, fire ve kur (spec §3A.3)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    brand: str
+    name: str
+    product_count: int
+    order_count: int
+    open_alert_count: int
+    revenue: Decimal
+    profit: Decimal
+    margin_pct: Decimal
+    stock_value: Decimal
+    damage_cost: Decimal
+    fx_diff: Decimal
+    open_fx_amount: Decimal
+
+
+class ConsolidatedOut(BaseModel):
+    """Holding özeti: markalar + toplamlar. Salt okunur."""
+
+    tenant: str
+    since: date
+    until: date
+    brands: list[ConsolidatedBrandOut]
+    total_revenue: Decimal
+    total_profit: Decimal
+    total_stock_value: Decimal
+    total_damage_cost: Decimal
+    total_fx_diff: Decimal
