@@ -74,18 +74,24 @@ test("panelde demo verisi görünür", async ({ page }) => {
   await expect(page.locator("svg").first()).toBeVisible();
 });
 
-test("SKU listesi doludur ve negatif marj filtresi çalışır", async ({ page }) => {
+test("SKU listesi doludur; arama ve negatif marj filtresi canlı çalışır", async ({ page }) => {
   await page.goto("/kahveji/sku");
 
   const rows = page.locator("table tbody tr");
   const all = await rows.count();
   expect(all).toBeGreaterThan(5);
 
-  await page.getByRole("link", { name: "Yalnızca negatif marj" }).click();
-  await page.waitForLoadState("networkidle");
+  // Negatif marj anahtarı listeyi daraltır ve kalan satırların marjı kırmızıdır.
+  await page.getByRole("button", { name: "Sadece negatif marj" }).click();
+  const negative = await rows.count();
+  expect(negative).toBeGreaterThan(0);
+  expect(negative).toBeLessThan(all);
+  await expect(page.locator("main")).toContainText(`${negative} / ${all} SKU`);
 
-  const filtered = await page.locator("table tbody tr").count();
-  expect(filtered).toBeLessThanOrEqual(all);
+  // Arama sunucuya gitmeden daraltır: eşleşmeyen terimde boş durum metni çıkar.
+  await page.getByRole("button", { name: "Sadece negatif marj" }).click();
+  await page.locator("input[placeholder*='ara']").fill("zzzzzz");
+  await expect(page.locator("main")).toContainText("Sonuç yok");
 });
 
 test("sipariş detayında şelale render olur", async ({ page }) => {

@@ -87,9 +87,14 @@ class SkuMarginOut(BaseModel):
     qty_sold: int
     revenue_gross: Decimal
     cost_cogs: Decimal
+    unit_cost: Decimal
+    cost_commission: Decimal
+    cost_cargo: Decimal
+    channel: str
     profit: Decimal
     margin_pct: Decimal
     is_final: bool
+    cargo_is_final: bool
 
 
 class OrderRowOut(BaseModel):

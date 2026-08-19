@@ -3181,12 +3181,22 @@ export interface components {
             revenue_gross: string;
             /** Cost Cogs */
             cost_cogs: string;
+            /** Unit Cost */
+            unit_cost: string;
+            /** Cost Commission */
+            cost_commission: string;
+            /** Cost Cargo */
+            cost_cargo: string;
+            /** Channel */
+            channel: string;
             /** Profit */
             profit: string;
             /** Margin Pct */
             margin_pct: string;
             /** Is Final */
             is_final: boolean;
+            /** Cargo Is Final */
+            cargo_is_final: boolean;
         };
         /**
          * SsoExchangeRequest

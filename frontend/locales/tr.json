@@ -738,5 +738,18 @@
     "topSku": "EN KÂRLI 5",
     "bottomSku": "ZARAR EDEN 5",
     "estimatedTip": "Tahmini — kargo faturası bekleniyor"
+  },
+  "sku": {
+    "search": "SKU ya da ürün ara",
+    "channelAll": "Kanal: Tümü",
+    "categoryAll": "Kategori: Tümü",
+    "onlyNegative": "Sadece negatif marj",
+    "channel": "Kanal",
+    "unitCost": "Birim Maliyet",
+    "commission": "Komisyon",
+    "cargo": "Kargo",
+    "footer": "{shown} / {total} SKU",
+    "noResult": "Sonuç yok — filtreleri gevşetmeyi dene.",
+    "netProfit": "Net Kâr"
   }
 }

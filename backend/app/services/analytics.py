@@ -20,10 +20,10 @@ from sqlalchemy.orm import Session
 
 from app.engine.vat import quantize_money
 from app.models.catalog import Product
-from app.models.enums import CommissionSource, OrderStatus
+from app.models.enums import CommissionSource, CostState, OrderStatus
 from app.models.identity import Channel, Store
 from app.models.results import LineProfit
-from app.models.transactions import Order, OrderLine, Return
+from app.models.transactions import Order, OrderLine, Return, Shipment
 
 ZERO = Decimal("0")
 
@@ -128,9 +128,17 @@ class SkuMargin:
     qty_sold: int
     revenue_gross: Decimal
     cost_cogs: Decimal
+    unit_cost: Decimal
+    """Satılan adet başına maliyet — dönemdeki toplam COGS / adet."""
+
+    cost_commission: Decimal
+    cost_cargo: Decimal
+    channel: str
     profit: Decimal
     margin_pct: Decimal
     is_final: bool
+    cargo_is_final: bool
+    """Kargo maliyeti kesinleşti mi — ekranda hücre başına amber nokta bunu gösterir."""
 
 
 @dataclass
@@ -327,6 +335,29 @@ def dashboard(session: Session, period: Period) -> Dashboard:
     )
 
 
+def _cargo_is_final() -> Any:
+    """Siparişin kargo maliyeti kesinleşti mi — **skaler alt sorgu**.
+
+    `shipments` tablosuna JOIN atılMAZ: bir siparişin birden çok gönderisi olabilir ve
+    join satırı çoğaltıp `sum(profit)` toplamını şişirir (kabul testi bunu yakaladı).
+    Gönderisi olmayan sipariş için `NULL` döner; `bool_and` onu yok sayar.
+    """
+    return (
+        select(func.bool_and(Shipment.cost_state == CostState.ACTUAL))
+        .where(Shipment.order_id == Order.id)
+        .correlate(Order)
+        .scalar_subquery()
+    )
+
+
+def _per_unit(total: Decimal, qty: int) -> Decimal:
+    """Adet başına maliyet; adet sıfırsa sıfır döner (bölme hatası yerine sessiz sıfır DEĞİL,
+    satırın kendisi zaten satışsızdır)."""
+    if qty <= 0:
+        return ZERO
+    return quantize_money(total / Decimal(qty))
+
+
 def sku_margins(
     session: Session,
     period: Period,
@@ -346,13 +377,19 @@ def sku_margins(
                 func.coalesce(func.sum(OrderLine.qty), 0),
                 func.coalesce(func.sum(LineProfit.revenue_gross), 0),
                 func.coalesce(func.sum(LineProfit.cost_cogs), 0),
+                func.coalesce(func.sum(LineProfit.cost_commission), 0),
+                func.coalesce(func.sum(LineProfit.cost_cargo), 0),
                 func.coalesce(func.sum(LineProfit.profit), 0),
                 func.bool_and(LineProfit.is_final),
+                func.min(Channel.code),
+                func.bool_and(_cargo_is_final()),
             )
             .select_from(LineProfit)
             .join(OrderLine, OrderLine.id == LineProfit.order_line_id)
             .join(Order, Order.id == OrderLine.order_id)
-            .join(Product, Product.id == OrderLine.product_id),
+            .join(Product, Product.id == OrderLine.product_id)
+            .join(Store, Store.id == Order.store_id)
+            .join(Channel, Channel.id == Store.channel_id),
             period,
         )
         .group_by(Product.id, Product.sku, Product.name, Product.category)
@@ -372,9 +409,14 @@ def sku_margins(
             qty_sold=int(row[4]),
             revenue_gross=quantize_money(Decimal(row[5])),
             cost_cogs=quantize_money(Decimal(row[6])),
-            profit=quantize_money(Decimal(row[7])),
-            margin_pct=_margin(Decimal(row[7]), Decimal(row[5])),
-            is_final=bool(row[8]),
+            unit_cost=_per_unit(Decimal(row[6]), int(row[4])),
+            cost_commission=quantize_money(Decimal(row[7])),
+            cost_cargo=quantize_money(Decimal(row[8])),
+            profit=quantize_money(Decimal(row[9])),
+            margin_pct=_margin(Decimal(row[9]), Decimal(row[5])),
+            is_final=bool(row[10]),
+            channel=row[11].value if hasattr(row[11], "value") else str(row[11]),
+            cargo_is_final=bool(row[12]),
         )
         for row in rows
     ]
