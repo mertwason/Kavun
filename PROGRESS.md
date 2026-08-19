@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %77** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░
-Son güncelleme: 2026-08-19 05:45 · Aktif görev: KVN-15
+**TOPLAM: %84** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░
+Son güncelleme: 2026-08-19 06:20 · Aktif görev: KVN-16
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -20,18 +20,81 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-12 | Senaryo motoru + karşılaştırma + hedef marj çözücü          | 6       | ✅ Bitti    |
 | KVN-13 | Komisyon çözümleme hiyerarşisi + snapshot/diff + etki       | 6       | ✅ Bitti    |
 | KVN-14 | Tarife Excel yükleme (esnek parser)                         | 4       | ✅ Bitti    |
-| KVN-15 | PDF fatura ayrıştırma + öğrenen SKU eşleştirme + onay       | 7       | 🔄 Yapılıyor|
-| KVN-16 | Inventory ledger + WAC motoru + açılış stoku                | 7       | ⏳ Sırada   |
+| KVN-15 | PDF fatura ayrıştırma + öğrenen SKU eşleştirme + onay       | 7       | ✅ Bitti    |
+| KVN-16 | Inventory ledger + WAC motoru + açılış stoku                | 7       | 🔄 Yapılıyor|
 | KVN-17 | İthalat dosyası modu + kur farkı takibi (Alessi)            | 5       | ⏳ Sırada   |
 | KVN-18 | D2B kanal + fire/hasar + MSRP disiplini                     | 3       | ⏳ Sırada   |
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 77 · **Faz 1 (KVN-01…09) tamamlandı**
+Toplam ağırlık: 100 · Biten ağırlık: 84 · **Faz 1 (KVN-01…09) tamamlandı**
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-15 bitti
+
+**Ne bitti:** Alış faturası akışı — PDF ayrıştırma, öğrenen SKU eşleştirme, onay
+(spec §12C.3) + fatura onay ekranı. Testler: 389 yeşil, fatura servisi coverage %94,
+genel %95. Zincir gerçek tarayıcıda uçtan uca denendi.
+
+**Kabul kriterleri kanıtlandı:**
+- Fatura PDF'i fixture olarak repoda; parser → review → confirm zinciri uçtan uca (§12C.11)
+- Onaylanmış faturayı değiştirme girişimi → **409** (§12C.11)
+- WAC formülü: 34@100 + 100@120 → **114,9254**; 50 satış sonrası ortalama değişmiyor,
+  ardından 20@130 alışta doğru güncelleniyor (§12C.1)
+
+**Ne kuruldu:**
+- `engine/inventory.py` — WAC saf fonksiyonu (§12C.1 bağlayıcı formül) + landed cost
+  paylaştırması
+- `services/invoices.py` — PDF metin çıkarımı, satır ayrıştırma, toplam doğrulama,
+  öğrenen eşleştirme, atomik onay
+- `GET/POST /{brand}/invoices…` uçları + `/{marka}/invoices` liste ve onay ekranları
+
+**Karar 1 — ayrıştırıcı deterministik (spec §12C.3.2'den BİLİNÇLİ SAPMA).** Spec "LLM
+destekli ayrıştırma (Claude API)" diyor. Yapılandırılmış bir LLM anahtarı yok ve harici
+servise bağımlı, tekrarlanamayan bir ayrıştırma testte doğrulanamaz. Varsayılan ayrıştırıcı
+e-arşiv tablo düzenini okuyan deterministik bir parser; `LineExtractor` protokolü LLM
+ayrıştırıcısının sonradan takılması için duruyor. Spec'in ASIL kuralı korunuyor: çıktı
+asla doğrudan yazılmıyor, her zaman review ekranından geçiyor. **Mert'in kararı gerekiyor:
+LLM ayrıştırıcı gerçekten isteniyorsa API anahtarı + maliyet/gizlilik kararı lazım.**
+
+**Karar 2 — fuzzy eşleşme asla otomatik kabul edilmez.** Öneri olarak gösterilir, kullanıcı
+onaylayınca `supplier_product_map`'e yazılır. Benzerlik ölçüsü kapsama tabanlı (fatura adı
+katalog adından uzun olduğu için saf Jaccard doğru eşleşmeyi cezalandırıyordu) ve en az
+iki ortak kelime şartı var — tek ortak kelime ("kahve") öneri üretmiyor.
+
+**Karar 3 — eşleşmemiş satır varken onay REDDEDİLİR.** Yanlış ürüne maliyet yazmaktansa
+akış duruyor.
+
+**Karar 4 — OCR yok, sessizlik de yok.** tesseract bu kurulumda yok; metin çıkmayan PDF
+boş sonuç dönmüyor, "taranmış olabilir, OCR etkin değil" hatası veriyor.
+
+**WAC motoru bölüşümü:** §12C.1 formülü ve landed cost paylaştırması burada kuruldu
+(onay adımı bunlarsız çalışamazdı). KVN-16 bunun üzerine ledger replay, açılış stoku,
+negatif stok uyarısı ve fire/hasar hareketlerini ekleyecek.
+
+**Fixture dürüstlüğü:** `tests/fixtures/invoices/earsiv_fatura_ornek.pdf` gerçek bir
+tedarikçi faturası DEĞİL; e-arşiv faturalarının metin düzenini taklit ediyor (üretici
+script yanında). Gerçek fatura elde edilince değiştirilip testler tekrar çalıştırılmalı.
+
+**Canlı tarayıcı testi (Playwright):** PDF yüklendi → 3 satır ayrıştırıldı → öneriler
+göründü (⚑ KHV-BRZ-1K, %80 güven) → satırlar eşleştirildi → toplam kontrolü ✓
+(₺15.750,00 / ₺15.750,00) → onaylandı. DB'de 3 `purchase_in` hareketi, güncellenen
+ortalama maliyetler (ör. KHV-BRZ-1K 60 adet stoka 20@420 girince ortalama 510,00) ve
+fatura referanslı `sku_costs` versiyonları oluştu. JS hatası yok.
+
+**Yakalanan hata:** benzerlik skorları `float` olarak yazılmıştı; kendi para/float lint
+kuralım 12 ihlal saydı. Skorlar para değil ama 12 istisna yazmak yerine `Decimal`e
+çevrildi — kod tabanında float hiç dolaşmıyor.
+
+**Bilinen risk:** Ayrıştırıcı tek bir satır kalıbına dayanıyor; farklı tedarikçi
+şablonlarında satır kaçırabilir (kaçan satır sessizce atlanır, ama toplam doğrulaması
+bunu yakalar ve fatura `review`de kalır). Tedarikçi listesi tenant seviyesindedir —
+Kahveji formunda Alessi'nin tedarikçisi de görünür (şema böyle tasarlanmış). `pdf_path`
+yalnızca dosya adını saklıyor; PDF'in kendisi henüz saklanmıyor, onay ekranında önizleme
+(tasarım brief'i kalıp 6'nın sol paneli) bu yüzden yok — KVN-19'da ele alınmalı.
 
 ### 2026-08-19 — KVN-14 bitti
 

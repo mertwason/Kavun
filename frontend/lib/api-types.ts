@@ -732,6 +732,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/invoices/suppliers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Tedarikçiler
+         * @description Fatura yükleme formundaki tedarikçi listesi.
+         */
+        get: operations["list_suppliers__brand_slug__invoices_suppliers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Alış faturaları
+         * @description Markanın alış faturaları (en yeni üstte).
+         */
+        get: operations["list_invoices__brand_slug__invoices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/invoices/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Fatura PDF'i yükle (ayrıştır — stoka YAZMAZ)
+         * @description §12C.3: ayrıştırma sonucu ASLA doğrudan yazılmaz; review ekranından geçer.
+         */
+        post: operations["upload_invoice__brand_slug__invoices_upload_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/invoices/{invoice_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fatura detayı + öneriler
+         * @description Review ekranının kaynağı: satırlar + eşleşmemişler için öneriler.
+         */
+        get: operations["get_invoice__brand_slug__invoices__invoice_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/invoices/{invoice_id}/lines/{line_id}/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Satırı SKU ile eşleştir (öğrenilir)
+         * @description §12C.3.4: onaylanan eşleştirme öğrenilir — aynı ürün bir daha sorulmaz.
+         */
+        post: operations["confirm_line_match__brand_slug__invoices__invoice_id__lines__line_id__match_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/invoices/{invoice_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Faturayı onayla
+         * @description §12C.3.5: ledger + WAC + `sku_costs` tek transaction'da yazılır.
+         */
+        post: operations["confirm_invoice__brand_slug__invoices__invoice_id__confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/products": {
         parameters: {
             query?: never;
@@ -877,6 +997,38 @@ export interface components {
              */
             file: string;
         };
+        /** Body_upload_invoice__brand_slug__invoices_upload_post */
+        Body_upload_invoice__brand_slug__invoices_upload_post: {
+            /**
+             * File
+             * @description Metin tabanlı e-arşiv/e-fatura PDF'i
+             */
+            file: string;
+            /**
+             * Supplier Id
+             * Format: uuid
+             */
+            supplier_id: string;
+            /** Invoice No */
+            invoice_no: string;
+            /**
+             * Invoice Date
+             * Format: date
+             */
+            invoice_date: string;
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string;
+            /** Fx Rate */
+            fx_rate?: number | string | null;
+            /**
+             * Landed Cost Extra
+             * @default 0
+             */
+            landed_cost_extra: number | string;
+        };
         /** Body_upload_tariff__brand_slug__tariffs_upload_post */
         Body_upload_tariff__brand_slug__tariffs_upload_post: {
             /**
@@ -999,6 +1151,17 @@ export interface components {
             scenario_ids?: string[];
             /** Inputs */
             inputs?: components["schemas"]["ScenarioInputIn"][];
+        };
+        /**
+         * ConfirmMatchIn
+         * @description Kullanıcının onayladığı SKU eşleştirmesi.
+         */
+        ConfirmMatchIn: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
         };
         /**
          * CredentialStatus
@@ -1187,6 +1350,112 @@ export interface components {
             rows: components["schemas"]["RowResultOut"][];
         };
         /**
+         * InvoiceDetailOut
+         * @description Fatura onay ekranının kaynağı (tasarım brief'i, kalıp 6).
+         */
+        InvoiceDetailOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Supplier Id
+             * Format: uuid
+             */
+            supplier_id: string;
+            /** Supplier Name */
+            supplier_name: string;
+            /** Invoice No */
+            invoice_no: string;
+            /**
+             * Invoice Date
+             * Format: date
+             */
+            invoice_date: string;
+            /** Currency */
+            currency: string;
+            /** Fx Rate */
+            fx_rate: string | null;
+            /** Landed Cost Extra */
+            landed_cost_extra: string;
+            /** Total */
+            total: string | null;
+            status: components["schemas"]["InvoiceStatus"];
+            /** Confirmed At */
+            confirmed_at: string | null;
+            /** Lines */
+            lines: components["schemas"]["InvoiceLineOut"][];
+        };
+        /**
+         * InvoiceLineOut
+         * @description Fatura satırı + eşleştirme durumu.
+         */
+        InvoiceLineOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Raw Text */
+            raw_text: string;
+            /** Product Id */
+            product_id: string | null;
+            /** Sku */
+            sku: string | null;
+            /** Product Name */
+            product_name: string | null;
+            /** Qty */
+            qty: string;
+            /** Unit Price Original */
+            unit_price_original: string;
+            /** Unit Price Try */
+            unit_price_try: string;
+            /** Vat Rate */
+            vat_rate: string;
+            /** Landed Unit Cost Try */
+            landed_unit_cost_try: string | null;
+            match_status: components["schemas"]["MatchStatus"];
+            /** Suggestions */
+            suggestions: components["schemas"]["SuggestionOut"][];
+        };
+        /**
+         * InvoiceStatus
+         * @description `purchase_invoices.status` (spec §12C.2).
+         * @enum {string}
+         */
+        InvoiceStatus: "parsed" | "review" | "confirmed";
+        /**
+         * InvoiceSummaryOut
+         * @description Fatura listesi satırı.
+         */
+        InvoiceSummaryOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Supplier Id
+             * Format: uuid
+             */
+            supplier_id: string;
+            /** Invoice No */
+            invoice_no: string;
+            /**
+             * Invoice Date
+             * Format: date
+             */
+            invoice_date: string;
+            /** Currency */
+            currency: string;
+            /** Total */
+            total: string | null;
+            status: components["schemas"]["InvoiceStatus"];
+            /** Confirmed At */
+            confirmed_at: string | null;
+        };
+        /**
          * KpisOut
          * @description Dashboard üst şeridi.
          */
@@ -1212,6 +1481,12 @@ export interface components {
             /** Final Line Count */
             final_line_count: number;
         };
+        /**
+         * MatchStatus
+         * @description `purchase_invoice_lines.match_status` (spec §12C.2).
+         * @enum {string}
+         */
+        MatchStatus: "auto" | "manual" | "unmatched";
         /**
          * MeResponse
          * @description Oturum bilgisi — frontend workspace switcher'ı bunu kullanır.
@@ -1644,6 +1919,38 @@ export interface components {
             is_active?: boolean | null;
         };
         /**
+         * SuggestionOut
+         * @description Fuzzy SKU önerisi — kullanıcı onayı şart (spec §12C.3.4).
+         */
+        SuggestionOut: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Sku */
+            sku: string;
+            /** Name */
+            name: string;
+            /** Confidence */
+            confidence: string;
+        };
+        /**
+         * SupplierOut
+         * @description Fatura formundaki tedarikçi seçeneği.
+         */
+        SupplierOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Default Currency */
+            default_currency: string;
+        };
+        /**
          * SwitchBrandRequest
          * @description Workspace değiştirme.
          */
@@ -1858,6 +2165,30 @@ export interface components {
             token_type: string;
             /** Active Brand */
             active_brand?: string | null;
+        };
+        /**
+         * UploadResultOut
+         * @description Yükleme sonucu — stoka hiçbir şey yazılmadı (spec §12C.3).
+         */
+        UploadResultOut: {
+            /**
+             * Invoice Id
+             * Format: uuid
+             */
+            invoice_id: string;
+            status: components["schemas"]["InvoiceStatus"];
+            /** Lines */
+            lines: number;
+            /** Unmatched */
+            unmatched: number;
+            /** Totals Ok */
+            totals_ok: boolean;
+            /** Lines Total */
+            lines_total: string;
+            /** Invoice Total */
+            invoice_total: string | null;
+            /** Message */
+            message: string;
         };
         /**
          * UserRole
@@ -3308,6 +3639,222 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TariffUploadOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_suppliers__brand_slug__invoices_suppliers_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_invoices__brand_slug__invoices_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceSummaryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_invoice__brand_slug__invoices_upload_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_invoice__brand_slug__invoices_upload_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadResultOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_invoice__brand_slug__invoices__invoice_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                invoice_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_line_match__brand_slug__invoices__invoice_id__lines__line_id__match_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                invoice_id: string;
+                line_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmMatchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceLineOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_invoice__brand_slug__invoices__invoice_id__confirm_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                invoice_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceDetailOut"];
                 };
             };
             /** @description Validation Error */

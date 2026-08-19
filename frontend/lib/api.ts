@@ -32,6 +32,10 @@ export type CommissionChange = components["schemas"]["CommissionChangeOut"];
 export type TariffImpact = components["schemas"]["TariffImpactOut"];
 export type TariffImpactInput = components["schemas"]["TariffImpactIn"];
 export type TariffUpload = components["schemas"]["TariffUploadOut"];
+export type InvoiceSummary = components["schemas"]["InvoiceSummaryOut"];
+export type InvoiceDetail = components["schemas"]["InvoiceDetailOut"];
+export type InvoiceUploadResult = components["schemas"]["UploadResultOut"];
+export type SupplierOption = components["schemas"]["SupplierOut"];
 
 export type HealthStatus = {
   online: boolean;
@@ -288,6 +292,62 @@ export async function uploadTariff(
       return { ok: false, status: response.status, reason: "http-error", detail };
     }
     return { ok: true, data: (await response.json()) as TariffUpload };
+  } catch {
+    return { ok: false, status: 0, reason: "unreachable" };
+  }
+}
+
+export function fetchSuppliers(brand: string) {
+  return get<SupplierOption[]>(brand, "/invoices/suppliers");
+}
+
+export function fetchInvoices(brand: string) {
+  return get<InvoiceSummary[]>(brand, "/invoices");
+}
+
+export function fetchInvoice(brand: string, invoiceId: string) {
+  return get<InvoiceDetail>(brand, `/invoices/${invoiceId}`);
+}
+
+export function matchInvoiceLine(
+  brand: string,
+  invoiceId: string,
+  lineId: string,
+  productId: string,
+) {
+  return post<unknown>(brand, `/invoices/${invoiceId}/lines/${lineId}/match`, {
+    product_id: productId,
+  });
+}
+
+export function confirmInvoice(brand: string, invoiceId: string) {
+  return post<InvoiceDetail>(brand, `/invoices/${invoiceId}/confirm`);
+}
+
+/** Fatura PDF'ini API'ye iletir; ayrıştırma sonucu stoka YAZILMAZ (spec §12C.3). */
+export async function uploadInvoice(
+  brand: string,
+  file: File,
+  fields: { supplier_id: string; invoice_no: string; invoice_date: string },
+): Promise<ApiResult<InvoiceUploadResult> & { detail?: string }> {
+  const token = await issueToken(brand);
+  if (!token) return { ok: false, status: 401, reason: "no-session" };
+  const form = new FormData();
+  form.append("file", file, file.name);
+  for (const [key, value] of Object.entries(fields)) form.append(key, value);
+  try {
+    const response = await fetch(`${API_URL}/${brand}/invoices/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { detail?: unknown } | null;
+      const detail = typeof payload?.detail === "string" ? payload.detail : undefined;
+      return { ok: false, status: response.status, reason: "http-error", detail };
+    }
+    return { ok: true, data: (await response.json()) as InvoiceUploadResult };
   } catch {
     return { ok: false, status: 0, reason: "unreachable" };
   }

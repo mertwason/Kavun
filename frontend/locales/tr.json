@@ -32,7 +32,8 @@
     "products": "Ürün çalışma alanı",
     "drafts": "Yeni ürün değerlendir",
     "scenarios": "Senaryolar",
-    "tariffs": "Komisyon tarifeleri"
+    "tariffs": "Komisyon tarifeleri",
+    "invoices": "Alış faturaları"
   },
   "period": {
     "label": "Dönem",
@@ -135,7 +136,9 @@
     "tariffs": "Bu mağazada tanımlı komisyon tarifesi yok.",
     "tariffsHint": "Tarife Excel yüklemesi KVN-14 ile gelecek; şimdilik demo veriyi yükleyin.",
     "tariffChanges": "Henüz komisyon değişikliği tespit edilmedi.",
-    "tariffChangesHint": "Günlük job her gece 03:00'te tarifeyi dünküyle karşılaştırır."
+    "tariffChangesHint": "Günlük job her gece 03:00'te tarifeyi dünküyle karşılaştırır.",
+    "invoices": "Henüz alış faturası yüklenmedi.",
+    "invoicesHint": "PDF'i yukarıdan yükleyin — e-arşiv/e-fatura metin tabanlı olmalı."
   },
   "error": {
     "unreachable": "API'ye ulaşılamıyor.",
@@ -288,5 +291,41 @@
     "confirmUpload": "Onayla ve yaz",
     "uploaded": "Tarife yazıldı",
     "validFromLabel": "Yürürlük tarihi"
+  },
+  "invoices": {
+    "uploadTitle": "Fatura PDF'i yükle",
+    "uploadSubtitle": "Ayrıştırma sonucu doğrudan stoka yazılmaz; önce onay ekranından geçer.",
+    "choosePdf": "PDF seç",
+    "supplier": "Tedarikçi",
+    "supplierIdHint": "Tedarikçi ID (UUID)",
+    "invoiceNo": "Fatura no",
+    "invoiceDate": "Fatura tarihi",
+    "parse": "Ayrıştır",
+    "parsed": "Ayrıştırılan satır",
+    "backToList": "Faturalara dön",
+    "reviewTitle": "Satır eşleştirme",
+    "reviewSubtitle": "Her satır bir SKU'ya bağlanmadan fatura onaylanamaz.",
+    "rawText": "Fatura satırı",
+    "unitPrice": "Birim fiyat (TL)",
+    "matchedSku": "Eşleşen SKU",
+    "chooseSku": "SKU seç…",
+    "suggestionNeedsApproval": "öneri — onayınız gerekli",
+    "totalCheck": "Satır toplamı",
+    "unmatchedCount": "Eşleşmeyen satır",
+    "confirm": "Onayla ve stoka işle",
+    "confirmed": "Onaylandı",
+    "confirmNote": "Onayda stok hareketi, ortalama maliyet ve maliyet versiyonu birlikte yazılır.",
+    "immutableNote": "Onaylanmış fatura değiştirilemez; düzeltme ancak ters kayıtla yapılır.",
+    "missingFields": "Tedarikçi, fatura no ve tarih zorunlu.",
+    "status": {
+      "parsed": "Ayrıştırıldı",
+      "review": "İnceleme",
+      "confirmed": "Onaylandı"
+    },
+    "matchStatus": {
+      "auto": "otomatik",
+      "manual": "elle",
+      "unmatched": "eşleşmedi"
+    }
   }
 }

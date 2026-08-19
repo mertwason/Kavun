@@ -213,6 +213,29 @@ karşılığı olmayan tarife satırları **hata değildir** — `unmatched` lis
 İleri tarihli yükleme bugünün hesabını etkilemez; senaryoların `future_tariff` modu o
 tarihteki oranı kullanır ("yeni tarife yürürlüğe girince marjım ne olur").
 
+### Alış faturası akışı
+
+`Yükle → İncele → Eşleştir → Onayla`. Ayrıştırma sonucu **asla doğrudan stoka yazılmaz**;
+her zaman onay ekranından geçer (spec §12C.3).
+
+1. **Ayrıştırma:** PDF metni pdfplumber ile okunur, satırlar (ad · adet · birim fiyat ·
+   KDV · tutar) çıkarılır. Metin çıkmayan (taranmış) PDF sessizce boş dönmez, açık hata
+   verir — OCR bu kurulumda etkin değil.
+2. **Doğrulama:** satır toplamları fatura genel toplamıyla ±0,10 TL tutmalı; tutmuyorsa
+   fatura `review` durumunda kalır.
+3. **Öğrenen eşleştirme:** barkod → tedarikçi bazlı öğrenilmiş eşleşme → fuzzy öneri.
+   **Fuzzy sonuç otomatik kabul edilmez**, kullanıcı onayı şarttır; onaylanan eşleşme
+   `supplier_product_map`'e yazılır, aynı tedarikçiden aynı ürün bir daha sorulmaz.
+4. **Onay:** her satır için `inventory_ledger` girişi + ağırlıklı ortalama maliyet (WAC)
+   güncellemesi + `sku_costs` versiyonu **tek transaction'da** yazılır. Navlun/gümrük
+   (`landed_cost_extra`) satırlara tutar ağırlıklı dağıtılır.
+5. **Onaylanmış fatura değiştirilemez** — değiştirme girişimi 409 döner; düzeltme ancak
+   ters kayıtla yapılır (muhasebe disiplini: geçmiş silinmez).
+
+WAC formülü bağlayıcıdır (spec §12C.1) ve `app/engine/inventory.py` içinde saf fonksiyon
+olarak durur: yalnızca girişler ortalamayı günceller, çıkışlar stoku düşürür ama ortalamayı
+değiştirmez. Spec'in örneği testtir: 34 adet @100 + 100 adet @120 → **114,9254**.
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -244,6 +267,7 @@ fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ; `make seed-demo
 | `/{marka}/drafts` | Yeni ürün değerlendir — form + anlık kâr kartı + taslak listesi |
 | `/{marka}/scenarios` | Senaryolar — karşılaştırma tablosu + hedef marj çözücü |
 | `/{marka}/tariffs` | Komisyon tarifeleri — geçerli oranlar, değişiklik geçmişi, etki analizi |
+| `/{marka}/invoices` | Alış faturaları — PDF yükleme + satır eşleştirme + onay |
 
 Dönem seçimi URL'de taşınır (`?days=7|30|90|365`), böylece ekran paylaşılabilir ve geri
 tuşu çalışır. Kâr rakamlarının yanındaki amber "Tahmini" rozeti kargo/komisyon
@@ -329,6 +353,13 @@ POST /{brand}/tariffs/detect-changes  # günlük diff'i elle tetikle
 POST /{brand}/tariffs/impact       # "komisyon %X artarsa ne olur" (toplu senaryo)
 POST /{brand}/tariffs/upload       # tarife Excel'i yükle (?valid_from&dry_run)
 
+GET  /{brand}/invoices             # alış faturaları
+GET  /{brand}/invoices/suppliers   # tedarikçi listesi
+POST /{brand}/invoices/upload      # fatura PDF'i ayrıştır (stoka YAZMAZ)
+GET  /{brand}/invoices/{id}        # onay ekranı: satırlar + SKU önerileri
+POST /{brand}/invoices/{id}/lines/{line}/match  # SKU eşleştir (öğrenilir)
+POST /{brand}/invoices/{id}/confirm             # ledger + WAC + maliyet versiyonu
+
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
 GET  /{brand}/import-files  # yalnızca `import_files` bayrağı açık markada (aksi halde 404)
@@ -393,5 +424,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-15 — PDF fatura
-ayrıştırma, öğrenen SKU eşleştirme ve onay akışı** (spec §12C.3).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-16 — inventory
+ledger, WAC motoru ve açılış stoku** (spec §12C.1-4).
