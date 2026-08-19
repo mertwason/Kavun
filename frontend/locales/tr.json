@@ -28,7 +28,8 @@
   "nav": {
     "dashboard": "Panel",
     "skuMargins": "SKU marjları",
-    "orders": "Siparişler"
+    "orders": "Siparişler",
+    "products": "Ürün çalışma alanı"
   },
   "period": {
     "label": "Dönem",
@@ -121,7 +122,9 @@
     "skuHint": "Dönemi genişletmeyi ya da demo veriyi yüklemeyi deneyin: make seed-demo",
     "orders": "Bu dönemde sipariş yok.",
     "ordersHint": "Dönemi genişletmeyi ya da demo veriyi yüklemeyi deneyin: make seed-demo",
-    "orderLines": "Bu siparişin satırı bulunamadı."
+    "orderLines": "Bu siparişin satırı bulunamadı.",
+    "products": "Bu markada ürün yok.",
+    "productsHint": "Excel şablonunu indirip doldurun ya da demo veriyi yükleyin: make seed-demo"
   },
   "error": {
     "unreachable": "API'ye ulaşılamıyor.",
@@ -135,5 +138,34 @@
     "lineTitle": "Satır dökümü",
     "commission": "Komisyon kaynağı",
     "netProfit": "Net kâr"
+  },
+  "pricelist": {
+    "export": "Excel'e Aktar",
+    "importTitle": "Excel'den Yükle",
+    "importSubtitle": "Aktardığınız dosya aynı zamanda yükleme şablonudur. Önce önizleme, sonra onay.",
+    "chooseFile": "Dosya seç",
+    "noFile": "Dosya seçilmedi",
+    "preview": "Önizle",
+    "checking": "Kontrol ediliyor…",
+    "apply": "Onayla ve uygula",
+    "applying": "Uygulanıyor…",
+    "applied": "Uygulandı",
+    "dryRunNote": "Önizlemede hiçbir şey yazılmadı. Onaylayana kadar veri değişmez.",
+    "new": "Yeni",
+    "updated": "Güncelleme",
+    "unchanged": "Değişiklik yok",
+    "errors": "Hata",
+    "row": "Satır",
+    "channel": "Kanal",
+    "change": "Değişiklik",
+    "desi": "Desi",
+    "price": "Satış fiyatı",
+    "commission": "Komisyon",
+    "actions": {
+      "yeni": "Yeni",
+      "guncelleme": "Güncelleme",
+      "hata": "Hata",
+      "degisiklik_yok": "Değişiklik yok"
+    }
   }
 }

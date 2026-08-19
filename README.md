@@ -123,6 +123,26 @@ maliyet arttıkça kâr azalır, şelale adımları kâra iner).
 Maliyet veya komisyon oranı bulunamayan satırda motor uydurma değer kullanmaz: kalem sıfır
 kalır ve satır `maliyet_yok` / `komisyon_orani_yok` uyarısıyla işaretlenir.
 
+### Fiyat listesi Excel round-trip'i
+
+**Export edilen dosya = import şablonu.** İkinci bir format yok; ekrandaki tablo, indirilen
+dosya ve import doğrulaması aynı sütun tanımından beslenir.
+
+Akış: `Excel'e Aktar` → dosyayı düzenle → `Excel'den Yükle` → **önizleme** (`dry_run`,
+hiçbir şey yazılmaz; yeşil yeni / mavi güncelleme / kırmızı hata) → onay → uygulanır.
+
+- `Net Kâr` ve `Marj %` sütunları export'ta motorun hesabıyla dolar, import'ta **yok
+  sayılır** — kârın tek doğruluk kaynağı motordur.
+- Maliyet ve fiyat değişiklikleri versiyonlu yazılır (`sku_costs`, `sku_prices`,
+  `effective_from = bugün`); geçmiş kayıt ezilmez, eski siparişlerin kârı bozulmaz.
+- Bir SKU birden fazla kanalda satılıyorsa dosyada birden fazla satırı olur. Fiyat kanal
+  bazlıdır; **maliyet, desi ve KDV ürün bazlıdır** — bunlar satırdan satıra çelişirse o
+  SKU'nun tüm satırları reddedilir ("son satır kazansın" sessiz veri kaybı olurdu).
+- Hatalı satırlar (boş SKU, bilinmeyen kanal, geçersiz KDV, negatif tutar) reddedilir;
+  diğer satırlar işlenir. Hata raporu, orijinal dosyaya "Hatalar" sayfası eklenmiş
+  olarak indirilebilir.
+- Her import (dry-run dahil) `import_batches` tablosuna loglanır.
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -150,6 +170,7 @@ fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ; `make seed-demo
 | `/{marka}/sku` | SKU marj listesi — negatif marj kırmızı, "yalnızca negatif" filtresi |
 | `/{marka}/orders` | Sipariş listesi |
 | `/{marka}/orders/{id}` | Sipariş detayı — **waterfall kâr dökümü** (ürünün imza ekranı) |
+| `/{marka}/products` | Ürün çalışma alanı — fiyat listesi + Excel aktar/yükle + diff önizleme |
 
 Dönem seçimi URL'de taşınır (`?days=7|30|90|365`), böylece ekran paylaşılabilir ve geri
 tuşu çalışır. Kâr rakamlarının yanındaki amber "Tahmini" rozeti kargo/komisyon
@@ -209,6 +230,11 @@ GET  /{brand}/dashboard     # dönem KPI'ları + günlük kâr serisi + mağaza 
 GET  /{brand}/sku-margins   # SKU marj listesi (en düşük kâr üstte)
 GET  /{brand}/orders        # dönemdeki siparişler + kârları
 GET  /{brand}/orders/{id}   # sipariş detayı — satır bazlı şelale dökümü
+
+GET  /{brand}/price-list           # fiyat listesi (ekran tablosu)
+GET  /{brand}/price-list/export    # xlsx indir (aynı zamanda yükleme şablonu)
+POST /{brand}/price-list/import    # yükle — ?dry_run=true iken hiçbir şey yazılmaz
+POST /{brand}/price-list/import/errors  # hatalı satırlar işaretlenmiş dosya
 
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
@@ -274,5 +300,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Faz 1 tamamlandı; sıradaki iş
-Faz 1.5'in ilki: **KVN-10 — Excel round-trip** (fiyat listesi export/import + diff, spec §12A).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-11 — taslak ürün
+akışı** (spec §12A.3).

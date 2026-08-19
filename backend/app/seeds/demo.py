@@ -31,6 +31,7 @@ from app.models.catalog import (
     ProductChannelMap,
     SkuCost,
     SkuLogistics,
+    SkuPrice,
     Supplier,
 )
 from app.models.enums import (
@@ -228,6 +229,16 @@ def _seed_products(
                 desi=definition.desi,
                 default_carrier="Trendyol Express",
                 effective_from=today - timedelta(days=120),
+            )
+        )
+        # Güncel satış fiyatı — fiyat listesi export'unun kaynağı (spec §12A.1).
+        session.add(
+            SkuPrice(
+                product_id=product.id,
+                store_id=store.id,
+                price=_rounded(definition.sale_price),
+                effective_from=today - timedelta(days=120),
+                created_by="seed-demo",
             )
         )
 
@@ -869,6 +880,7 @@ def _wipe_demo(session: Session) -> int:
         delete(CommissionRate).where(CommissionRate.store_id.in_(store_ids)),
         delete(SkuCost).where(SkuCost.product_id.in_(product_ids)),
         delete(SkuLogistics).where(SkuLogistics.product_id.in_(product_ids)),
+        delete(SkuPrice).where(SkuPrice.product_id.in_(product_ids)),
         delete(ProductChannelMap).where(ProductChannelMap.product_id.in_(product_ids)),
         delete(PricingScenario).where(PricingScenario.tenant_id == tenant_id),
         delete(ProductDraft).where(ProductDraft.tenant_id == tenant_id),

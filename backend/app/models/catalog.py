@@ -79,6 +79,27 @@ class SkuCost(Base, TimestampMixin):
     created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
 
+class SkuPrice(Base, TimestampMixin):
+    """Versiyonlu satış fiyatı — kanal (mağaza) bazlı (spec §12A.1).
+
+    Spec §5.2'de ayrı bir fiyat tablosu tanımlı değil ama §12A.1 fiyat listesinin
+    upsert anahtarı `(SKU, Kanal)`; yani fiyat ürünün değil, ürün-kanal çiftinin
+    özelliğidir (Trendyol fiyatı ile D2B fiyatı aynı olmak zorunda değil). Maliyet
+    gibi versiyonlanır: geçmiş kayıt güncellenmez, yeni `effective_from` eklenir —
+    böylece eski siparişlerin fiyat bağlamı bozulmaz (CLAUDE.md §1).
+    """
+
+    __tablename__ = "sku_prices"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    product_id: Mapped[uuid.UUID] = uuid_fk("products.id")
+    store_id: Mapped[uuid.UUID] = uuid_fk("stores.id")
+    price: Mapped[Decimal] = mapped_column(Money, nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="TRY")
+    effective_from: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+
 class SkuLogistics(Base, TimestampMixin):
     """Desi ve varsayılan kargo firması (spec §5.2)."""
 

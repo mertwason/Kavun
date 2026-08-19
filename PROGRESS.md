@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %52** ▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░
-Son güncelleme: 2026-08-19 03:35 · Aktif görev: KVN-10
+**TOPLAM: %58** ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░
+Son güncelleme: 2026-08-19 04:05 · Aktif görev: KVN-11
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -15,8 +15,8 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-07 | Kâr motoru — çekirdek hesap (KDV netleştirme dahil)         | 8       | ✅ Bitti    |
 | KVN-08 | Kâr motoru — edge-case test paketi (8 senaryo)              | 6       | ✅ Bitti    |
 | KVN-09 | Dashboard + SKU marj listesi + sipariş detayı (waterfall)   | 7       | ✅ Bitti    |
-| KVN-10 | Excel round-trip — fiyat listesi export/import + diff       | 6       | 🔄 Yapılıyor|
-| KVN-11 | Taslak ürün akışı                                           | 3       | ⏳ Sırada   |
+| KVN-10 | Excel round-trip — fiyat listesi export/import + diff       | 6       | ✅ Bitti    |
+| KVN-11 | Taslak ürün akışı                                           | 3       | 🔄 Yapılıyor|
 | KVN-12 | Senaryo motoru + karşılaştırma + hedef marj çözücü          | 6       | ⏳ Sırada   |
 | KVN-13 | Komisyon çözümleme hiyerarşisi + snapshot/diff + etki       | 6       | ⏳ Sırada   |
 | KVN-14 | Tarife Excel yükleme (esnek parser)                         | 4       | ⏳ Sırada   |
@@ -27,11 +27,55 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 52 · **Faz 1 (KVN-01…09) tamamlandı**
+Toplam ağırlık: 100 · Biten ağırlık: 58 · **Faz 1 (KVN-01…09) tamamlandı**
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-10 bitti
+
+**Ne bitti:** Fiyat listesi Excel round-trip'i (spec §12A.1, §12A.2) + Ürün Çalışma Alanı
+ekranı. Testler: 265 yeşil, genel coverage %96. Akış gerçek tarayıcıda uçtan uca denendi.
+
+**Kabul kriterleri (§12A.6) kanıtlandı:**
+- Export → hiç değiştirmeden import → dry_run: **0 yeni, 0 güncelleme, 0 hata** (testte ve
+  canlı demo veride)
+- 500 satırlık dosya 10 sn'nin çok altında işleniyor (testte ölçülüyor)
+
+**Ne kuruldu:**
+- `services/pricelist.py` — export/import tek sütun tanımından (`COLUMNS`) beslenir;
+  şablon sürümü `kavun-template-v1` ilk (gizli) satırda, import bunu doğrular
+- `GET /{brand}/price-list` (ekran tablosu), `/price-list/export`, `POST /price-list/import`
+  (`?dry_run=`), `POST /price-list/import/errors` (hatalı satırlar işaretli dosya)
+- `/{marka}/products` ekranı: tablo + "Excel'e Aktar" + yükleme/diff önizleme
+  (tasarım brief'i kalıp 5: yeşil yeni / mavi güncelleme / kırmızı hata, onaysız yazma yok)
+
+**Karar 1 — `sku_prices` tablosu (yeni).** Spec §5.2'de satış fiyatı için tablo yoktu ama
+§12A.1'in upsert anahtarı `(SKU, Kanal)`; yani fiyat ürün-kanal çiftinin özelliğidir
+(Trendyol fiyatı ile D2B fiyatı aynı olmak zorunda değil). Maliyet gibi versiyonlandı
+(migration `5bbc0933e0a3`). Demo seed artık fiyat da yazıyor.
+
+**Karar 2 — ürün seviyesi alan çelişkisi hata sayılır.** Bir SKU iki kanalda satılıyorsa
+dosyada iki satırı olur; maliyet/desi/KDV ürünün özelliğidir, satırdan satıra değişemez.
+Kullanıcı yalnızca bir satırı düzenlerse dosya kendi içinde çelişir — "son satır kazansın"
+demek sessiz veri kaybıdır, o SKU'nun tüm satırları reddedilir (CLAUDE.md §5).
+
+**Karar 3 — ekran ve dosya tek kaynaktan.** `price_rows()` hem tabloyu hem export'u
+besliyor; ikisinin ayrışması (ekranda bir rakam, dosyada başka) mümkün değil.
+
+**Yeni bağımlılık:** `openpyxl` (+ `types-openpyxl`), `python-multipart` (dosya yükleme).
+
+**Canlı tarayıcı testi (Playwright):** 30 satırlık export indirildi, bir fiyat değiştirildi,
+bir satır bozuldu, bir yeni SKU eklendi → önizleme 1 yeni / 1 güncelleme / 28 değişiklik yok
+/ 1 hata gösterdi (hata gerekçesiyle: "Geçersiz KDV oranı: %7"), onaydan sonra tablo yeni
+ürünü ve yeni fiyatı gösterdi. Onaydan önce DB'de hiçbir değişiklik olmadı.
+
+**Bilinen risk:** Aynı markanın aynı kanalda birden fazla mağazası olursa `Kanal` sütunu
+belirsizleşir (şu an kanal koduna göre tek mağaza varsayılıyor) — gerçek kurulumda böyle
+bir durum yok ama D2B genişlerse sütunun mağaza adına dönmesi gerekir. Import tüm satırları
+tek transaction'da işliyor; 5.000+ satırlık dosyalarda bellek/süre KVN-20'de ölçülmeli.
+`Kargo (tahmini)` sütunu şimdilik 0 yazılıyor — desi bazlı tarife KVN-14'te gelecek.
 
 ### 2026-08-19 — KVN-09 bitti · **Faz 1 tamamlandı**
 

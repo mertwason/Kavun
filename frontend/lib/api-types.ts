@@ -339,6 +339,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/price-list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fiyat listesi (ekran tablosu)
+         * @description Ekrandaki tablo ile export edilen dosya AYNI kaynaktan beslenir (spec §12A).
+         */
+        get: operations["list_price_rows__brand_slug__price_list_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/price-list/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fiyat listesini xlsx olarak indir
+         * @description Export edilen dosya aynı zamanda import şablonudur (spec §12A).
+         */
+        get: operations["export_price_list__brand_slug__price_list_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/price-list/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Fiyat listesi yükle (dry_run ile diff önizleme)
+         * @description `dry_run=true` → yalnızca diff; `false` → uygulanır ve batch loglanır.
+         */
+        post: operations["import_price_list__brand_slug__price_list_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/price-list/import/errors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hatalı satırların işaretlendiği dosyayı indir
+         * @description Orijinal dosya + "Hatalar" sayfası (satır no + açıklama) — spec §12A.2.3.
+         */
+        post: operations["download_error_report__brand_slug__price_list_import_errors_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/products": {
         parameters: {
             query?: never;
@@ -431,6 +511,19 @@ export interface components {
             created_at: string;
             /** Acknowledged At */
             acknowledged_at: string | null;
+        };
+        /** Body_download_error_report__brand_slug__price_list_import_errors_post */
+        Body_download_error_report__brand_slug__price_list_import_errors_post: {
+            /** File */
+            file: string;
+        };
+        /** Body_import_price_list__brand_slug__price_list_import_post */
+        Body_import_price_list__brand_slug__price_list_import_post: {
+            /**
+             * File
+             * @description Kavun şablonuyla üretilmiş xlsx
+             */
+            file: string;
         };
         /**
          * BrandAccess
@@ -566,6 +659,24 @@ export interface components {
             currency: string;
             /** Import Vat Paid */
             import_vat_paid: string | null;
+        };
+        /**
+         * ImportSummaryOut
+         * @description Import sonucu — `dry_run=true` iken hiçbir yazma yapılmamıştır.
+         */
+        ImportSummaryOut: {
+            /** Dry Run */
+            dry_run: boolean;
+            /** Yeni */
+            yeni: number;
+            /** Guncelleme */
+            guncelleme: number;
+            /** Degisiklik Yok */
+            degisiklik_yok: number;
+            /** Hata */
+            hata: number;
+            /** Rows */
+            rows: components["schemas"]["RowResultOut"][];
         };
         /**
          * KpisOut
@@ -735,6 +846,39 @@ export interface components {
             end: string;
         };
         /**
+         * PriceRowOut
+         * @description Ürün çalışma alanı tablosunun bir satırı (spec §12A.5).
+         */
+        PriceRowOut: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Sku */
+            sku: string;
+            /** Name */
+            name: string;
+            /** Channel */
+            channel: string;
+            /** Vat Rate */
+            vat_rate: string;
+            /** Desi */
+            desi: string | null;
+            /** Unit Cost */
+            unit_cost: string | null;
+            /** Price */
+            price: string | null;
+            /** Commission Rate */
+            commission_rate: string | null;
+            /** Service Fee */
+            service_fee: string;
+            /** Profit */
+            profit: string;
+            /** Margin Pct */
+            margin_pct: string;
+        };
+        /**
          * ProductSummary
          * @description Marka kapsamlı ürün özeti.
          */
@@ -754,6 +898,26 @@ export interface components {
             vat_rate: string;
             /** Msrp */
             msrp: string | null;
+        };
+        /**
+         * RowResultOut
+         * @description Diff önizlemesindeki bir satır.
+         */
+        RowResultOut: {
+            /** Row No */
+            row_no: number;
+            /** Sku */
+            sku: string;
+            /** Channel */
+            channel: string;
+            /** Action */
+            action: string;
+            /** Message */
+            message: string;
+            /** Changes */
+            changes: {
+                [key: string]: string;
+            };
         };
         /**
          * SkuMarginOut
@@ -1575,6 +1739,153 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrderDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_price_rows__brand_slug__price_list_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceRowOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_price_list__brand_slug__price_list_export_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_price_list__brand_slug__price_list_import_post: {
+        parameters: {
+            query?: {
+                /** @description true iken hiçbir şey yazılmaz */
+                dry_run?: boolean;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_price_list__brand_slug__price_list_import_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportSummaryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_error_report__brand_slug__price_list_import_errors_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_download_error_report__brand_slug__price_list_import_errors_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
