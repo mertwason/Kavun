@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %91** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░
-Son güncelleme: 2026-08-19 02:40 · Aktif görev: KVN-17
+**TOPLAM: %96** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░
+Son güncelleme: 2026-08-19 03:05 · Aktif görev: KVN-18
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -22,16 +22,47 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-14 | Tarife Excel yükleme (esnek parser)                         | 4       | ✅ Bitti    |
 | KVN-15 | PDF fatura ayrıştırma + öğrenen SKU eşleştirme + onay       | 7       | ✅ Bitti    |
 | KVN-16 | Inventory ledger + WAC motoru + açılış stoku                | 7       | ✅ Bitti    |
-| KVN-17 | İthalat dosyası modu + kur farkı takibi (Alessi)            | 5       | 🔄 Yapılıyor|
-| KVN-18 | D2B kanal + fire/hasar + MSRP disiplini                     | 3       | ⏳ Sırada   |
+| KVN-17 | İthalat dosyası modu + kur farkı takibi (Alessi)            | 5       | ✅ Bitti    |
+| KVN-18 | D2B kanal + fire/hasar + MSRP disiplini                     | 3       | 🔄 Yapılıyor|
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 91 · **Faz 1 (KVN-01…09) tamamlandı**
+Toplam ağırlık: 100 · Biten ağırlık: 96 · **Faz 1 (KVN-01…09) tamamlandı**
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-17 bitti
+
+**Ne bitti:** İthalat dosyası modu ve kur farkı takibi (spec §12C.7-8) + İthalat dosyaları
+ekranı (liste + detay). Dosya = mal faturası + beyanname + masraf kalemleri; masraflar mal
+bedeli ağırlıklı dağıtılır, onayda 12C.3 zinciri (ledger + WAC + `sku_costs`) çalışır.
+İthalat KDV'si maliyete girmiyor, kur farkı ürün maliyetine dokunmuyor — ikisi de testle
+sabitlendi. `GET /{brand}/imports/fx-exposure` açık pozisyonu raporluyor. Modül bayrağı
+kapalı markada hem uç hem menü öğesi yok (404). Testler: 434 yeşil, ithalat servisi
+coverage %93, genel %94. Ekranlar gerçek tarayıcıda denendi: Alessi'de dolu, Kahveji'de
+"modül kapalı"; ödeme formu ve onay kilidi doğrulandı.
+
+**Kararlar / notlar:**
+- **Kur farkının işareti P&L yönüne çevrildi:** negatif = kur farkı gideri, pozitif = gelir.
+  Uygulamanın geri kalanında negatif rakam kârı azaltan kalem; kur farkı da aynı okumayı
+  taşımalı. Aksi halde ekranda "pahalıya ödedik" yeşil görünüyordu.
+- **Replay sırası kayıt sırasına (`id`) çevrildi** — hareket tarihine değil. Bugün onaylanan
+  40 gün önceki ithalat faturası, tarih sırasıyla oynatılınca farklı ortalama üretiyor ve
+  §12C.11'in "birebir aynı" kriterini bozuyordu. Defter bir yevmiye kaydıdır; kayıtlar
+  yazıldıkları sırayla uygulanır. Geriye dönük tarihli hareket için regresyon testi yazıldı.
+- **`purchase_invoices.import_file_id` eklendi** (migration `a8595701d7b5`). Fatura dosyaya
+  bağlıysa `landed_cost_extra` sıfırlanır: masraf iki kaynaktan birden sayılmaz.
+- Guard yine iş gördü: `goods_lines` faturaları alt sorguyla çekiyordu, marka filtresi
+  taşımayan alt sorgu reddedildi. Faturalar önce ayrı sorguyla çözülüyor.
+- Demo seed ithalat akışını artık servisin kendisiyle kuruyor (elle ledger satırı yazmıyor),
+  böylece demo durumu da defterden birebir yeniden kurulabiliyor.
+
+**Bilinen risk:** `fx_exposure` açık pozisyonu dosya bazında hesaplıyor; aynı tedarikçiye
+dosya dışı (yurtiçi/serbest) dövizli borç varsa kapsam dışında kalır. Spec §12C.8 yalnızca
+ithalat dosyası bağlamını tanımlıyor; genel döviz borcu raporu gerekirse KVN-EK olarak
+açılmalı.
 
 ### 2026-08-19 — KVN-16 bitti
 

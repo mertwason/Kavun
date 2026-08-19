@@ -34,7 +34,8 @@
     "scenarios": "Senaryolar",
     "tariffs": "Komisyon tarifeleri",
     "invoices": "Alış faturaları",
-    "inventory": "Stok & maliyet"
+    "inventory": "Stok & maliyet",
+    "imports": "İthalat dosyaları"
   },
   "period": {
     "label": "Dönem",
@@ -143,7 +144,11 @@
     "stock": "Bu markada stok kaydı olan ürün yok.",
     "stockHint": "Açılış stokunu aşağıdan girin ya da demo veriyi yükleyin: make seed-demo",
     "ledger": "Henüz stok hareketi yok.",
-    "ledgerHint": "Fatura onayı, satış ve iade hareketleri buraya düşer."
+    "ledgerHint": "Fatura onayı, satış ve iade hareketleri buraya düşer.",
+    "imports": "Bu markada ithalat dosyası yok.",
+    "importsHint": "Dosya mal faturası + beyanname + masraf kalemlerinden oluşur.",
+    "importLines": "Dosyaya bağlı mal faturası yok.",
+    "importLinesHint": "Önce alış faturasını yükleyip dosyaya bağlayın."
   },
   "error": {
     "unreachable": "API'ye ulaşılamıyor.",
@@ -376,5 +381,63 @@
       "adjustment": "Düzeltme",
       "damage": "Hasar/fire"
     }
+  },
+  "imports": {
+    "title": "İthalat dosyaları",
+    "subtitle": "Mal faturası + beyanname + masraf kalemleri. Masraflar mal bedeli ağırlıklı dağıtılır.",
+    "fileNo": "Dosya no",
+    "beyanname": "Beyanname",
+    "beyannameDate": "Beyanname tarihi",
+    "currency": "Para birimi",
+    "fxBeyanname": "Beyanname kuru",
+    "importVat": "İthalat KDV’si",
+    "importVatNote": "İndirilecek KDV — maliyete girmez, yalnızca nakit akışı için tutulur.",
+    "status": "Durum",
+    "open": "Açık",
+    "confirmed": "Onaylandı",
+    "costItems": "Masraf kalemleri",
+    "costItemsSubtitle": "Her kalem kendi para biriminde girilir; TL karşılığı girişte sabitlenir.",
+    "itemType": "Kalem",
+    "amount": "Tutar",
+    "amountTry": "TL karşılığı",
+    "vendor": "Firma",
+    "costTotal": "Dağıtılacak masraf",
+    "goodsTotal": "Mal bedeli (TL)",
+    "allocation": "Dağıtım önizlemesi",
+    "allocationSubtitle": "Onaya kadar hiçbir şey stoka yazılmaz.",
+    "line": "Satır",
+    "share": "Masraf payı",
+    "landedUnit": "Birim landed maliyet",
+    "confirm": "Dosyayı onayla ve stoka işle",
+    "confirmNote": "Onayda ledger + ortalama maliyet + maliyet versiyonu birlikte yazılır.",
+    "confirmed_": "Dosya onaylandı; düzeltme ancak ters kayıtla yapılır.",
+    "payments": "Ödemeler ve kur farkı",
+    "paymentsSubtitle": "Maliyet beyanname kuruyla sabittir; ödeme kuru farkı ayrı raporlanır.",
+    "payDate": "Ödeme tarihi",
+    "payAmount": "Tutar",
+    "payRate": "Ödeme kuru",
+    "fxDiff": "Kur farkı",
+    "addPayment": "Ödeme kaydet",
+    "fxExposure": "Açık döviz pozisyonu",
+    "openAmount": "Açık pozisyon",
+    "costRate": "Maliyet kuru",
+    "paidAmount": "Ödenen",
+    "realized": "Gerçekleşen kur farkı",
+    "add": "Ekle",
+    "saving": "Kaydediliyor…",
+    "saved": "Kaydedildi.",
+    "disabled": "Bu modül bu markada kapalı.",
+    "disabledHint": "İthalat dosyası yalnızca ithalat yapan markalarda açıktır (spec §3A.4).",
+    "backToList": "İthalat dosyalarına dön",
+    "itemTypes": {
+      "mal_bedeli": "Mal bedeli",
+      "navlun": "Navlun",
+      "sigorta": "Sigorta",
+      "gumruk_vergisi": "Gümrük vergisi",
+      "gumruk_musavirligi": "Gümrük müşavirliği",
+      "ardiye_liman": "Ardiye/liman",
+      "diger": "Diğer"
+    },
+    "missingAmount": "Tutar ve kur zorunlu."
   }
 }

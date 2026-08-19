@@ -266,6 +266,33 @@ Kurallar:
 `stock --rebuild --dry-run` demo veride de koşulur ve CI'da testtir: elle kurulan seed
 satırları motorun üreteceğinden saparsa test kırılır.
 
+### İthalat dosyası ve kur farkı (KVN-17)
+
+İthal alım tek fatura değildir; bir **dosyadır**: mal faturası (EUR) + beyanname + masraf
+kalemleri (navlun, sigorta, gümrük müşavirliği, ardiye…). Dosya `Alessi` gibi `import_files`
+bayrağı açık markalarda görünür; kapalı markada uç ve ekran **404** döner.
+
+1. Dosya açılır, **beyanname kuru** girilir — maliyet bu kurla sabitlenir.
+2. Masraf kalemleri kendi para biriminde girilir; TL karşılığı girişte sabitlenir.
+3. Mal faturası dosyaya bağlanır; artık `landed_cost_extra` kullanılmaz (basit yurtiçi
+   modun alanıdır, iki kaynak birden sayılmaz).
+4. Dağıtım önizlemesi satır bazlı landed cost'u gösterir — **onaya kadar hiçbir şey
+   stoka yazılmaz**.
+5. Onayda 12C.3 zinciri çalışır: ledger + WAC + `sku_costs` versiyonu tek transaction.
+
+İki kural şaşmaz:
+
+- **İthalat KDV'si maliyet kalemi değildir.** Gümrükte ödenir ama indirilecek KDV'dir;
+  `import_files.import_vat_paid` alanında nakit akışı/KDV raporu için durur, landed cost
+  hesabına asla katılmaz.
+- **Kur farkı ürün maliyetine girmez.** Ödeme günü kur değiştiyse fark
+  `supplier_payments.fx_diff_try`de raporlanır. İşaret P&L yönündedir: **negatif = kur farkı
+  gideri**, pozitif = gelir. `GET /{brand}/imports/fx-exposure` açık pozisyonu, maliyet
+  kurunu ve gerçekleşen farkı verir.
+
+Dağıtım mal bedeli ağırlıklıdır ve kuruş kaybetmez; testler elle hesaplanan örneği birebir
+doğrular (EUR mal + TL navlun + EUR sigorta + müşavirlik → 4.650,00 ve 13.950,00).
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -299,6 +326,8 @@ fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ; `make seed-demo
 | `/{marka}/tariffs` | Komisyon tarifeleri — geçerli oranlar, değişiklik geçmişi, etki analizi |
 | `/{marka}/invoices` | Alış faturaları — PDF yükleme + satır eşleştirme + onay |
 | `/{marka}/inventory` | Stok & maliyet — eldeki adet, ortalama maliyet, hareket defteri, açılış/düzeltme |
+| `/{marka}/imports` | İthalat dosyaları + açık döviz pozisyonu (yalnızca bayrağı açık markada) |
+| `/{marka}/imports/{id}` | Dosya detayı — masraf kalemleri, dağıtım önizlemesi, ödemeler/kur farkı |
 
 Dönem seçimi URL'de taşınır (`?days=7|30|90|365`), böylece ekran paylaşılabilir ve geri
 tuşu çalışır. Kâr rakamlarının yanındaki amber "Tahmini" rozeti kargo/komisyon
@@ -397,6 +426,15 @@ POST /{brand}/inventory/opening    # açılış (devir) stoku — ürün başın
 POST /{brand}/inventory/adjust     # düzeltme kaydı (gerekçe zorunlu)
 POST /{brand}/inventory/rebuild    # durumu defterden yeniden kur (?dry_run)
 
+GET  /{brand}/imports              # ithalat dosyaları (bayrak kapalıysa 404)
+GET  /{brand}/imports/fx-exposure  # açık döviz pozisyonu + gerçekleşen kur farkı
+POST /{brand}/imports              # yeni dosya (beyanname kuru burada sabitlenir)
+GET  /{brand}/imports/{id}         # masraf kalemleri + dağıtım önizlemesi + ödemeler
+POST /{brand}/imports/{id}/cost-items          # masraf kalemi (ithalat KDV'si GİRMEZ)
+POST /{brand}/imports/{id}/invoices/{invoice}  # mal faturasını dosyaya bağla
+POST /{brand}/imports/{id}/confirm             # ledger + WAC + maliyet versiyonu
+POST /{brand}/imports/{id}/payments            # ödeme + kur farkı
+
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
 GET  /{brand}/import-files  # yalnızca `import_files` bayrağı açık markada (aksi halde 404)
@@ -461,5 +499,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-17 — ithalat
-dosyası modu ve kur farkı takibi** (spec §12C.7-8).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-18 — D2B kanal,
+fire/hasar ve MSRP disiplini** (spec §12C.9-10).

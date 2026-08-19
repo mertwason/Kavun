@@ -549,10 +549,18 @@ def confirm_invoice(
         raise InvoiceError(f"{len(missing)} satır hâlâ eşleşmemiş; onaydan önce SKU seçilmeli")
 
     # Landed cost (navlun/gümrük/sigorta) satırlara tutar ağırlıklı dağıtılır (§12C.2).
+    # Fatura bir ithalat dosyasına bağlıysa masraf toplamı dosyadan gelir (§12C.7) ve
+    # `landed_cost_extra` kullanılmaz — iki kaynak aynı anda sayılmamalı.
     from app.engine.inventory import allocate_landed_cost
+    from app.services.imports import import_cost_total
 
     amounts = [line.unit_price_try * line.qty for line in lines]
-    extras = allocate_landed_cost(amounts, invoice.landed_cost_extra or ZERO)
+    extra_total = (
+        import_cost_total(session, import_file_id=invoice.import_file_id)
+        if invoice.import_file_id is not None
+        else (invoice.landed_cost_extra or ZERO)
+    )
+    extras = allocate_landed_cost(amounts, extra_total)
 
     summary = ConfirmSummary(invoice_id=invoice.id)
     moved_at = datetime.combine(invoice.invoice_date, datetime.min.time(), tzinfo=UTC)

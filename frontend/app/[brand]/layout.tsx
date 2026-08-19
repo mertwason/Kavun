@@ -10,10 +10,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { fetchImportFiles } from "@/lib/api";
 import { BRANDS, isBrandSlug } from "@/lib/brands";
 import tr from "@/locales/tr.json";
 
-export default function BrandLayout({
+export default async function BrandLayout({
   children,
   params,
 }: {
@@ -25,6 +26,9 @@ export default function BrandLayout({
   }
   const brand = BRANDS[params.brand];
 
+  // Kapalı modül menüde görünmez: bayrak kapalıysa API 404 döner (spec §3A.4).
+  const imports = await fetchImportFiles(brand.slug);
+
   const navItems = [
     { href: `/${brand.slug}`, label: tr.nav.dashboard },
     { href: `/${brand.slug}/sku`, label: tr.nav.skuMargins },
@@ -35,6 +39,7 @@ export default function BrandLayout({
     { href: `/${brand.slug}/tariffs`, label: tr.nav.tariffs },
     { href: `/${brand.slug}/invoices`, label: tr.nav.invoices },
     { href: `/${brand.slug}/inventory`, label: tr.nav.inventory },
+    ...(imports.ok ? [{ href: `/${brand.slug}/imports`, label: tr.nav.imports }] : []),
   ];
 
   return (

@@ -55,6 +55,9 @@ class PurchaseInvoice(Base, TimestampMixin):
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     brand_id: Mapped[uuid.UUID] = brand_fk()
     supplier_id: Mapped[uuid.UUID] = uuid_fk("suppliers.id")
+    # Dolu ise fatura bir ithalat dosyasının mal faturasıdır: landed cost dosyanın masraf
+    # kalemlerinden gelir, `landed_cost_extra` kullanılmaz (spec §12C.7).
+    import_file_id: Mapped[uuid.UUID | None] = uuid_fk_opt("import_files.id")
     invoice_no: Mapped[str] = mapped_column(String(120), nullable=False)
     invoice_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="TRY")

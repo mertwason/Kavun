@@ -852,6 +852,150 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * İthalat dosyaları
+         * @description Marka kapsamlı dosya listesi.
+         */
+        get: operations["list_files__brand_slug__imports_get"];
+        put?: never;
+        /**
+         * Yeni ithalat dosyası
+         * @description Dosya açar. Bayrak kontrolü rol kontrolünden sonra ayrıca uygulanır.
+         */
+        post: operations["create_file__brand_slug__imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/imports/fx-exposure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Açık döviz pozisyonu
+         * @description §12C.8 raporu: açık pozisyon, maliyet kuru, gerçekleşmiş kur farkı.
+         */
+        get: operations["fx_exposure__brand_slug__imports_fx_exposure_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/imports/{file_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dosya detayı
+         * @description Masraf kalemleri + satır bazlı dağıtım önizlemesi + ödemeler.
+         */
+        get: operations["get_file__brand_slug__imports__file_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/imports/{file_id}/cost-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Masraf kalemi ekle
+         * @description İthalat KDV'si buraya girilmez; dosyanın `import_vat_paid` alanında durur.
+         */
+        post: operations["add_cost_item__brand_slug__imports__file_id__cost_items_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/imports/{file_id}/invoices/{invoice_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mal faturasını dosyaya bağla
+         * @description Bağlanan faturanın landed cost'u artık dosyadan gelir (§12C.7).
+         */
+        post: operations["attach_invoice__brand_slug__imports__file_id__invoices__invoice_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/imports/{file_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dosyayı onayla (stoka işle)
+         * @description Ledger + WAC + `sku_costs` zinciri bağlı her fatura için çalışır.
+         */
+        post: operations["confirm_file__brand_slug__imports__file_id__confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/imports/{file_id}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ödeme kaydet (kur farkı hesaplanır)
+         * @description Kur farkı ürün maliyetine dokunmaz; ayrı satırda raporlanır (§12C.8).
+         */
+        post: operations["record_payment__brand_slug__imports__file_id__payments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/inventory": {
         parameters: {
             query?: never;
@@ -1284,6 +1428,60 @@ export interface components {
             product_id: string;
         };
         /**
+         * ConfirmResultOut
+         * @description Onay sonucu.
+         */
+        ConfirmResultOut: {
+            /** Invoices */
+            invoices: number;
+            /** Lines */
+            lines: number;
+            /** Ledger Entries */
+            ledger_entries: number;
+        };
+        /**
+         * CostItemIn
+         * @description Masraf kalemi. İthalat KDV'si buraya GİRMEZ (spec §12C.7).
+         */
+        CostItemIn: {
+            item_type: components["schemas"]["ImportCostItemType"];
+            /** Amount Original */
+            amount_original: number | string;
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string;
+            /** Fx Rate */
+            fx_rate?: number | string | null;
+            /** Vendor */
+            vendor?: string | null;
+            /** Doc Ref */
+            doc_ref?: string | null;
+        };
+        /**
+         * CostItemOut
+         * @description Kaydedilmiş masraf kalemi.
+         */
+        CostItemOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            item_type: components["schemas"]["ImportCostItemType"];
+            /** Amount Original */
+            amount_original: string;
+            /** Currency */
+            currency: string;
+            /** Amount Try */
+            amount_try: string;
+            /** Vendor */
+            vendor: string | null;
+            /** Doc Ref */
+            doc_ref: string | null;
+        };
+        /**
          * CredentialStatus
          * @description Credential durumu — içerik ASLA dönmez.
          */
@@ -1415,6 +1613,22 @@ export interface components {
          * @enum {string}
          */
         DraftStatus: "draft" | "promoted" | "discarded";
+        /**
+         * FxExposureOut
+         * @description Açık döviz pozisyonu (spec §12C.8 raporu).
+         */
+        FxExposureOut: {
+            /** Currency */
+            currency: string;
+            /** Open Amount */
+            open_amount: string;
+            /** Cost Fx Rate */
+            cost_fx_rate: string | null;
+            /** Paid Amount */
+            paid_amount: string;
+            /** Realized Fx Diff Try */
+            realized_fx_diff_try: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1430,6 +1644,70 @@ export interface components {
             /** Brands */
             brands: components["schemas"]["BrandTotals"][];
         };
+        /**
+         * ImportCostItemType
+         * @description `import_cost_items.item_type` (spec §12C.7).
+         *
+         *     İthalat KDV'si burada YOKTUR — indirilecek KDV'dir, landed cost'a girmez.
+         * @enum {string}
+         */
+        ImportCostItemType: "mal_bedeli" | "navlun" | "sigorta" | "gumruk_vergisi" | "gumruk_musavirligi" | "ardiye_liman" | "diger";
+        /**
+         * ImportFileDetailOut
+         * @description Dosya detayı: masraf kalemleri + dağıtım önizlemesi + ödemeler.
+         */
+        ImportFileDetailOut: {
+            file: components["schemas"]["ImportFileSummaryOut"];
+            /** Supplier Name */
+            supplier_name: string;
+            /** Cost Items */
+            cost_items: components["schemas"]["CostItemOut"][];
+            /** Cost Total Try */
+            cost_total_try: string;
+            /** Goods Total Try */
+            goods_total_try: string;
+            /** Lines */
+            lines: components["schemas"]["LandedLineOut"][];
+            /** Payments */
+            payments: components["schemas"]["PaymentOut"][];
+            /** Invoice Ids */
+            invoice_ids: string[];
+        };
+        /**
+         * ImportFileIn
+         * @description Yeni ithalat dosyası.
+         */
+        ImportFileIn: {
+            /**
+             * Supplier Id
+             * Format: uuid
+             */
+            supplier_id: string;
+            /** File No */
+            file_no: string;
+            /**
+             * Currency
+             * @default EUR
+             */
+            currency: string;
+            /** Beyanname No */
+            beyanname_no?: string | null;
+            /** Beyanname Date */
+            beyanname_date?: string | null;
+            /** Fx Rate Beyanname */
+            fx_rate_beyanname?: number | string | null;
+            /**
+             * Import Vat Paid
+             * @description Gümrükte ödenen KDV — maliyete GİRMEZ
+             */
+            import_vat_paid?: number | string | null;
+        };
+        /**
+         * ImportFileStatus
+         * @description `import_files.status` (spec §12C.7).
+         * @enum {string}
+         */
+        ImportFileStatus: "open" | "confirmed";
         /**
          * ImportFileSummary
          * @description İthalat dosyası — yalnızca `import_files` bayrağı açık markalarda görünür.
@@ -1448,6 +1726,35 @@ export interface components {
             currency: string;
             /** Import Vat Paid */
             import_vat_paid: string | null;
+        };
+        /**
+         * ImportFileSummaryOut
+         * @description Dosya listesi satırı.
+         */
+        ImportFileSummaryOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Supplier Id
+             * Format: uuid
+             */
+            supplier_id: string;
+            /** File No */
+            file_no: string;
+            /** Beyanname No */
+            beyanname_no: string | null;
+            /** Beyanname Date */
+            beyanname_date: string | null;
+            /** Currency */
+            currency: string;
+            /** Fx Rate Beyanname */
+            fx_rate_beyanname: string | null;
+            /** Import Vat Paid */
+            import_vat_paid: string | null;
+            status: components["schemas"]["ImportFileStatus"];
         };
         /**
          * ImportSummaryOut
@@ -1606,6 +1913,29 @@ export interface components {
             estimated_profit: string;
             /** Final Line Count */
             final_line_count: number;
+        };
+        /**
+         * LandedLineOut
+         * @description Dağıtım önizlemesi — henüz stoka yazılmadı.
+         */
+        LandedLineOut: {
+            /**
+             * Line Id
+             * Format: uuid
+             */
+            line_id: string;
+            /** Product Id */
+            product_id: string | null;
+            /** Raw Text */
+            raw_text: string;
+            /** Qty */
+            qty: string;
+            /** Goods Total Try */
+            goods_total_try: string;
+            /** Extra Share Try */
+            extra_share_try: string;
+            /** Landed Unit Cost Try */
+            landed_unit_cost_try: string;
         };
         /**
          * LedgerEntryOut
@@ -1791,6 +2121,47 @@ export interface components {
          * @enum {string}
          */
         OrderStatus: "created" | "picking" | "shipped" | "delivered" | "cancelled" | "returned";
+        /**
+         * PaymentIn
+         * @description Tedarikçi ödemesi — kur farkı otomatik hesaplanır (spec §12C.8).
+         */
+        PaymentIn: {
+            /**
+             * Pay Date
+             * Format: date
+             */
+            pay_date: string;
+            /** Amount Original */
+            amount_original: number | string;
+            /** Fx Rate Payment */
+            fx_rate_payment: number | string;
+            /** Currency */
+            currency?: string | null;
+        };
+        /**
+         * PaymentOut
+         * @description Ödeme kaydı ve kur farkı.
+         */
+        PaymentOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Pay Date
+             * Format: date
+             */
+            pay_date: string;
+            /** Amount Original */
+            amount_original: string;
+            /** Currency */
+            currency: string;
+            /** Fx Rate Payment */
+            fx_rate_payment: string;
+            /** Fx Diff Try */
+            fx_diff_try: string | null;
+        };
         /**
          * PeriodOut
          * @description Rapor dönemi (`start` dahil, `end` hariç).
@@ -4073,6 +4444,296 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoiceDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_files__brand_slug__imports_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportFileSummaryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_file__brand_slug__imports_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportFileIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportFileSummaryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fx_exposure__brand_slug__imports_fx_exposure_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FxExposureOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_file__brand_slug__imports__file_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                file_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportFileDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_cost_item__brand_slug__imports__file_id__cost_items_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                file_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CostItemIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostItemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    attach_invoice__brand_slug__imports__file_id__invoices__invoice_id__post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                file_id: string;
+                invoice_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportFileDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_file__brand_slug__imports__file_id__confirm_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                file_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfirmResultOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_payment__brand_slug__imports__file_id__payments_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                file_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentOut"];
                 };
             };
             /** @description Validation Error */

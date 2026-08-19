@@ -43,7 +43,6 @@ from app.models.enums import (
     CostState,
     DraftStatus,
     ImportCostItemType,
-    ImportFileStatus,
     InventoryMovement,
     InvoiceStatus,
     MatchStatus,
@@ -99,7 +98,14 @@ from app.seeds.base import (
     get_or_create_tenant,
 )
 from app.seeds.catalog_data import ALESSI_PRODUCTS, KAHVEJI_PRODUCTS, DemoProduct
+from app.services.imports import add_cost_item, confirm_file, record_payment
 from app.services.inventory import record_returns, record_sales
+
+IMPORT_FX_BEYANNAME = Decimal("37.500000")
+"""Beyanname kuru — maliyet bu kurla sabitlenir (spec §12C.8)."""
+
+IMPORT_FX_PAYMENT = Decimal("39.200000")
+"""Ödeme günü kuru; aradaki fark kur farkı olarak raporlanır, maliyete girmez."""
 
 DEMO_TENANT_SLUG = "demo"
 DEMO_TENANT_NAME = "Demo (örnek veri)"
@@ -521,46 +527,78 @@ def _seed_purchasing(
         currency="EUR",
         fx_rate_beyanname=Decimal("37.500000"),
         # İthalat KDV'si maliyete GİRMEZ; yalnızca nakit akışı için kayıt altında.
-        import_vat_paid=Decimal("184500.00"),
-        status=ImportFileStatus.CONFIRMED,
+        import_vat_paid=Decimal("114500.00"),
     )
     session.add(import_file)
     session.flush()
     summary.bump("import_files")
 
-    cost_items = (
-        (ImportCostItemType.MAL_BEDELI, Decimal("24500.00"), "EUR", Decimal("918750.00")),
-        (ImportCostItemType.NAVLUN, Decimal("38500.00"), "TRY", Decimal("38500.00")),
-        (ImportCostItemType.SIGORTA, Decimal("320.00"), "EUR", Decimal("12000.00")),
-        (ImportCostItemType.GUMRUK_MUSAVIRLIGI, Decimal("14500.00"), "TRY", Decimal("14500.00")),
-        (ImportCostItemType.ARDIYE_LIMAN, Decimal("8750.00"), "TRY", Decimal("8750.00")),
+    # Mal faturası dosyaya bağlanır; landed cost artık dosyanın masraf kalemlerinden gelir.
+    goods_invoice = PurchaseInvoice(
+        tenant_id=tenant.id,
+        brand_id=alessi.id,
+        supplier_id=ithalat.id,
+        import_file_id=import_file.id,
+        invoice_no="IT-2026-4471",
+        invoice_date=today - timedelta(days=40),
+        currency="EUR",
+        fx_rate=IMPORT_FX_BEYANNAME,
+        status=InvoiceStatus.PARSED,
     )
-    for item_type, amount, currency, amount_try in cost_items:
+    session.add(goods_invoice)
+    session.flush()
+    summary.bump("purchase_invoices")
+
+    goods_total_eur = Decimal("0")
+    for product, definition in alessi_products[:4]:
+        qty = Decimal(40)
+        unit_eur = (definition.unit_cost / IMPORT_FX_BEYANNAME).quantize(Decimal("0.01"))
+        goods_total_eur += unit_eur * qty
         session.add(
-            ImportCostItem(
-                import_file_id=import_file.id,
-                item_type=item_type,
-                amount_original=amount,
-                currency=currency,
-                amount_try=amount_try,
-                vendor="Med Lojistik" if item_type == ImportCostItemType.NAVLUN else None,
+            PurchaseInvoiceLine(
+                invoice_id=goods_invoice.id,
+                raw_text=definition.name,
+                product_id=product.id,
+                qty=qty,
+                unit_price_original=unit_eur,
+                unit_price_try=_rounded(unit_eur * IMPORT_FX_BEYANNAME),
+                vat_rate=definition.vat_rate,
+                match_status=MatchStatus.AUTO,
             )
+        )
+        summary.bump("purchase_invoice_lines")
+    goods_invoice.total = _rounded(goods_total_eur)
+    session.flush()
+
+    # Masraf kalemleri servis üzerinden girilir: TL karşılıkları orada sabitlenir.
+    # Mal bedeli kalem olarak GİRİLMEZ — fatura satırlarında zaten var, iki kez sayılmaz.
+    for item_type, amount, currency in (
+        (ImportCostItemType.NAVLUN, Decimal("38500.00"), "TRY"),
+        (ImportCostItemType.SIGORTA, Decimal("320.00"), "EUR"),
+        (ImportCostItemType.GUMRUK_MUSAVIRLIGI, Decimal("14500.00"), "TRY"),
+        (ImportCostItemType.ARDIYE_LIMAN, Decimal("8750.00"), "TRY"),
+    ):
+        add_cost_item(
+            session,
+            import_file=import_file,
+            item_type=item_type,
+            amount_original=amount,
+            currency=currency,
+            vendor="Med Lojistik" if item_type is ImportCostItemType.NAVLUN else None,
         )
         summary.bump("import_cost_items")
 
+    # Onay motorun kendisiyle yapılır: ledger + WAC + maliyet versiyonu birlikte yazılır,
+    # böylece demo durumu da defterden birebir yeniden kurulabilir kalır (§12C.11).
+    confirm_file(session, import_file=import_file, user="seed-demo")
+
     # Ödeme + kur farkı: beyanname kuru 37,50 · ödeme kuru 39,20 (spec §12C.8).
-    session.add(
-        SupplierPayment(
-            tenant_id=tenant.id,
-            brand_id=alessi.id,
-            supplier_id=ithalat.id,
-            import_file_id=import_file.id,
-            pay_date=today - timedelta(days=10),
-            amount_original=Decimal("24500.00"),
-            currency="EUR",
-            fx_rate_payment=Decimal("39.200000"),
-            fx_diff_try=_rounded(Decimal("24500.00") * (Decimal("39.20") - Decimal("37.50"))),
-        )
+    record_payment(
+        session,
+        import_file=import_file,
+        pay_date=today - timedelta(days=10),
+        amount_original=Decimal("8000.00"),
+        fx_rate_payment=IMPORT_FX_PAYMENT,
     )
     summary.bump("supplier_payments")
 

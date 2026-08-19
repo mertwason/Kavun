@@ -371,6 +371,41 @@ def test_state_can_be_rebuilt_from_the_ledger(
     assert summary.movements == 3
 
 
+def test_rebuild_replays_in_posting_order_not_by_date(
+    db_session: Session, store: Store, product: Product
+) -> None:
+    """Geriye dönük tarihli hareket replay'i bozmaz — defter yevmiye sırasıyla oynatılır.
+
+    Bugün onaylanan 40 gün önceki ithalat faturası gibi kayıtlar gerçek hayatta olur;
+    ortalama maliyet yol bağımlı olduğu için tarih sırasıyla oynatmak farklı sonuç verirdi.
+    """
+    inventory.opening_stock(
+        db_session, product=product, qty=D("10"), unit_cost=D("100"), on_date=TODAY
+    )
+    # Sonradan yazılan ama TARİHİ geçmişte olan alış.
+    inventory.record_movement(
+        db_session,
+        tenant_id=store.tenant_id,
+        brand_id=store.brand_id,
+        product_id=product.id,
+        movement=InventoryMovement.PURCHASE_IN,
+        qty=D("10"),
+        unit_cost=D("200"),
+        moved_at=datetime.combine(TODAY, datetime.min.time(), tzinfo=UTC) - timedelta(days=40),
+    )
+
+    before = _state(db_session, product)
+    assert before is not None
+    expected_on_hand, expected_avg = before.on_hand_qty, before.avg_cost
+
+    summary = inventory.rebuild_state(db_session, dry_run=True)
+
+    assert summary.mismatches == []
+    rebuilt = _state(db_session, product)
+    assert rebuilt is not None
+    assert (rebuilt.on_hand_qty, rebuilt.avg_cost) == (expected_on_hand, expected_avg)
+
+
 def test_rebuild_dry_run_reports_without_writing(db_session: Session, product: Product) -> None:
     """`dry_run` yazmaz; sessiz sapmayı raporlar."""
     inventory.opening_stock(

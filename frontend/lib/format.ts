@@ -83,3 +83,23 @@ export function signClass(value: string | number | null | undefined): string {
   if (parsed > 0) return "text-positive";
   return "text-ink-muted";
 }
+
+const amount = new Intl.NumberFormat("tr-TR", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const rate = new Intl.NumberFormat("tr-TR", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 4,
+});
+
+/** Dövizli tutar: para birimi ayrı sütunda durduğu için sembolsüz yazılır. */
+export function formatAmount(value: string | number | null | undefined): string {
+  return amount.format(toNumber(value));
+}
+
+/** Kur: 37,50 · 39,2015 — sondaki gereksiz sıfırlar atılır. */
+export function formatRate(value: string | number | null | undefined): string {
+  return rate.format(toNumber(value));
+}

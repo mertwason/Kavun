@@ -40,6 +40,11 @@ export type StockRow = components["schemas"]["StockRowOut"];
 export type LedgerEntry = components["schemas"]["LedgerEntryOut"];
 export type OpeningStockInput = components["schemas"]["OpeningStockIn"];
 export type AdjustmentInput = components["schemas"]["AdjustmentIn"];
+export type ImportFileSummary = components["schemas"]["ImportFileSummaryOut"];
+export type ImportFileDetail = components["schemas"]["ImportFileDetailOut"];
+export type ImportCostItemInput = components["schemas"]["CostItemIn"];
+export type ImportPaymentInput = components["schemas"]["PaymentIn"];
+export type FxExposure = components["schemas"]["FxExposureOut"];
 
 export type HealthStatus = {
   online: boolean;
@@ -372,4 +377,31 @@ export function createOpeningStock(brand: string, input: OpeningStockInput) {
 
 export function createAdjustment(brand: string, input: AdjustmentInput) {
   return post<LedgerEntry>(brand, "/inventory/adjust", input);
+}
+
+export function fetchImportFiles(brand: string) {
+  return get<ImportFileSummary[]>(brand, "/imports");
+}
+
+export function fetchImportFile(brand: string, fileId: string) {
+  return get<ImportFileDetail>(brand, `/imports/${fileId}`);
+}
+
+export function fetchFxExposure(brand: string) {
+  return get<FxExposure[]>(brand, "/imports/fx-exposure");
+}
+
+export function addImportCostItem(brand: string, fileId: string, input: ImportCostItemInput) {
+  return post<unknown>(brand, `/imports/${fileId}/cost-items`, input);
+}
+
+export function recordImportPayment(brand: string, fileId: string, input: ImportPaymentInput) {
+  return post<unknown>(brand, `/imports/${fileId}/payments`, input);
+}
+
+export function confirmImportFile(brand: string, fileId: string) {
+  return post<{ invoices: number; lines: number; ledger_entries: number }>(
+    brand,
+    `/imports/${fileId}/confirm`,
+  );
 }

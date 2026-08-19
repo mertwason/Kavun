@@ -436,11 +436,15 @@ def rebuild_state(session: Session, *, dry_run: bool = False) -> RebuildSummary:
 
     Ledger append-only olduğu için durum her zaman ondan türetilebilir. `dry_run=True`
     yazmaz, yalnızca mevcut durumla farkları raporlar — sessiz sapma yakalanır.
+
+    **Sıra: kayıt sırası (`id`), hareket tarihi değil.** Ortalama maliyet yol bağımlıdır ve
+    canlı durum hareketler yazıldıkça bu sırayla oluşur. Geriye dönük tarihli bir hareket
+    (ör. bugün onaylanan 40 gün önceki ithalat faturası) tarih sırasına göre oynatılırsa
+    farklı bir ortalama çıkar; defter bir yevmiye kaydıdır, kayıtlar yazıldıkları sırayla
+    uygulanır. §12C.11'in "birebir aynı" kriteri ancak böyle sağlanır.
     """
     summary = RebuildSummary()
-    entries = session.scalars(
-        select(InventoryLedger).order_by(InventoryLedger.moved_at, InventoryLedger.id)
-    ).all()
+    entries = session.scalars(select(InventoryLedger).order_by(InventoryLedger.id)).all()
 
     states: dict[uuid.UUID, StockState] = {}
     last_moved: dict[uuid.UUID, datetime] = {}
@@ -455,7 +459,11 @@ def rebuild_state(session: Session, *, dry_run: bool = False) -> RebuildSummary:
         else:
             state = apply_outbound(state, qty=abs(entry.qty_delta))
         states[entry.product_id] = state
-        last_moved[entry.product_id] = entry.moved_at
+        # "Son hareket" en yeni TARİHtir; kayıt sırası geriye dönük olabilir.
+        previous = last_moved.get(entry.product_id)
+        last_moved[entry.product_id] = (
+            entry.moved_at if previous is None else max(previous, entry.moved_at)
+        )
         summary.movements += 1
 
     for product_id, state in states.items():
