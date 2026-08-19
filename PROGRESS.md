@@ -1,8 +1,8 @@
 # KAVUN İlerleme
 
 **TOPLAM: %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-**FAZ 2 (ek görevler): %69** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░
-Son güncelleme: 2026-08-19 21:20 · Aktif görev: KVN-EK-08 (13 handoff ekranının tamamı geçti; kalan: onboarding/boş durum kalıpları)
+**FAZ 2 (ek görevler): %88** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░
+Son güncelleme: 2026-08-19 22:10 · Aktif görev: yok — sıradaki KVN-EK-07 (Mert'in fixture dosyalarına bağlı)
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -46,9 +46,9 @@ Toplam ağırlık: **110** · Biten ağırlık: 110 · **Faz 1 ve Faz 1.5 tamaml
 | KVN-EK-05 | Trendyol Faz 2 uçları + eksik beat programı                | 8       | ✅ Bitti     | spec §4, §9 — iade/hakediş/kargo senkronu; `workers/tasks.py` coverage ≥ %80 |
 | KVN-EK-06 | Uyarılar ekranı + acknowledge akışı                        | 4       | ✅ Bitti     | spec §10.6 — `acknowledged_at` yazan uç dahil |
 | KVN-EK-07 | Gerçek veri kalibrasyon haftası                            | 6       | ⏳ Sırada    | **Mert'in dosyalarına bağlı** — geldiğinde sıraya girer; kurgu fixture'lar + 3 `TODO(verify)` + `tracking_no` |
-| KVN-EK-08 | Tasarım sistemi rework — 13 ekranlık handoff'un uygulanması | 10      | 🔄 Yapılıyor | handoff geldi (`docs/design_handoff_kavun/`), blokaj kalktı |
+| KVN-EK-08 | Tasarım sistemi rework — 13 ekranlık handoff'un uygulanması | 10      | ✅ Bitti     | Tremor yerine handoff desenleri kullanıldı (gerekçe oturum özetinde) |
 
-Faz 2 ağırlığı: 51 · Biten: 35
+Faz 2 ağırlığı: 51 · Biten: 45
 
 > **Sıra (2026-08-19, Mert onayı):** EK-04 → EK-05 → EK-06 → **EK-08**. EK-07 dosyalar
 > geldiğinde araya girer. Bu dört görev, KVN-EK-03 sonrası çıkarılan durum raporunun karşılığıdır:
