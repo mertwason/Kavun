@@ -66,7 +66,7 @@ test("panelde demo verisi görünür", async ({ page }) => {
   await page.goto("/kahveji");
 
   // KPI şeridi dolu olmalı: boş dashboard demo verinin bozulduğunu gösterir.
-  const kpis = page.locator(".card .tabular");
+  const kpis = page.locator("[data-kpi-value]");
   await expect(kpis.first()).toBeVisible();
   await expect(await kpis.first().innerText()).toMatch(/\d/);
 
@@ -177,7 +177,7 @@ test("kargo ekranı kesinleşme durumunu gösterir", async ({ page }) => {
   await page.goto("/kahveji/cargo");
 
   // Demo veride gönderilerin bir kısmı kesinleşmiş olmalı (spec §6.2).
-  const kpis = await page.locator(".card .tabular").allInnerTexts();
+  const kpis = await page.locator("[data-kpi-value]").allInnerTexts();
   expect(kpis.length).toBeGreaterThanOrEqual(4);
   expect(Number(kpis[1].replace(/\D/g, ""))).toBeGreaterThan(0);
 

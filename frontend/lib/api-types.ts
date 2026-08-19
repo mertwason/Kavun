@@ -2148,6 +2148,10 @@ export interface components {
             revenue_gross: string;
             /** Profit */
             profit: string;
+            /** Final Profit */
+            final_profit: string;
+            /** Order Count */
+            order_count: number;
         };
         /**
          * DamageIn
@@ -3234,6 +3238,8 @@ export interface components {
             store_id: string;
             /** Store Name */
             store_name: string;
+            /** Channel */
+            channel: string;
             /** Revenue Gross */
             revenue_gross: string;
             /** Profit */

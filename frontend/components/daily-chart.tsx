@@ -1,61 +1,123 @@
 /**
- * Günlük kâr grafiği — dashboard'ın tek grafiği (brief: "her görsel bir soruya cevap
- * vermeli"). Soru: "kâr hangi günlerde negatife düştü?"
+ * Günlük net kâr alan grafiği — handoff `Dashboard.dc.html`.
  *
- * Düz SVG sütun grafiği; sıfır çizgisinin altındaki sütunlar kırmızı.
+ * İki seri üst üste çizilir:
+ * - **kesin**: `#16A34A` 1.8px düz çizgi + `rgba(22,163,74,0.15)` dolgu
+ * - **toplam (tahmini dahil)**: kesikli `rgba(22,163,74,0.45)` çizgi + `0.07` dolgu
+ *
+ * Aradaki bant "henüz kesinleşmemiş kâr"dır ve son günlerde doğal olarak genişler —
+ * kargo faturası ve hakediş sonradan gelir. Bu ayrım ürünün DNA'sı olduğu için grafikte
+ * de görünür, yalnız KPI'da değil.
+ *
+ * Ek bağımlılık yok: düz SVG. Kütüphane getirmek bu sadelikte kazanç sağlamazdı.
  */
 
-import type { Dashboard } from "@/lib/api";
-import { formatDayShort, formatMoney, toNumber } from "@/lib/format";
+import { formatDayShort, formatMoneyWhole, toNumber } from "@/lib/format";
+import tr from "@/locales/tr.json";
 
-const HEIGHT = 120;
-const GAP = 1.5;
+export type DailyPoint = { day: string; profit: string; final_profit: string };
 
-export function DailyProfitChart({ points }: { points: Dashboard["daily"] }) {
-  if (points.length === 0) {
-    return null;
-  }
+const WIDTH = 720;
+const HEIGHT = 260;
+const PADDING = { top: 12, right: 8, bottom: 22, left: 52 };
 
-  const values = points.map((point) => toNumber(point.profit));
-  const max = Math.max(0, ...values);
-  const min = Math.min(0, ...values);
+export function DailyProfitChart({ points }: { points: DailyPoint[] }) {
+  if (points.length === 0) return null;
+
+  const totals = points.map((point) => toNumber(point.profit));
+  const finals = points.map((point) => toNumber(point.final_profit));
+  const max = Math.max(...totals, ...finals, 0);
+  const min = Math.min(...totals, ...finals, 0);
   const span = max - min || 1;
-  const zeroY = (max / span) * HEIGHT;
-  const width = points.length * (4 + GAP);
+
+  const plotWidth = WIDTH - PADDING.left - PADDING.right;
+  const plotHeight = HEIGHT - PADDING.top - PADDING.bottom;
+  const stepX = points.length > 1 ? plotWidth / (points.length - 1) : 0;
+
+  const x = (index: number) => PADDING.left + index * stepX;
+  const y = (value: number) => PADDING.top + (1 - (value - min) / span) * plotHeight;
+  const baseline = y(Math.max(0, min));
+
+  const line = (values: number[]) =>
+    values.map((value, index) => `${index === 0 ? "M" : "L"}${x(index)},${y(value)}`).join(" ");
+  const area = (values: number[]) =>
+    `${line(values)} L${x(values.length - 1)},${baseline} L${x(0)},${baseline} Z`;
+
+  // Yatay gridline'lar: sıfır çizgisi dahil dört seviye.
+  const levels = [0, 0.25, 0.5, 0.75, 1].map((ratio) => min + span * ratio);
 
   return (
     <div className="flex flex-col gap-2">
-      <svg
-        viewBox={`0 0 ${width} ${HEIGHT}`}
-        preserveAspectRatio="none"
-        className="h-32 w-full"
-        role="img"
-        aria-label="Günlük kâr"
-      >
-        <line x1={0} x2={width} y1={zeroY} y2={zeroY} stroke="#E7E5E4" strokeWidth={0.5} />
-        {points.map((point, index) => {
-          const value = toNumber(point.profit);
-          const barHeight = Math.max((Math.abs(value) / span) * HEIGHT, 0.5);
-          const y = value >= 0 ? zeroY - barHeight : zeroY;
-          return (
-            <rect
-              key={point.day}
-              x={index * (4 + GAP)}
-              y={y}
-              width={4}
-              height={barHeight}
-              fill={value < 0 ? "#B91C1C" : "#15803D"}
-              fillOpacity={0.85}
-            >
-              <title>{`${formatDayShort(point.day)}: ${formatMoney(point.profit)}`}</title>
-            </rect>
-          );
-        })}
-      </svg>
-      <div className="flex justify-between text-[11px] text-ink-faint">
-        <span>{formatDayShort(points[0].day)}</span>
-        <span>{formatDayShort(points[points.length - 1].day)}</span>
+      <div className="flex items-center justify-end gap-4 text-micro text-ink-body">
+        <Legend color="#16A34A" label={tr.dashboard.legendFinal} />
+        <Legend color="rgba(22,163,74,0.45)" label={tr.dashboard.legendTotal} dashed />
       </div>
+
+      <svg
+        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+        className="h-[260px] w-full"
+        role="img"
+        aria-label={tr.dashboard.dailyTitle}
+      >
+        {levels.map((value) => (
+          <g key={value}>
+            <line
+              x1={PADDING.left}
+              x2={WIDTH - PADDING.right}
+              y1={y(value)}
+              y2={y(value)}
+              stroke="#E7E5E4"
+              strokeWidth={1}
+              strokeDasharray="3 3"
+            />
+            <text x={PADDING.left - 8} y={y(value) + 3} textAnchor="end" className="fill-ink-muted text-[11px]">
+              {formatMoneyWhole(value)}
+            </text>
+          </g>
+        ))}
+
+        <path d={area(totals)} fill="rgba(22,163,74,0.07)" />
+        <path d={area(finals)} fill="rgba(22,163,74,0.15)" />
+        <path
+          d={line(totals)}
+          fill="none"
+          stroke="rgba(22,163,74,0.45)"
+          strokeWidth={1.8}
+          strokeDasharray="4 3"
+        />
+        <path d={line(finals)} fill="none" stroke="#16A34A" strokeWidth={1.8} />
+
+        <text x={PADDING.left} y={HEIGHT - 4} className="fill-ink-muted text-[11px]">
+          {formatDayShort(points[0].day)}
+        </text>
+        <text
+          x={WIDTH - PADDING.right}
+          y={HEIGHT - 4}
+          textAnchor="end"
+          className="fill-ink-muted text-[11px]"
+        >
+          {formatDayShort(points[points.length - 1].day)}
+        </text>
+      </svg>
     </div>
+  );
+}
+
+function Legend({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <svg width="14" height="6" aria-hidden>
+        <line
+          x1="0"
+          y1="3"
+          x2="14"
+          y2="3"
+          stroke={color}
+          strokeWidth={1.8}
+          strokeDasharray={dashed ? "4 3" : undefined}
+        />
+      </svg>
+      {label}
+    </span>
   );
 }

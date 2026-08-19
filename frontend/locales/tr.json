@@ -63,14 +63,17 @@
   "kpi": {
     "revenue": "Ciro",
     "revenueHint": "KDV dahil, iadeler düşülmüş",
-    "profit": "Net kâr",
+    "profit": "Net Kâr",
     "profitHint": "Tüm kesintiler ve KDV netleştirmesi sonrası",
     "margin": "Marj",
     "marginHint": "Net kâr / ciro",
-    "returnRate": "İade oranı",
+    "returnRate": "İade Oranı",
     "returnRateHint": "İade tutarının toplam talebe oranı",
     "orders": "sipariş",
-    "lines": "satır"
+    "lines": "satır",
+    "deltaWindow": "30 gün",
+    "finalShort": "kesin",
+    "estimatedShort": "tahmini"
   },
   "estimate": {
     "estimated": "Tahmini",
@@ -718,5 +721,22 @@
     "neverSynced": "Henüz senkron yok",
     "plan": "Büyüme Planı",
     "planUsage": "{used}/{total} mağaza"
+  },
+  "dashboard": {
+    "dailyTitle": "Günlük Net Kâr",
+    "legendFinal": "kesin",
+    "legendTotal": "toplam (tahmini dahil)",
+    "todayTitle": "Son gün",
+    "todayOrders": "Sipariş",
+    "todayRevenue": "Ciro",
+    "todayProfit": "Net Kâr",
+    "todayReturns": "İade",
+    "recentAlerts": "Son Uyarılar",
+    "all": "Tümü",
+    "channelTitle": "Kanal Kırılımı",
+    "skuEdgesTitle": "SKU Kâr Uçları",
+    "topSku": "EN KÂRLI 5",
+    "bottomSku": "ZARAR EDEN 5",
+    "estimatedTip": "Tahmini — kargo faturası bekleniyor"
   }
 }

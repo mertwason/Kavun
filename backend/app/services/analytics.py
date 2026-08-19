@@ -15,13 +15,13 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, case, func, select
 from sqlalchemy.orm import Session
 
 from app.engine.vat import quantize_money
 from app.models.catalog import Product
 from app.models.enums import CommissionSource, OrderStatus
-from app.models.identity import Store
+from app.models.identity import Channel, Store
 from app.models.results import LineProfit
 from app.models.transactions import Order, OrderLine, Return
 
@@ -81,11 +81,18 @@ class Kpis:
 
 @dataclass
 class DailyPoint:
-    """Günlük kâr grafiğinin bir noktası."""
+    """Günlük kâr grafiğinin bir noktası.
+
+    Kâr ikiye ayrılır: `final_profit` kesinleşmiş kalemlerden, `profit` ise hepsinden
+    (kesin + tahmini) gelir. Grafik bu ikisini ayrı çizer — ürünün "tahmini vs kesin"
+    ayrımı gün seviyesinde de görünmeli (tasarım handoff'u).
+    """
 
     day: date
     revenue_gross: Decimal
     profit: Decimal
+    final_profit: Decimal
+    order_count: int
 
 
 @dataclass
@@ -94,6 +101,7 @@ class StoreBreakdown:
 
     store_id: uuid.UUID
     store_name: str
+    channel: str
     revenue_gross: Decimal
     profit: Decimal
     margin_pct: Decimal
@@ -251,6 +259,10 @@ def _daily(session: Session, period: Period) -> list[DailyPoint]:
                 day,
                 func.coalesce(func.sum(LineProfit.revenue_gross), 0),
                 func.coalesce(func.sum(LineProfit.profit), 0),
+                func.coalesce(
+                    func.sum(case((LineProfit.is_final.is_(True), LineProfit.profit), else_=0)), 0
+                ),
+                func.count(func.distinct(Order.id)),
             )
             .select_from(LineProfit)
             .join(OrderLine, OrderLine.id == LineProfit.order_line_id)
@@ -265,6 +277,8 @@ def _daily(session: Session, period: Period) -> list[DailyPoint]:
             day=row[0],
             revenue_gross=quantize_money(Decimal(row[1])),
             profit=quantize_money(Decimal(row[2])),
+            final_profit=quantize_money(Decimal(row[3])),
+            order_count=int(row[4]),
         )
         for row in rows
     ]
@@ -276,25 +290,28 @@ def _stores(session: Session, period: Period) -> list[StoreBreakdown]:
             select(
                 Store.id,
                 Store.name,
+                Channel.code,
                 func.coalesce(func.sum(LineProfit.revenue_gross), 0),
                 func.coalesce(func.sum(LineProfit.profit), 0),
             )
             .select_from(LineProfit)
             .join(OrderLine, OrderLine.id == LineProfit.order_line_id)
             .join(Order, Order.id == OrderLine.order_id)
-            .join(Store, Store.id == Order.store_id),
+            .join(Store, Store.id == Order.store_id)
+            .join(Channel, Channel.id == Store.channel_id),
             period,
         )
-        .group_by(Store.id, Store.name)
+        .group_by(Store.id, Store.name, Channel.code)
         .order_by(Store.name)
     ).all()
     return [
         StoreBreakdown(
             store_id=row[0],
             store_name=row[1],
-            revenue_gross=quantize_money(Decimal(row[2])),
-            profit=quantize_money(Decimal(row[3])),
-            margin_pct=_margin(Decimal(row[3]), Decimal(row[2])),
+            channel=row[2].value if hasattr(row[2], "value") else str(row[2]),
+            revenue_gross=quantize_money(Decimal(row[3])),
+            profit=quantize_money(Decimal(row[4])),
+            margin_pct=_margin(Decimal(row[4]), Decimal(row[3])),
         )
         for row in rows
     ]

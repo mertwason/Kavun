@@ -51,6 +51,8 @@ class DailyPointOut(BaseModel):
     day: date
     revenue_gross: Decimal
     profit: Decimal
+    final_profit: Decimal
+    order_count: int
 
 
 class StoreBreakdownOut(BaseModel):
@@ -58,6 +60,7 @@ class StoreBreakdownOut(BaseModel):
 
     store_id: uuid.UUID
     store_name: str
+    channel: str
     revenue_gross: Decimal
     profit: Decimal
     margin_pct: Decimal
