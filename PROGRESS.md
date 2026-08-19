@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %95** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░
-Son güncelleme: 2026-08-19 04:05 · Aktif görev: KVN-20
+**TOPLAM: %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+Son güncelleme: 2026-08-19 04:30 · Aktif görev: — (Faz 1 + 1.5 tamamlandı)
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -25,9 +25,9 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-17 | İthalat dosyası modu + kur farkı takibi (Alessi)            | 5       | ✅ Bitti    |
 | KVN-18 | D2B kanal + fire/hasar + MSRP disiplini                     | 3       | ✅ Bitti    |
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ✅ Bitti    |
-| KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | 🔄 Yapılıyor|
+| KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ✅ Bitti    |
 
-Toplam ağırlık: **110** · Biten ağırlık: 104 · **Faz 1 (KVN-01…09) tamamlandı**
+Toplam ağırlık: **110** · Biten ağırlık: 110 · **Faz 1 ve Faz 1.5 tamamlandı** · Sırada: spec Faz 2 (kargo faturası + hakediş mutabakatı)
 
 > **Düzeltme (2026-08-19):** CLAUDE.md §0'daki kanonik listenin başlığı "toplam ağırlık 100"
 > diyor ama tablodaki 20 görevin ağırlıkları **110** ediyor. §0 kuralı yüzdeyi "bitmiş
@@ -39,6 +39,39 @@ Toplam ağırlık: **110** · Biten ağırlık: 104 · **Faz 1 (KVN-01…09) tam
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-20 bitti · Faz 1 + Faz 1.5 tamam
+
+**Ne bitti:** Golden dataset ve uçtan uca kabul turu (spec §11). 20 sipariş satırı
+girdileri ve beklenen kârlarıyla `tests/golden/orders.json` içinde donmuş literal olarak
+duruyor; beklenen değerler motordan değil, bağımsız ikinci bir uygulamadan
+(`tests/golden_reference.py`) üretiliyor ve testler üç kaynağı birden karşılaştırıyor:
+motor = referans = donmuş değer. Kabul kriteri "kuruş kuruş eşit" olduğu için
+karşılaştırma kuruşta, ara adımlar 4 hanede; ayrıca iki uygulama arasındaki fark yarım
+kuruşu geçemiyor (yuvarlamanın gizleyeceği yapısal fark da yakalanıyor).
+
+`tests/test_acceptance.py` modüller arası tutarlılığı doğruluyor: dashboard kârı = SKU
+listesi toplamı, ciro = mağaza kırılımı, günlük seri = dönem kârı, şelale = satır kârı,
+stok değeri = adet × ortalama maliyet, holding cirosu = markaların toplamı. Kabul
+kriteri → test eşlemesi `docs/ACCEPTANCE.md`'de; `make acceptance` ikisini birden koşuyor.
+Testler: 536 yeşil, motor coverage %94-100, genel %94.
+
+**Kararlar / notlar:**
+- **Yuvarlama sorusu netleşti.** İlk yazdığım elle hesap ara adımları kuruşa yuvarlıyordu
+  ve GOLD-01 için 73,34 veriyordu; motor 4 hane taşıyıp 73,3334 (kuruşta 73,33) veriyor.
+  CLAUDE.md §1 net: yuvarlama yalnızca gösterim katmanında. Referans hesap da 4 haneye
+  çekildi, çözümlü örnek bu farkı açıkça anlatıyor — ileride aynı soru tekrar sorulmasın.
+- Golden dataset'i **yeniden üretmek bir insan kararıdır**: `python -m tests.golden_generate`
+  çalıştırmak "beklenen değer değişsin" demektir; sebebi commit mesajına yazılmalı.
+- Faz 2'nin kabul kriteri (gerçek hakediş dökümüyle %99+ satır eşleşmesi) kapsam dışı
+  bırakıldı — gerçek veri ister, mutabakat modülü Faz 2'nin işi.
+
+**Bilinen risk:** Frontend davranışı otomatik test edilmiyor (projede frontend test
+koşucusu yok; CI tsc/eslint/build koşuyor). Her görevde ekranlar gerçek tarayıcıda elle
+gezildi ama bu regresyona karşı koruma sağlamaz. Faz 2'ye geçmeden önce Playwright ile
+birkaç kritik akışın (fiyat listesi round-trip, fatura onayı, stok ekranı) smoke testi
+yazılması önerilir — KVN-EK-01 olarak listeye eklenebilir.
+
 
 ### 2026-08-19 — KVN-19 bitti
 

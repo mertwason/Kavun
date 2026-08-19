@@ -8,6 +8,7 @@ hakediş mutabakatı yapar, fiyat/kampanya kararlarını simüle eder.
 - Tasarım brief: [`docs/KAVUN_Design_Brief.md`](docs/KAVUN_Design_Brief.md)
 - Geliştirme konvansiyonları (bağlayıcı): [`CLAUDE.md`](CLAUDE.md)
 - İlerleme durumu: [`PROGRESS.md`](PROGRESS.md)
+- Kabul kriteri → test eşlemesi: [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md)
 
 ## Hızlı başlangıç
 
@@ -61,6 +62,7 @@ make seed        # çekirdek veri: mokka tenant, 2 marka, kanallar, mağazalar
 make seed-demo   # demo veri: 50 SKU, ~210 sipariş, iade, fatura, tarife, alert (+ kâr hesabı)
 make recompute   # kâr kaydı olmayan satırların kârını hesaplar
 make stock       # satış/iade stok hareketlerini deftere yaz (idempotent)
+make acceptance  # kabul turu: golden dataset + uçtan uca tutarlılık
 make wipe-demo   # demo verisini sil (gerçek tenant'a dokunmaz)
 make gen-api     # OpenAPI şemasından frontend tipleri
 ```
@@ -364,6 +366,36 @@ bazlı), 2 alış faturası, 1 ithalat dosyası (EUR + kur farkı), uyarılar, t
 fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ; `make seed-demo` sonrası
 `python -m app.cli recompute --pending` ile motor tarafından hesaplanır.
 
+## Kabul turu ve golden dataset (KVN-20)
+
+Spec'teki her kabul kriterinin karşılığı bir testtir; eşleme
+[`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) dosyasındadır.
+
+```bash
+make acceptance   # golden dataset + uçtan uca tutarlılık turu
+```
+
+**Golden dataset.** Faz 1'in kabul kriteri "rastgele 20 sipariş için elle hesaplanan
+kârla motor çıktısı kuruş kuruş eşit" der. `tests/golden/orders.json` bu 20 satırı
+girdileri **ve** beklenen değerleriyle donmuş literal olarak taşır. Beklenen değerler
+motordan değil, bağımsız bir ikinci uygulamadan (`tests/golden_reference.py`) üretilir;
+testler üç kaynağı birden karşılaştırır:
+
+```
+motor  ==  referans uygulama  ==  dosyadaki donmuş değer
+```
+
+Ara adımlar 4 haneyle taşınır (yuvarlama yalnızca gösterimde), karşılaştırma kuruşta
+yapılır ve iki uygulama arasındaki fark yarım kuruşu geçemez — yuvarlamanın gizleyeceği
+yapısal fark da yakalanır. Dosyayı yeniden üretmek insan kararıdır:
+`python -m tests.golden_generate`.
+
+**Uçtan uca tur.** `tests/test_acceptance.py` tek tek modülleri değil aralarındaki
+tutarlılığı doğrular: dashboard kârı SKU listesinin toplamına, mağaza kırılımı ciroya,
+günlük seri dönem kârına, şelale adımları satır kârına, stok değeri adet × ortalama
+maliyete, holding cirosu markaların toplamına eşit olmalı. Bir halka koparsa hangi
+ekranın yalan söylediği buradan görülür.
+
 ## Ekranlar
 
 | Yol | Ekran |
@@ -562,5 +594,7 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-20 — golden dataset
-doğrulama ve uçtan uca kabul turu** (spec §11).
+Faz 1 ve Faz 1.5'in kanonik görev listesi (KVN-01…20) tamamlandı; durum ve oturum
+özetleri `PROGRESS.md` dosyasındadır. Sırada spec'in **Faz 2**'si var: kargo faturası ve
+hakediş (settlement) senkronu, `estimated → actual` geçişleri ve mutabakat modülü.
+Faz 2'nin kabul kriteri gerçek hakediş dökümü ister (§11).
