@@ -301,12 +301,21 @@ def _price_list_with_foreign_sku(api: TestClient, headers: dict[str, str]) -> by
     exported = api.get("/kahveji/price-list/export", headers=headers).content
     workbook = load_workbook(BytesIO(exported))
     sheet = workbook[SHEET_NAME]
-    row = sheet.max_row + 1
-    for column, value in enumerate(
-        ("ALS-9090-3", "Karışmış Alessi ürünü", "Kahveji", "trendyol", 20, 3.5, 3450, 6890),
-        start=1,
-    ):
-        sheet.cell(row=max(row, FIRST_DATA_ROW), column=column, value=value)
+    row = max(sheet.max_row + 1, FIRST_DATA_ROW)
+    # Desi ondalıklıdır ama para değil: hücreye metin yazıp parser'ın çözmesini bekliyoruz
+    # (CLAUDE.md §1 — testte de `float` ile para/ölçü taşınmaz).
+    values: tuple[str, ...] = (
+        "ALS-9090-3",
+        "Karışmış Alessi ürünü",
+        "Kahveji",
+        "trendyol",
+        "20",
+        "3,5",
+        "3450",
+        "6890",
+    )
+    for column, value in enumerate(values, start=1):
+        sheet.cell(row=row, column=column, value=value)
     buffer = BytesIO()
     workbook.save(buffer)
     return buffer.getvalue()
