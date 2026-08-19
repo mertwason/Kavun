@@ -156,6 +156,40 @@ async def sync_store(
                 fetched_at=fetched_at,
             )
 
+            # --- Faz 2 kalemleri (KVN-EK-05) --------------------------------
+            # Ayrı `try` YOK: bir uç patlarsa tüm sync hatalı sayılır ve `last_synced_at`
+            # ilerlemez — yarım senkronu "başarılı" saymak, eksik veriyle kâr hesaplamaya
+            # yol açardı.
+            returns = await adapter.fetch_returns(since)
+            summary.fetched["returns"] = len(returns)
+            summary.written["returns"] = record_raw_events(
+                session,
+                store,
+                "return",
+                [(item.external_return_id, item.payload) for item in returns],
+                fetched_at=fetched_at,
+            )
+
+            settlements = await adapter.fetch_settlements(since)
+            summary.fetched["settlements"] = len(settlements)
+            summary.written["settlements"] = record_raw_events(
+                session,
+                store,
+                "settlement",
+                [(row.external_ref, row.payload) for row in settlements],
+                fetched_at=fetched_at,
+            )
+
+            cargo_invoices = await adapter.fetch_cargo_invoices(since)
+            summary.fetched["cargo_invoices"] = len(cargo_invoices)
+            summary.written["cargo_invoices"] = record_raw_events(
+                session,
+                store,
+                "cargo_invoice",
+                [(invoice.invoice_no, invoice.payload) for invoice in cargo_invoices],
+                fetched_at=fetched_at,
+            )
+
             commissions = await adapter.fetch_commission_rates()
             summary.fetched["commissions"] = len(commissions)
             summary.written["commissions"] = record_raw_events(

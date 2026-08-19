@@ -59,6 +59,9 @@ class RawOrder:
     cargo_provider: str | None
     desi: Decimal | None
     lines: tuple[RawOrderLine, ...]
+    cargo_tracking_no: str | None = None
+    """Gönderi takip numarası — kargo faturası eşleştirmesinin birincil anahtarı."""
+
     payload: dict[str, Any] = field(repr=False, default_factory=dict)
 
 
@@ -92,12 +95,30 @@ class RawCommission:
 
 
 @dataclass(frozen=True)
+class RawReturnLine:
+    """İade edilen tek satır — hangi sipariş satırı, kaç adet, ne kadar geri ödendi."""
+
+    external_line_id: str
+    """Sipariş satırının kanal id'si (`orderLineItemId`) — iadeyi satıra bağlar."""
+
+    barcode: str | None
+    seller_sku: str | None
+    quantity: int
+    refund_amount: Decimal
+    reason: str | None
+    accepted: bool
+    """Kabul edilmemiş talep iade sayılmaz; kâr etkisi ancak kabulle doğar."""
+
+
+@dataclass(frozen=True)
 class RawReturn:
     """Ham iade kaydı (Faz 2)."""
 
     external_return_id: str
     external_order_id: str
     return_date: datetime
+    lines: tuple[RawReturnLine, ...] = ()
+    cargo_tracking_no: str | None = None
     payload: dict[str, Any] = field(repr=False, default_factory=dict)
 
 
@@ -115,12 +136,23 @@ class RawSettlementRow:
 
 
 @dataclass(frozen=True)
+class RawCargoInvoiceLine:
+    """Kargo faturasının tek kalemi: hangi gönderi, ne kadar, kaç desi."""
+
+    parcel_id: str | None
+    external_order_id: str | None
+    amount: Decimal
+    desi: Decimal | None
+
+
+@dataclass(frozen=True)
 class RawCargoInvoice:
     """Ham kargo faturası (Faz 2)."""
 
     invoice_no: str
     period: str
     total: Decimal
+    lines: tuple[RawCargoInvoiceLine, ...] = ()
     payload: dict[str, Any] = field(repr=False, default_factory=dict)
 
 

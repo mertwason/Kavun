@@ -1,0 +1,38 @@
+{
+  "page": 0,
+  "size": 500,
+  "totalPages": 1,
+  "totalElements": 2,
+  "content": [
+    {
+      "id": "KRG-2026-08-0001",
+      "transactionDate": 1786752000000,
+      "transactionType": "Kargo Faturası",
+      "receiptId": 5510001,
+      "description": "Ağustos 2026 kargo faturası",
+      "debt": 1284.4,
+      "credit": 0.0,
+      "sellerRevenue": -1284.4,
+      "orderNumber": null,
+      "paymentOrderId": 77002,
+      "paymentDate": "2026-09-08",
+      "sellerId": 123456,
+      "country": "TR"
+    },
+    {
+      "id": "IAD-2026-08-0009",
+      "transactionDate": 1786752000000,
+      "transactionType": "İade Faturası",
+      "receiptId": 5510002,
+      "description": "İade faturası",
+      "debt": 120.0,
+      "credit": 0.0,
+      "sellerRevenue": -120.0,
+      "orderNumber": null,
+      "paymentOrderId": 77002,
+      "paymentDate": "2026-09-08",
+      "sellerId": 123456,
+      "country": "TR"
+    }
+  ]
+}

@@ -81,11 +81,22 @@ docker compose exec api python -m app.cli replay --store <uuid> --dry-run  # yal
 
 `replay` normalize kayıtları siler ve ham olaylardan yeniden üretir; ham veriye asla
 dokunmaz. Kesinleşmiş (`actual`) kargo maliyeti yeniden normalize'de ezilmez.
-Zamanlanmış işler (Celery beat): `normalize_pending` 15 dakikada bir,
-`recompute_pending_profits` 30 dakikada bir, `record_stock_movements` 45 dakikada bir,
-`detect_commission_changes` her gece 03:00, `check_price_discipline` her gece 04:00,
-`ensure_raw_event_partitions` her gece 02:30
-(gelecek ayların partition'larını açar).
+**Zamanlanmış işler (Celery beat, spec §9):**
+
+| Job | Sıklık | Ne yapar |
+|---|---|---|
+| `sync_all_stores` | 15 dk | credential'ı tanımlı her mağaza için sync kuyruğa alır |
+| `normalize_pending` | 15 dk | işlenmemiş ham olayları domain tablolarına aktarır |
+| `recompute_pending_profits` | 30 dk | kâr kaydı olmayan satırları hesaplar |
+| `record_stock_movements` | 45 dk | satış/iade stok hareketleri |
+| `alert_scan` | saatlik | senkronu durmuş mağazaları uyarır |
+| `ensure_raw_event_partitions` | 02:30 | gelecek ayların partition'larını açar |
+| `detect_commission_changes` | 03:00 | tarife snapshot diff'i |
+| `check_price_discipline` | 04:00 | MSRP / marj tabanı taraması |
+| `reconciliation_run` | 07:00 | dönemin hakediş mutabakatı |
+
+`sync_all_stores` credential'ı olmayan mağazayı atlar — boşuna istek atıp 401 toplamak
+yerine Ayarlar ekranında "Girilmedi" olarak bekler.
 
 ### Kâr hesabı
 
@@ -400,6 +411,46 @@ Dönem seç → Önizle (hiçbir şey yazılmaz) → Uygula → açık farkları
 - Fark **açıklamasız kapatılamaz:** en az 3 karakterlik not zorunludur, `open` durumuna geri
   dönüş yoktur. Açıklamasız kapatılan fark, kapatılmamış farktan daha tehlikelidir.
 
+### Trendyol Faz 2 uçları (KVN-EK-05)
+
+Faz 1'de yalnızca sipariş ve ürün çekiliyordu; iade, hakediş ve kargo faturası uçları
+`NotImplementedError` idi. Üçü de yazıldı — alan adları developers.trendyol.com'dan
+**2026-08-19'da doğrulandı**, tahmin edilen alan yok.
+
+| Ne | Uç | Not |
+|---|---|---|
+| İadeler | `GET /order/sellers/{id}/claims` | `size` max 200; adet `claimItems` sayısından |
+| Hakediş | `GET /finance/che/sellers/{id}/settlements` | aralık max **15 gün**, `size` 500\|1000, `transactionType` **tek tip** |
+| Kargo faturası | `.../otherfinancials` → `.../cargo-invoice/{seri}/items` | **iki adımlı**, aşağıya bak |
+
+**İade kuralları.** Adet `claimItems` dizisinin uzunluğundan sayılır (servis her iade
+edilen adedi ayrı kayıt olarak veriyor). **Kabul edilmeyen talep iade sayılmaz** — reddedilen
+talebi iade yazmak ciroyu haksız yere düşürürdü; kısmen kabul edilen satır kabul edilen ve
+edilmeyen adetlere bölünür. Sipariş satırı bulunamazsa iade **yazılmaz** ama sessizce de
+geçilmez (`iade_satir_yok` sayacı). `restocked` alanı serviste yok ve **False** varsayılır:
+malın yeniden satılabilir olduğunu kanıtsız varsaymak kârı olduğundan yüksek gösterirdi.
+
+**Hakediş tutarı.** Servis borç (`debt`) ve alacak (`credit`) sütunlarını ayrı veriyor;
+Kavun tek tutar taşır: `credit − debt`. Bizden kesilen kalem negatif, bize ödenen pozitif
+olur. Bilinmeyen `transactionType` **atılmaz**, `other` olarak yazılır — mutabakatta
+"tanımadığım kalem" görünür kalmalı, atılan kalem farkı gizler.
+
+**Kargo faturası zinciri.** Fatura numaralarını doğrudan listeleyen bir servis yok:
+
+```
+otherfinancials?transactionType=DeductionInvoices
+   → transactionType'ı "Kargo Faturası" olan kayıtların `id`'si = fatura seri no
+   → cargo-invoice/{seri}/items  →  parcelUniqueId · orderNumber · amount · desi
+```
+
+Kalemler gönderiyle eşleşince maliyet `estimated → actual` olur; kurallar Excel
+akışıyla aynıdır (kesinleşmiş maliyet ezilmez, eşleşmeyen satır uydurulmaz).
+
+**Takip numarası artık doldruluyor.** `cargoTrackingNumber` sipariş yanıtında doğrulandı
+(KVN-EK-02'de doğrulanamadığı için boş bırakılıyordu ve eşleştirme sipariş numarasına
+düşüyordu). Kargo faturası eşleştirmesinin birincil anahtarı artık gerçekten takip
+numarası.
+
 ### Ayarlar: mağaza, bağlantı ve kargo tarifesi (KVN-EK-04)
 
 Gerçek veriye geçişin kapısı (spec §10.7). `/{marka}/settings` altında üç şey yönetilir:
@@ -675,14 +726,18 @@ Bilinçli bypass yalnızca iki yolla: `holding_scope()` (audit'e yazılır) ve `
 
 ## Trendyol entegrasyonu
 
-Uç noktalar ve alan adları developers.trendyol.com'dan doğrulandı (2026-08-18);
-tahmin edilen alan yok, doğrulanamayanlar kodda `TODO(verify)` ile işaretli.
+Uç noktalar ve alan adları developers.trendyol.com'dan doğrulandı (siparişler/ürünler
+2026-08-18, Faz 2 uçları 2026-08-19); tahmin edilen alan yok, doğrulanamayanlar kodda
+`TODO(verify)` ile işaretli.
 
 | Ne | Uç | Kısıtlar |
 |---|---|---|
 | Siparişler | `GET /order/sellers/{sellerId}/orders` | `size` max 200, tarih aralığı max 2 hafta, 3 ay geriye, 1.000 istek/dk |
 | Ürünler (onaylı, V2) | `GET /product/sellers/{sellerId}/products/approved` | `size` max 100, 10.000 üstü `nextPageToken` |
-| Hakediş (Faz 2) | `GET /finance/che/sellers/{sellerId}/settlements` | `transactionType` zorunlu, aralık max 15 gün |
+| İadeler | `GET /order/sellers/{sellerId}/claims` | `size` max 200, tarih milisaniye damgası |
+| Hakediş | `GET /finance/che/sellers/{sellerId}/settlements` | `transactionType` zorunlu ve tek tip, aralık max 15 gün, `size` 500\|1000 |
+| Kesinti faturaları | `GET /finance/che/sellers/{sellerId}/otherfinancials` | kargo faturasının seri numarası buradan çıkar |
+| Kargo faturası kalemleri | `GET /finance/che/sellers/{sellerId}/cargo-invoice/{seri}/items` | `parcelUniqueId`, `orderNumber`, `amount`, `desi` |
 
 Kimlik: HTTP Basic (API Key : Secret) + `User-Agent: {SellerID} - SelfIntegration`
 (başlık yoksa 403). Base URL: `https://apigw.trendyol.com/integration`.

@@ -1,0 +1,112 @@
+{
+  "totalElements": 2,
+  "totalPages": 1,
+  "page": 0,
+  "size": 200,
+  "content": [
+    {
+      "id": "b0f1c2d3-1111-4a2b-9c3d-000000000001",
+      "claimId": "CLM-90010001",
+      "orderNumber": "TY-2026-000117",
+      "orderDate": 1786060800000,
+      "customerFirstName": "Ay*",
+      "customerLastName": "Yıl*",
+      "claimDate": 1786665600000,
+      "cargoTrackingNumber": 7300000000011,
+      "cargoTrackingLink": "https://trendyol.com/kargo/7300000000011",
+      "cargoSenderNumber": "9911",
+      "cargoProviderName": "Trendyol Express",
+      "orderShipmentPackageId": 550001,
+      "items": [
+        {
+          "orderLine": {
+            "id": 880001,
+            "productName": "Kahveji Espresso Harmanı 250g",
+            "barcode": "8690000000011",
+            "merchantSku": "KHV-BLD-ESP-250",
+            "productColor": null,
+            "productSize": null,
+            "price": 289.9,
+            "vatBaseAmount": 1,
+            "vatRate": 1,
+            "salesCampaignId": null,
+            "productCategory": "Kahve/Harman"
+          },
+          "claimItems": [
+            {
+              "id": "ci-0001",
+              "orderLineItemId": 880001,
+              "customerClaimItemReason": { "name": "Beğenmedim", "externalReasonId": 12, "code": "NOT_LIKED" },
+              "trendyolClaimItemReason": { "name": "Müşteri iadesi", "externalReasonId": 1, "code": "CUSTOMER" },
+              "claimItemStatus": { "name": "Accepted" },
+              "note": null,
+              "customerNote": "Tadı beklediğim gibi değildi",
+              "resolved": true,
+              "autoAccepted": false,
+              "acceptedBySeller": true,
+              "acceptDetail": null
+            },
+            {
+              "id": "ci-0002",
+              "orderLineItemId": 880001,
+              "customerClaimItemReason": { "name": "Beğenmedim", "externalReasonId": 12, "code": "NOT_LIKED" },
+              "trendyolClaimItemReason": { "name": "Müşteri iadesi", "externalReasonId": 1, "code": "CUSTOMER" },
+              "claimItemStatus": { "name": "Accepted" },
+              "note": null,
+              "customerNote": null,
+              "resolved": true,
+              "autoAccepted": true,
+              "acceptedBySeller": false,
+              "acceptDetail": null
+            }
+          ]
+        }
+      ],
+      "lastModifiedDate": 1786752000000,
+      "orderOutboundPackageId": 550001
+    },
+    {
+      "id": "b0f1c2d3-2222-4a2b-9c3d-000000000002",
+      "claimId": "CLM-90010002",
+      "orderNumber": "TY-2026-000203",
+      "orderDate": 1786147200000,
+      "customerFirstName": "Me*",
+      "customerLastName": "Ka*",
+      "claimDate": 1786752000000,
+      "cargoTrackingNumber": 7300000000022,
+      "cargoProviderName": "Trendyol Express",
+      "orderShipmentPackageId": 550002,
+      "items": [
+        {
+          "orderLine": {
+            "id": 880002,
+            "productName": "Alessi Çelik Cezve 400ml",
+            "barcode": "8690000000022",
+            "merchantSku": "ALS-CZV-400",
+            "price": 1249.0,
+            "vatBaseAmount": 20,
+            "vatRate": 20,
+            "productCategory": "Ekipman/Aksesuar"
+          },
+          "claimItems": [
+            {
+              "id": "ci-0003",
+              "orderLineItemId": 880002,
+              "customerClaimItemReason": { "name": "Hasarlı geldi", "externalReasonId": 8, "code": "DAMAGED" },
+              "trendyolClaimItemReason": { "name": "Müşteri iadesi", "externalReasonId": 1, "code": "CUSTOMER" },
+              "claimItemStatus": { "name": "Rejected" },
+              "note": "Ürün kullanılmış",
+              "customerNote": null,
+              "resolved": true,
+              "autoAccepted": false,
+              "acceptedBySeller": false,
+              "acceptDetail": "Kullanım izi"
+            }
+          ]
+        }
+      ],
+      "lastModifiedDate": 1786838400000,
+      "orderOutboundPackageId": 550002
+    }
+  ]
+}

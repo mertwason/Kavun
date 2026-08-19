@@ -35,9 +35,20 @@ class FakeConnector(MarketplaceConnector):
 
     channel_code = "trendyol"
 
-    def __init__(self, orders: list[RawOrder], products: list[RawProduct]) -> None:
+    def __init__(
+        self,
+        orders: list[RawOrder],
+        products: list[RawProduct],
+        *,
+        returns: list[RawReturn] | None = None,
+        settlements: list[RawSettlementRow] | None = None,
+        cargo_invoices: list[RawCargoInvoice] | None = None,
+    ) -> None:
         self.orders = orders
         self.products = products
+        self.returns = returns or []
+        self.settlements = settlements or []
+        self.cargo_invoices = cargo_invoices or []
         self.calls: list[str] = []
 
     async def fetch_orders(self, since: datetime, until: datetime) -> list[RawOrder]:
@@ -53,13 +64,16 @@ class FakeConnector(MarketplaceConnector):
         return []
 
     async def fetch_returns(self, since: datetime) -> list[RawReturn]:
-        raise NotImplementedError
+        self.calls.append("returns")
+        return self.returns
 
     async def fetch_settlements(self, since: datetime) -> list[RawSettlementRow]:
-        raise NotImplementedError
+        self.calls.append("settlements")
+        return self.settlements
 
     async def fetch_cargo_invoices(self, since: datetime) -> list[RawCargoInvoice]:
-        raise NotImplementedError
+        self.calls.append("cargo_invoices")
+        return self.cargo_invoices
 
 
 class FailingConnector(FakeConnector):
@@ -127,8 +141,22 @@ async def test_sync_writes_raw_events(db_session: Session, store: Store) -> None
     summary = await sync_service.sync_store(db_session, store, connector=connector)
 
     assert summary.ok
-    assert summary.fetched == {"orders": 2, "products": 1, "commissions": 0}
-    assert summary.written == {"orders": 2, "products": 1, "commissions": 0}
+    assert summary.fetched == {
+        "orders": 2,
+        "products": 1,
+        "returns": 0,
+        "settlements": 0,
+        "cargo_invoices": 0,
+        "commissions": 0,
+    }
+    assert summary.written == {
+        "orders": 2,
+        "products": 1,
+        "returns": 0,
+        "settlements": 0,
+        "cargo_invoices": 0,
+        "commissions": 0,
+    }
 
     events = db_session.scalars(select(RawEvent).where(RawEvent.store_id == store.id)).all()
     assert {event.event_type for event in events} == {"order", "product"}

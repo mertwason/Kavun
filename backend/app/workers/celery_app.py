@@ -34,6 +34,11 @@ celery_app.conf.update(
 # beat yalnızca zincirin ortak adımlarını çalıştırır; kanal bazlı sync programı
 # mağaza sayısı arttığında KVN-20'de gözden geçirilecek.
 celery_app.conf.beat_schedule = {
+    # Spec §9: kanaldan çekim. Tek mağaza değil, credential'ı tanımlı tüm mağazalar.
+    "sync-all-stores": {
+        "task": "kavun.sync_all_stores",
+        "schedule": crontab(minute="*/15"),
+    },
     "normalize-pending": {
         "task": "kavun.normalize_pending",
         "schedule": crontab(minute="*/15"),
@@ -55,6 +60,16 @@ celery_app.conf.beat_schedule = {
     "check-price-discipline": {
         "task": "kavun.check_price_discipline",
         "schedule": crontab(hour=4, minute=0),
+    },
+    # Spec §9: günlük hakediş mutabakatı (07:00) — hakediş çekimi 06:00'da tamamlanır.
+    "reconciliation-run": {
+        "task": "kavun.reconciliation_run",
+        "schedule": crontab(hour=7, minute=0),
+    },
+    # Spec §9: saatlik uyarı taraması.
+    "alert-scan": {
+        "task": "kavun.alert_scan",
+        "schedule": crontab(minute=5),
     },
     "ensure-raw-event-partitions": {
         "task": "kavun.ensure_raw_event_partitions",

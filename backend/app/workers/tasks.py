@@ -129,3 +129,85 @@ def record_stock_movements() -> dict[str, int]:
 
     log.info("inventory.movements_recorded", sale_out=sales.sale_out, return_in=returns.return_in)
     return {"sale_out": sales.sale_out, "return_in": returns.return_in}
+
+
+@celery_app.task(name="kavun.sync_all_stores")
+def sync_all_stores_task(normalize: bool = True) -> dict[str, Any]:
+    """Credential'ı tanımlı TÜM mağazaları senkronlar (spec §9).
+
+    Zamanlanmış sync'in giriş kapısı: beat tek mağaza id'si bilemez, bu görev aktif
+    mağazaları tarar ve her biri için `sync_store` kuyruğa alır. Credential'ı olmayan
+    mağaza atlanır — boşuna istek atıp 401 toplamak yerine sessizce beklenir.
+    """
+    from app.models.identity import Store, StoreCredential
+
+    queued: list[str] = []
+    skipped = 0
+    with SessionLocal() as session, system_scope():
+        rows = session.execute(
+            select(Store, StoreCredential)
+            .outerjoin(StoreCredential, StoreCredential.store_id == Store.id)
+            .where(Store.is_active.is_(True))
+        ).all()
+        for store, credential in rows:
+            if credential is None:
+                skipped += 1
+                continue
+            queued.append(str(store.id))
+
+    for store_id in queued:
+        sync_store_task.delay(store_id, normalize=normalize)
+
+    log.info("sync.all_stores", queued=len(queued), skipped_without_credentials=skipped)
+    return {"queued": len(queued), "skipped": skipped}
+
+
+@celery_app.task(name="kavun.reconciliation_run")
+def reconciliation_run_task(period: str | None = None) -> dict[str, Any]:
+    """Günlük hakediş mutabakatı (spec §9, §7).
+
+    Dönem verilmezse **içinde bulunulan ay** mutabakatlanır. Tur idempotenttir: önceki
+    turda işlenmiş kalemler atlanır, ikinci fark kaydı üretilmez.
+    """
+    from app.core.context import brand_scope
+    from app.models.identity import Brand, Store
+    from app.services import reconciliation
+
+    target = period or date.today().strftime("%Y-%m")
+    diffs = 0
+    records = 0
+    with SessionLocal() as session:
+        with system_scope():
+            brands = list(session.scalars(select(Brand)).all())
+            stores_by_brand: dict[uuid.UUID, list[Store]] = {}
+            for store in session.scalars(select(Store).where(Store.is_active.is_(True))):
+                stores_by_brand.setdefault(store.brand_id, []).append(store)
+
+        for brand in brands:
+            for store in stores_by_brand.get(brand.id, []):
+                with brand_scope(brand.tenant_id, brand.id, brand_slug=brand.slug):
+                    summary = reconciliation.run(session, store=store, period=target, dry_run=False)
+                    diffs += summary.diffs
+                    records += summary.records
+        session.commit()
+
+    log.info("reconciliation.daily_run", period=target, records=records, diffs=diffs)
+    return {"period": target, "records": records, "diffs": diffs}
+
+
+@celery_app.task(name="kavun.alert_scan")
+def alert_scan_task() -> dict[str, int]:
+    """Saatlik uyarı taraması (spec §9).
+
+    Uyarı üreten akışların çoğu (negatif stok, tarife diff'i, fiyat disiplini, kargo ve
+    mutabakat eşleşmezliği) uyarıyı **olay anında** yazıyor; burada tekrar taranmaz.
+    Taranan tek şey hiçbir akışın yazmadığı durum: senkronun sessizce durmuş olması.
+    """
+    from app.services.alerts import scan_stale_syncs
+
+    with SessionLocal() as session, system_scope():
+        alerts = scan_stale_syncs(session)
+        session.commit()
+
+    log.info("alerts.scanned", alerts=alerts)
+    return {"alerts": alerts}

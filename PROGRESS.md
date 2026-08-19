@@ -2,7 +2,7 @@
 
 **TOPLAM: %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 **FAZ 2 (ek görevler): %45** ▓▓▓▓▓▓▓▓▓░░░░░░░░░░░
-Son güncelleme: 2026-08-19 10:10 · Aktif görev: — (sırada: KVN-EK-05)
+Son güncelleme: 2026-08-19 10:20 · Aktif görev: KVN-EK-05
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -43,7 +43,7 @@ Toplam ağırlık: **110** · Biten ağırlık: 110 · **Faz 1 ve Faz 1.5 tamaml
 | KVN-EK-02 | Kargo faturası eşleştirme + `estimated → actual` + revizyon | 6       | ✅ Bitti     | spec §5.3, §6.2 |
 | KVN-EK-03 | Hakediş mutabakatı: eşleştirme + fark motoru + ekran       | 8       | ✅ Bitti     | spec §7 — "katil özellik" |
 | KVN-EK-04 | Ayarlar ekranı: mağaza + credential + hizmet bedeli + kargo tarifesi | 5 | ✅ Bitti     | spec §10.7 — kargo tarife TABLOSU da bu görevde yazıldı (yoktu) |
-| KVN-EK-05 | Trendyol Faz 2 uçları + eksik beat programı                | 8       | ⏳ Sırada    | spec §4, §9 — iade/hakediş/kargo senkronu; `workers/tasks.py` coverage ≥ %80 |
+| KVN-EK-05 | Trendyol Faz 2 uçları + eksik beat programı                | 8       | 🔄 Yapılıyor | spec §4, §9 — iade/hakediş/kargo senkronu; `workers/tasks.py` coverage ≥ %80 |
 | KVN-EK-06 | Uyarılar ekranı + acknowledge akışı                        | 4       | ⏳ Sırada    | spec §10.6 — `acknowledged_at` yazan uç dahil |
 | KVN-EK-07 | Gerçek veri kalibrasyon haftası                            | 6       | ⏳ Sırada    | **Mert'in dosyalarına bağlı** — geldiğinde sıraya girer; kurgu fixture'lar + 3 `TODO(verify)` + `tracking_no` |
 | KVN-EK-08 | Tasarım sistemi rework (token seti + Tremor + TanStack)    | 10      | ⏳ Sırada    | **BLOKE:** brief'in "Kaynak Kütüphaneler" bölümü repoda yok (aşağıya bak) |

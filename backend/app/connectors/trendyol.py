@@ -29,16 +29,18 @@ from typing import Any
 from app.connectors.base import (
     MarketplaceConnector,
     RawCargoInvoice,
+    RawCargoInvoiceLine,
     RawCommission,
     RawOrder,
     RawOrderLine,
     RawProduct,
     RawReturn,
+    RawReturnLine,
     RawSettlementRow,
 )
 from app.connectors.http import ApiClient
 from app.core.logging import get_logger
-from app.models.enums import OrderStatus
+from app.models.enums import OrderStatus, SettlementRecordType
 
 log = get_logger("connectors.trendyol")
 
@@ -50,6 +52,53 @@ ORDER_PAGE_SIZE = 200  # servis üst sınırı
 ORDER_WINDOW_DAYS = 14  # startDate–endDate arası en fazla iki hafta
 PRODUCT_PAGE_SIZE = 100  # onaylı ürün servisinin üst sınırı
 REQUESTS_PER_MINUTE = 600  # dokümandaki 1.000/dk sınırının altında güvenli pas
+
+CLAIM_PAGE_SIZE = 200  # iade servisinin üst sınırı
+SETTLEMENT_WINDOW_DAYS = 15  # hakediş servisinde aralık 15 günü aşamaz
+SETTLEMENT_PAGE_SIZE = 500  # servis yalnızca 500 veya 1000 kabul eder
+CARGO_INVOICE_PAGE_SIZE = 500
+
+# Hakediş servisi `transactionType`'ı zorunlu ve TEK tip alır; kâr motorunu ilgilendiren
+# tipler bunlar. Listede olmayan tip (ör. ProvisionPositive) çekilmez — hakedişin tamamı
+# değil, kâra giren kalemler mutabakata sokulur (spec §7).
+SETTLEMENT_TRANSACTION_TYPES: tuple[str, ...] = (
+    "Sale",
+    "Return",
+    "Discount",
+    "DiscountCancel",
+    "Coupon",
+    "CouponCancel",
+    "CommissionPositive",
+    "CommissionNegative",
+    "DeliveryFee",
+    "DeliveryFeeCancel",
+    "ManualRefund",
+    "ManualRefundCancel",
+)
+
+DEDUCTION_INVOICE_TYPE = "DeductionInvoices"
+"""Kargo faturasının seri numarası bu tipin yanıtından çıkar (bkz. `fetch_cargo_invoices`)."""
+
+# Kargo faturası satırını ayırt eden etiketler — doküman iki yazımı da veriyor.
+CARGO_INVOICE_LABELS = ("kargo faturası", "kargo fatura")
+
+# Hakediş `transactionType` → içeri normalize tip (spec §5.3).
+SETTLEMENT_TYPE_MAP: dict[str, SettlementRecordType] = {
+    "sale": SettlementRecordType.SALE,
+    "return": SettlementRecordType.REFUND,
+    "manualrefund": SettlementRecordType.REFUND,
+    "manualrefundcancel": SettlementRecordType.REFUND,
+    "commissionpositive": SettlementRecordType.COMMISSION,
+    "commissionnegative": SettlementRecordType.COMMISSION,
+    "commissionpositivecancel": SettlementRecordType.COMMISSION,
+    "commissionnegativecancel": SettlementRecordType.COMMISSION,
+    "deliveryfee": SettlementRecordType.CARGO,
+    "deliveryfeecancel": SettlementRecordType.CARGO,
+    "discount": SettlementRecordType.OTHER,
+    "discountcancel": SettlementRecordType.OTHER,
+    "coupon": SettlementRecordType.OTHER,
+    "couponcancel": SettlementRecordType.OTHER,
+}
 
 DEFAULT_STOREFRONT_CODE = "TR"
 
@@ -224,21 +273,148 @@ class TrendyolConnector(MarketplaceConnector):
 
     # --- Faz 2 uçları -------------------------------------------------------
 
-    async def fetch_returns(self, since: datetime) -> list[RawReturn]:
-        """İade/talep servisi — Faz 2 (`/order/sellers/{sellerId}/claims`)."""
-        raise NotImplementedError("İade senkronu Faz 2 kapsamında (spec §11)")
+    async def fetch_returns(
+        self, since: datetime, until: datetime | None = None
+    ) -> list[RawReturn]:
+        """İade taleplerini çeker (`GET /order/sellers/{sellerId}/claims`).
 
-    async def fetch_settlements(self, since: datetime) -> list[RawSettlementRow]:
-        """Hakediş — Faz 2: `GET /finance/che/sellers/{sellerId}/settlements`.
-
-        Doğrulanmış kısıtlar: `transactionType` (Sale|Return) zorunlu, tarih aralığı
-        en fazla 15 gün, `size` yalnızca 500 veya 1000.
+        Alan adları doğrulandı (2026-08-19): `content[].claimId`, `orderNumber`,
+        `claimDate`, `cargoTrackingNumber`, `items[].orderLine`, `items[].claimItems[]`.
+        Sayfa boyutu üst sınırı 200, tarih alanları milisaniye damgası.
         """
-        raise NotImplementedError("Hakediş senkronu Faz 2 kapsamında (spec §7)")
+        finish = until or datetime.now(UTC)
+        claims: list[RawReturn] = []
+        for window_start, window_end in date_windows(since, finish):
+            page = 0
+            while True:
+                body = await self._client.get_json(
+                    f"/order/sellers/{self.seller_id}/claims",
+                    params={
+                        "startDate": to_millis(window_start),
+                        "endDate": to_millis(window_end),
+                        "page": page,
+                        "size": CLAIM_PAGE_SIZE,
+                    },
+                )
+                content = body.get("content") or []
+                claims.extend(parse_claim(item) for item in content)
 
-    async def fetch_cargo_invoices(self, since: datetime) -> list[RawCargoInvoice]:
-        """Kargo faturaları — Faz 2."""
-        raise NotImplementedError("Kargo faturası senkronu Faz 2 kapsamında (spec §11)")
+                total_pages = int(body.get("totalPages") or 0)
+                page += 1
+                if page >= total_pages or not content:
+                    break
+
+        log.info("trendyol.claims.fetched", seller_id=self.seller_id, count=len(claims))
+        return claims
+
+    async def fetch_settlements(
+        self, since: datetime, until: datetime | None = None
+    ) -> list[RawSettlementRow]:
+        """Hakediş kalemlerini çeker (`GET /finance/che/sellers/{sellerId}/settlements`).
+
+        Doğrulanmış kısıtlar (2026-08-19): `transactionType` zorunlu ve **tek tip**,
+        tarih aralığı en fazla **15 gün**, `size` yalnızca 500 veya 1000. Bu yüzden her
+        tip için ayrı istek atılır; hepsi tek listede birleşir.
+        """
+        finish = until or datetime.now(UTC)
+        rows: list[RawSettlementRow] = []
+        for window_start, window_end in date_windows(since, finish, days=SETTLEMENT_WINDOW_DAYS):
+            for transaction_type in SETTLEMENT_TRANSACTION_TYPES:
+                rows.extend(
+                    await self._settlement_pages(
+                        "settlements", transaction_type, window_start, window_end
+                    )
+                )
+
+        log.info("trendyol.settlements.fetched", seller_id=self.seller_id, count=len(rows))
+        return rows
+
+    async def _settlement_pages(
+        self, service: str, transaction_type: str, window_start: datetime, window_end: datetime
+    ) -> list[RawSettlementRow]:
+        """Tek tip + tek pencere için tüm sayfaları tüketir."""
+        collected: list[RawSettlementRow] = []
+        page = 0
+        while True:
+            body = await self._client.get_json(
+                f"/finance/che/sellers/{self.seller_id}/{service}",
+                params={
+                    "startDate": to_millis(window_start),
+                    "endDate": to_millis(window_end),
+                    "transactionType": transaction_type,
+                    "page": page,
+                    "size": SETTLEMENT_PAGE_SIZE,
+                },
+            )
+            content = body.get("content") or []
+            collected.extend(parse_settlement_row(item) for item in content)
+
+            total_pages = int(body.get("totalPages") or 0)
+            page += 1
+            if page >= total_pages or not content:
+                break
+        return collected
+
+    async def fetch_cargo_invoices(
+        self, since: datetime, until: datetime | None = None
+    ) -> list[RawCargoInvoice]:
+        """Kargo faturalarını çeker — **iki adımlı** akış (2026-08-19 doğrulandı).
+
+        1. `otherfinancials?transactionType=DeductionInvoices` çağrılır; dönen kayıtlardan
+           `transactionType` alanı "Kargo Faturası"/"Kargo Fatura" olanların `id` değeri
+           fatura seri numarasıdır.
+        2. Her seri numarası için `cargo-invoice/{seri}/items` çağrılır; kalemler
+           `parcelUniqueId`, `orderNumber`, `amount`, `desi` alanlarını taşır.
+
+        Fatura numarası doğrudan listeleyen bir servis yok; zincir dokümanda bu şekilde
+        tarif ediliyor.
+        """
+        finish = until or datetime.now(UTC)
+        invoices: list[RawCargoInvoice] = []
+
+        for window_start, window_end in date_windows(since, finish, days=SETTLEMENT_WINDOW_DAYS):
+            deductions = await self._settlement_pages(
+                "otherfinancials", DEDUCTION_INVOICE_TYPE, window_start, window_end
+            )
+            for row in deductions:
+                if not is_cargo_invoice_row(row.payload):
+                    continue
+                serial = str(row.payload.get("id") or "").strip()
+                if not serial:
+                    continue
+                invoices.append(await self._cargo_invoice_items(serial, row))
+
+        log.info("trendyol.cargo_invoices.fetched", seller_id=self.seller_id, count=len(invoices))
+        return invoices
+
+    async def _cargo_invoice_items(self, serial: str, row: RawSettlementRow) -> RawCargoInvoice:
+        """Tek faturanın kalemlerini tüm sayfalarıyla çeker."""
+        raw_items: list[dict[str, Any]] = []
+        page = 0
+        while True:
+            body = await self._client.get_json(
+                f"/finance/che/sellers/{self.seller_id}/cargo-invoice/{serial}/items",
+                params={"page": page, "size": CARGO_INVOICE_PAGE_SIZE},
+            )
+            content = body.get("content") or []
+            raw_items.extend(content)
+
+            total_pages = int(body.get("totalPages") or 0)
+            page += 1
+            if page >= total_pages or not content:
+                break
+
+        lines = [parse_cargo_invoice_line(item) for item in raw_items]
+        return RawCargoInvoice(
+            invoice_no=serial,
+            period=row.transaction_date.strftime("%Y-%m"),
+            total=sum((line.amount for line in lines), Decimal("0")),
+            lines=tuple(lines),
+            # Payload `raw_events`'e JSONB olarak yazılır: ham sözlükler saklanır,
+            # ayrıştırılmış Decimal'ler DEĞİL (serialize edilemezler ve ham veri
+            # değişmezliği ilkesini bozarlar).
+            payload={"invoice": row.payload, "items": raw_items},
+        )
 
 
 # --- ayrıştırıcılar (saf fonksiyonlar, HTTP'den bağımsız test edilir) --------
@@ -275,7 +451,9 @@ def parse_order(raw: dict[str, Any]) -> RawOrder:
     """Sipariş paketini normalize eder.
 
     Alan adları doğrulandı: `orderNumber`, `orderDate`, `status`, `grossAmount`,
-    `totalPrice`, `shipmentAddress.city`, `cargoProviderName`, `deci`, `lines`.
+    `totalPrice`, `shipmentAddress.city`, `cargoProviderName`, `deci`, `lines`,
+    `cargoTrackingNumber` (2026-08-19'da doğrulandı — kargo faturası eşleştirmesinin
+    birincil anahtarı; KVN-EK-02'de doğrulanamadığı için boş bırakılıyordu).
     """
     status = normalize_status(raw.get("status") or raw.get("shipmentPackageStatus"))
     shipment_address = raw.get("shipmentAddress") or {}
@@ -289,6 +467,9 @@ def parse_order(raw: dict[str, Any]) -> RawOrder:
         currency=str(raw.get("currencyCode") or "TRY"),
         customer_city=shipment_address.get("city"),
         cargo_provider=raw.get("cargoProviderName"),
+        cargo_tracking_no=(
+            str(raw["cargoTrackingNumber"]) if raw.get("cargoTrackingNumber") else None
+        ),
         desi=_decimal(raw.get("deci")) or None,
         lines=tuple(
             parse_order_line(line, package_status=status) for line in raw.get("lines") or []
@@ -346,3 +527,151 @@ def parse_product(raw: dict[str, Any]) -> list[RawProduct]:
         )
         for variant in variants
     ]
+
+
+# --- Faz 2 ayrıştırıcıları ---------------------------------------------------
+
+
+def parse_claim_line(item: dict[str, Any]) -> list[RawReturnLine]:
+    """İade talebinin bir kalemini satırlara çevirir.
+
+    Yapı doğrulandı: `items[].orderLine` sipariş satırını, `items[].claimItems[]` ise o
+    satırdan iade edilen **her bir adedi** ayrı kayıt olarak taşır. Bu yüzden adet,
+    `claimItems` uzunluğundan sayılır; tutar birim fiyat × adettir.
+
+    **Kabul edilmemiş talep iade değildir:** `claimItemStatus.name` `Accepted` (ya da
+    `autoAccepted`/`acceptedBySeller`) olmayan kalemler `accepted=False` döner ve kâr
+    etkisi doğurmaz — reddedilen talebi iade saymak ciroyu haksız yere düşürürdü.
+    """
+    order_line = item.get("orderLine") or {}
+    claim_items = item.get("claimItems") or []
+    if not claim_items:
+        return []
+
+    unit_price = _decimal(order_line.get("price"))
+    line_id = str(order_line.get("id") or "")
+
+    # Aynı satırın kabul edilen ve edilmeyen adetleri ayrı kayıtlara bölünür.
+    grouped: dict[bool, list[dict[str, Any]]] = {True: [], False: []}
+    for claim_item in claim_items:
+        grouped[_claim_accepted(claim_item)].append(claim_item)
+
+    lines: list[RawReturnLine] = []
+    for accepted, members in grouped.items():
+        if not members:
+            continue
+        quantity = len(members)
+        lines.append(
+            RawReturnLine(
+                external_line_id=line_id,
+                barcode=order_line.get("barcode"),
+                seller_sku=order_line.get("merchantSku"),
+                quantity=quantity,
+                refund_amount=(unit_price * quantity).quantize(Decimal("0.0001")),
+                reason=_claim_reason(members[0]),
+                accepted=accepted,
+            )
+        )
+    return lines
+
+
+def _claim_accepted(claim_item: dict[str, Any]) -> bool:
+    """Kalem kabul edilmiş mi? Üç alanın herhangi biri kabulü gösterir."""
+    status = (claim_item.get("claimItemStatus") or {}).get("name") or ""
+    return (
+        status.strip().lower() == "accepted"
+        or bool(claim_item.get("autoAccepted"))
+        or bool(claim_item.get("acceptedBySeller"))
+    )
+
+
+def _claim_reason(claim_item: dict[str, Any]) -> str | None:
+    """İade gerekçesi: önce müşterinin seçtiği sebep, yoksa Trendyol'unki."""
+    customer = (claim_item.get("customerClaimItemReason") or {}).get("name")
+    trendyol = (claim_item.get("trendyolClaimItemReason") or {}).get("name")
+    return customer or trendyol or None
+
+
+def parse_claim(raw: dict[str, Any]) -> RawReturn:
+    """İade talebini normalize eder.
+
+    Alan adları doğrulandı: `claimId`, `orderNumber`, `claimDate`, `cargoTrackingNumber`,
+    `items[]`.
+    """
+    lines: list[RawReturnLine] = []
+    for item in raw.get("items") or []:
+        lines.extend(parse_claim_line(item))
+
+    claim_date = raw.get("claimDate")
+    tracking = raw.get("cargoTrackingNumber")
+    return RawReturn(
+        external_return_id=str(raw.get("claimId") or raw.get("id") or ""),
+        external_order_id=str(raw.get("orderNumber") or ""),
+        return_date=from_millis(claim_date) if claim_date else datetime.now(UTC),
+        lines=tuple(lines),
+        cargo_tracking_no=str(tracking) if tracking else None,
+        payload=raw,
+    )
+
+
+def normalize_settlement_type(value: str | None) -> SettlementRecordType:
+    """Hakediş `transactionType` değerini içeri tipe çevirir.
+
+    Bilinmeyen tip `OTHER` olur — sessizce atılmaz. Mutabakatta "tanımadığım kalem" görünür
+    kalmalı; atılan kalem farkı gizler.
+    """
+    if not value:
+        return SettlementRecordType.OTHER
+    return SETTLEMENT_TYPE_MAP.get(value.strip().lower(), SettlementRecordType.OTHER)
+
+
+def parse_settlement_row(raw: dict[str, Any]) -> RawSettlementRow:
+    """Hakediş satırını normalize eder.
+
+    Alan adları doğrulandı: `id`, `transactionDate`, `transactionType`, `debt`, `credit`,
+    `commissionRate`, `orderNumber`, `barcode`, `shipmentPackageId`.
+
+    **Tutar işareti:** servis borç (`debt`) ve alacak (`credit`) sütunlarını ayrı veriyor.
+    Kavun tek tutar taşır: `credit - debt`. Böylece bizden kesilen kalem negatif, bize
+    ödenen pozitif olur; mutabakat motoru zaten mutlak değerle karşılaştırıyor (spec §7.3).
+    """
+    transaction_date = raw.get("transactionDate")
+    credit = _decimal(raw.get("credit"))
+    debt = _decimal(raw.get("debt"))
+    rate = raw.get("commissionRate")
+
+    return RawSettlementRow(
+        external_ref=str(raw.get("id") or ""),
+        transaction_date=(from_millis(transaction_date) if transaction_date else datetime.now(UTC)),
+        record_type=normalize_settlement_type(raw.get("transactionType")).value,
+        amount=(credit - debt).quantize(Decimal("0.0001")),
+        commission_rate=_decimal(rate) if rate is not None else None,
+        external_order_id=str(raw["orderNumber"]) if raw.get("orderNumber") else None,
+        payload=raw,
+    )
+
+
+def is_cargo_invoice_row(payload: dict[str, Any]) -> bool:
+    """`DeductionInvoices` kaydı kargo faturası mı?
+
+    Doküman iki yazımı da veriyor ("Kargo Faturası" / "Kargo Fatura"); karşılaştırma
+    büyük/küçük harf ve boşluk duyarsız yapılır.
+    """
+    label = str(payload.get("transactionType") or "").strip().lower()
+    return any(label.startswith(candidate) for candidate in CARGO_INVOICE_LABELS)
+
+
+def parse_cargo_invoice_line(raw: dict[str, Any]) -> RawCargoInvoiceLine:
+    """Kargo faturası kalemini normalize eder.
+
+    Alan adları doğrulandı: `parcelUniqueId`, `orderNumber`, `amount`, `desi`.
+    """
+    parcel = raw.get("parcelUniqueId")
+    order_number = raw.get("orderNumber")
+    desi = raw.get("desi")
+    return RawCargoInvoiceLine(
+        parcel_id=str(parcel) if parcel else None,
+        external_order_id=str(order_number) if order_number else None,
+        amount=_decimal(raw.get("amount")),
+        desi=_decimal(desi) if desi is not None else None,
+    )

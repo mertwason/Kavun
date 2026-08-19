@@ -1,0 +1,11 @@
+{
+  "page": 0,
+  "size": 500,
+  "totalPages": 1,
+  "totalElements": 3,
+  "content": [
+    { "shipmentPackageType": "Satış", "parcelUniqueId": "7300000000011", "orderNumber": "TY-2026-000117", "amount": 54.9, "desi": 0.8 },
+    { "shipmentPackageType": "Satış", "parcelUniqueId": "7300000000022", "orderNumber": "TY-2026-000203", "amount": 94.5, "desi": 3.4 },
+    { "shipmentPackageType": "İade", "parcelUniqueId": "7300000000033", "orderNumber": "TY-2026-000117", "amount": 54.9, "desi": 0.8 }
+  ]
+}

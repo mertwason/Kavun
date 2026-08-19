@@ -26,15 +26,31 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from app.connectors import trendyol
-from app.connectors.base import RawOrder, RawProduct
+from app.connectors.base import (
+    RawCargoInvoice,
+    RawCargoInvoiceLine,
+    RawOrder,
+    RawProduct,
+    RawReturn,
+    RawReturnLine,
+    RawSettlementRow,
+)
 from app.core.context import system_scope
 from app.core.logging import get_logger
 from app.engine import cargo as cargo_engine
 from app.models.catalog import Product, ProductChannelMap
-from app.models.enums import ChannelCode, CostState, OrderStatus
+from app.models.enums import ChannelCode, CostState, OrderStatus, SettlementRecordType
 from app.models.identity import Channel, Store
 from app.models.results import LineProfit
-from app.models.transactions import Order, OrderLine, RawEvent, Shipment
+from app.models.transactions import (
+    CargoInvoice,
+    Order,
+    OrderLine,
+    RawEvent,
+    Return,
+    SettlementRecord,
+    Shipment,
+)
 from app.services import cargo_tariffs
 
 log = get_logger("services.normalize")
@@ -56,6 +72,9 @@ class NormalizeSummary:
     lines_written: int = 0
     products_matched: int = 0
     products_unmatched: int = 0
+    returns_written: int = 0
+    settlements_written: int = 0
+    cargo_lines_matched: int = 0
     skipped: dict[str, int] = field(default_factory=dict)
 
     def skip(self, reason: str) -> None:
@@ -71,6 +90,9 @@ class NormalizeSummary:
             "lines_written": self.lines_written,
             "products_matched": self.products_matched,
             "products_unmatched": self.products_unmatched,
+            "returns_written": self.returns_written,
+            "settlements_written": self.settlements_written,
+            "cargo_lines_matched": self.cargo_lines_matched,
             "skipped": self.skipped,
         }
 
@@ -95,7 +117,10 @@ def _channel_code(session: Session, store: Store) -> ChannelCode:
     return code
 
 
-def _parse_event(channel: ChannelCode, event: RawEvent) -> RawOrder | list[RawProduct] | None:
+ParsedEvent = RawOrder | list[RawProduct] | RawReturn | RawSettlementRow | RawCargoInvoice
+
+
+def _parse_event(channel: ChannelCode, event: RawEvent) -> ParsedEvent | None:
     """Ham olayı kanalın ayrıştırıcısıyla çözer."""
     if channel is not ChannelCode.TRENDYOL:
         return None
@@ -103,7 +128,32 @@ def _parse_event(channel: ChannelCode, event: RawEvent) -> RawOrder | list[RawPr
         return trendyol.parse_order(event.payload)
     if event.event_type == "product":
         return trendyol.parse_product(event.payload)
+    if event.event_type == "return":
+        return trendyol.parse_claim(event.payload)
+    if event.event_type == "settlement":
+        return trendyol.parse_settlement_row(event.payload)
+    if event.event_type == "cargo_invoice":
+        return _parse_cargo_invoice_event(event.payload)
     return None
+
+
+def _parse_cargo_invoice_event(payload: dict[str, Any]) -> RawCargoInvoice:
+    """Kargo faturası olayını ham sözlükten yeniden kurar.
+
+    `raw_events` ham yanıtı saklar (`{"invoice": ..., "items": [...]}`); normalize onu
+    her replay'de yeniden ayrıştırır — ham veriden yeniden üretilebilirlik ilkesi.
+    """
+    invoice_row = payload.get("invoice") or {}
+    items = payload.get("items") or []
+    parsed = trendyol.parse_settlement_row(invoice_row)
+    lines = [trendyol.parse_cargo_invoice_line(item) for item in items]
+    return RawCargoInvoice(
+        invoice_no=str(invoice_row.get("id") or ""),
+        period=parsed.transaction_date.strftime("%Y-%m"),
+        total=sum((line.amount for line in lines), Decimal("0")),
+        lines=tuple(lines),
+        payload=payload,
+    )
 
 
 def _find_product(
@@ -310,6 +360,8 @@ def normalize_events(
     store_cache: dict[uuid.UUID, tuple[Store, ChannelCode]] = {}
     # Kargo tarifesi marka başına bir kez yüklenir: sipariş başına sorgu atmamak için.
     band_cache: dict[uuid.UUID, list[cargo_engine.Band]] = {}
+    # Kargo faturası kesinleşen siparişlerin kârı koşu sonunda yeniden hesaplanır (§6.2).
+    touched_orders: list[uuid.UUID] = []
 
     for event in sorted(events, key=lambda item: (item.fetched_at, item.id)):
         cached = store_cache.get(event.store_id)
@@ -333,6 +385,12 @@ def normalize_events(
                 bands = cargo_tariffs.bands_for_brand(session, store.brand_id)
                 band_cache[store.brand_id] = bands
             apply_order(session, store, parsed, summary, bands=bands)
+        elif isinstance(parsed, RawReturn):
+            apply_return(session, store, parsed, summary)
+        elif isinstance(parsed, RawSettlementRow):
+            apply_settlement(session, store, parsed, summary)
+        elif isinstance(parsed, RawCargoInvoice):
+            touched_orders.extend(apply_cargo_invoice(session, store, parsed, summary))
         else:
             apply_products(session, store, parsed, summary)
 
@@ -341,6 +399,10 @@ def normalize_events(
             event.processed_at = datetime.now(UTC)
 
     session.flush()
+    if touched_orders:
+        from app.services.profit import recompute_orders
+
+        recompute_orders(session, order_ids=touched_orders, reason="kargo_faturasi")
     return summary
 
 
@@ -453,3 +515,219 @@ def _purge_normalized(
         reset = reset.where(RawEvent.fetched_at < until)
     session.execute(reset)
     session.flush()
+
+
+# --- Faz 2 uygulayıcıları (KVN-EK-05) ----------------------------------------
+
+
+def apply_return(
+    session: Session, store: Store, raw_return: RawReturn, summary: NormalizeSummary
+) -> None:
+    """İade talebini `returns` tablosuna yazar.
+
+    İki kural bağlayıcı:
+
+    1. **Yalnızca kabul edilen kalem iade sayılır.** Reddedilen talep ciroyu düşürmez;
+       `accepted=False` satırlar atlanır ve `iade_reddedildi` olarak sayılır.
+    2. **Satır bulunamazsa iade YAZILMAZ.** İade, sipariş satırına bağlıdır; uydurma
+       eşleştirme yanlış satırın kârını sıfırlar. Eşleşmeyen kalem `iade_satir_yok`
+       sayacına düşer ve görünür kalır.
+
+    `restocked` alanı iade servisinden gelmez (talep yanıtında böyle bir alan yok) ve
+    **False** varsayılır: malın yeniden satılabilir olduğunu kanıtsız varsaymak kârı
+    olduğundan yüksek gösterirdi. Stok geri alındığında düzeltme kaydıyla girilir.
+    """
+    for line in raw_return.lines:
+        if not line.accepted:
+            summary.skip("iade_reddedildi")
+            continue
+
+        order_line = _find_order_line(session, store, raw_return, line)
+        if order_line is None:
+            summary.skip("iade_satir_yok")
+            continue
+
+        existing = session.scalar(
+            select(Return).where(
+                Return.order_line_id == order_line.id,
+                Return.return_date == raw_return.return_date,
+            )
+        )
+        if existing is not None:
+            # Aynı iade ikinci kez işlenirse kopya yazılmaz (idempotency).
+            existing.qty = line.quantity
+            existing.refund_amount = line.refund_amount
+            existing.reason = line.reason
+            continue
+
+        session.add(
+            Return(
+                tenant_id=store.tenant_id,
+                brand_id=store.brand_id,
+                order_line_id=order_line.id,
+                return_date=raw_return.return_date,
+                qty=line.quantity,
+                reason=line.reason,
+                refund_amount=line.refund_amount,
+                # Dönüş kargosu gerçek tutarı kargo faturasından gelir; şimdilik gidiş
+                # tahminiyle aynı bant kullanılır.
+                return_cargo_cost_estimated=_return_cargo_estimate(session, store, order_line),
+                cost_state=CostState.ESTIMATED,
+                restocked=False,
+            )
+        )
+        summary.returns_written += 1
+
+
+def _find_order_line(
+    session: Session, store: Store, raw_return: RawReturn, line: RawReturnLine
+) -> OrderLine | None:
+    """İade kalemini sipariş satırına bağlar: önce satır id'si, sonra sipariş + barkod."""
+    statement = (
+        select(OrderLine)
+        .join(Order, Order.id == OrderLine.order_id)
+        .where(Order.tenant_id == store.tenant_id, Order.store_id == store.id)
+    )
+    if line.external_line_id:
+        found = session.scalar(statement.where(OrderLine.external_line_id == line.external_line_id))
+        if found is not None:
+            return found
+
+    if raw_return.external_order_id and (line.barcode or line.seller_sku):
+        # `order_lines` barkod taşımaz; ürün üzerinden eşleştirilir.
+        by_product = statement.join(Product, Product.id == OrderLine.product_id).where(
+            Order.external_order_id == raw_return.external_order_id
+        )
+        if line.barcode:
+            found = session.scalar(by_product.where(Product.barcode == line.barcode))
+            if found is not None:
+                return found
+        if line.seller_sku:
+            return session.scalar(by_product.where(Product.sku == line.seller_sku))
+    return None
+
+
+def _return_cargo_estimate(session: Session, store: Store, order_line: OrderLine) -> Decimal:
+    """Dönüş kargosu tahmini — gidiş gönderisinin tahminiyle aynı tarifeden."""
+    shipment = session.scalar(select(Shipment).where(Shipment.order_id == order_line.order_id))
+    if shipment is not None:
+        return shipment.cargo_cost_estimated
+    return estimate_cargo(None, bands=cargo_tariffs.bands_for_brand(session, store.brand_id))
+
+
+def apply_settlement(
+    session: Session, store: Store, row: RawSettlementRow, summary: NormalizeSummary
+) -> None:
+    """Hakediş kalemini `settlement_records`'a yazar (upsert).
+
+    Tekillik `(tenant_id, store_id, external_ref)`; aynı kalem iki kez çekilirse güncellenir,
+    kopyalanmaz. Sipariş eşleşmesi burada YAPILMAZ — mutabakat motorunun işidir (spec §7).
+    """
+    if not row.external_ref:
+        summary.skip("hakedis_ref_yok")
+        return
+
+    record = session.scalar(
+        select(SettlementRecord).where(
+            SettlementRecord.tenant_id == store.tenant_id,
+            SettlementRecord.store_id == store.id,
+            SettlementRecord.external_ref == row.external_ref,
+        )
+    )
+    record_type = SettlementRecordType(row.record_type)
+    if record is None:
+        record = SettlementRecord(
+            tenant_id=store.tenant_id,
+            brand_id=store.brand_id,
+            store_id=store.id,
+            external_ref=row.external_ref,
+            record_type=record_type,
+            amount=row.amount,
+            transaction_date=row.transaction_date.date(),
+        )
+        session.add(record)
+        summary.settlements_written += 1
+    else:
+        record.record_type = record_type
+        record.amount = row.amount
+        record.transaction_date = row.transaction_date.date()
+
+
+def apply_cargo_invoice(
+    session: Session, store: Store, invoice: RawCargoInvoice, summary: NormalizeSummary
+) -> list[uuid.UUID]:
+    """Kargo faturasını yazar ve gönderi maliyetlerini kesinleştirir (spec §6.2).
+
+    KVN-EK-02'deki Excel akışıyla **aynı kurallar**: eşleştirme önce takip numarası, sonra
+    sipariş numarası üzerinden; kesinleşmiş (`actual`) maliyet ikinci faturayla ezilmez;
+    eşleşmeyen satır uydurulmaz, sayılır. Kâr yeniden hesabı çağıran katmanda tetiklenir.
+    """
+    existing = session.scalar(
+        select(CargoInvoice).where(
+            CargoInvoice.store_id == store.id, CargoInvoice.invoice_no == invoice.invoice_no
+        )
+    )
+    if existing is not None:
+        summary.skip("kargo_faturasi_zaten_islenmis")
+        return []
+
+    touched: list[uuid.UUID] = []
+    results: list[dict[str, Any]] = []
+
+    for line in invoice.lines:
+        shipment = _find_shipment_for_invoice(session, store, line)
+        if shipment is None:
+            results.append({"parcel": line.parcel_id, "sonuc": "eslesmedi"})
+            summary.skip("kargo_gonderi_yok")
+            continue
+        if shipment.cost_state is CostState.ACTUAL:
+            results.append({"parcel": line.parcel_id, "sonuc": "zaten_kesin"})
+            continue
+
+        shipment.cargo_cost_actual = line.amount
+        shipment.desi_invoiced = line.desi
+        shipment.cost_state = CostState.ACTUAL
+        if line.parcel_id and not shipment.tracking_no:
+            shipment.tracking_no = line.parcel_id
+        touched.append(shipment.order_id)
+        summary.cargo_lines_matched += 1
+        results.append({"parcel": line.parcel_id, "sonuc": "kesinlesti"})
+
+    session.add(
+        CargoInvoice(
+            tenant_id=store.tenant_id,
+            brand_id=store.brand_id,
+            store_id=store.id,
+            invoice_no=invoice.invoice_no,
+            period=invoice.period,
+            total=invoice.total,
+            lines=results,
+        )
+    )
+    session.flush()
+    return touched
+
+
+def _find_shipment_for_invoice(
+    session: Session, store: Store, line: RawCargoInvoiceLine
+) -> Shipment | None:
+    """Fatura kalemini gönderiye bağlar: önce takip no, sonra sipariş numarası."""
+    if line.parcel_id:
+        found = session.scalar(
+            select(Shipment)
+            .join(Order, Order.id == Shipment.order_id)
+            .where(Order.store_id == store.id, Shipment.tracking_no == line.parcel_id)
+        )
+        if found is not None:
+            return found
+
+    if line.external_order_id:
+        return session.scalar(
+            select(Shipment)
+            .join(Order, Order.id == Shipment.order_id)
+            .where(
+                Order.store_id == store.id,
+                Order.external_order_id == line.external_order_id,
+            )
+        )
+    return None

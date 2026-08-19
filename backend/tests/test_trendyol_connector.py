@@ -19,7 +19,7 @@ from app.connectors import trendyol
 from app.connectors.base import AuthenticationError, ConnectorError, RateLimitError
 from app.connectors.http import ApiClient, RetryPolicy, parse_json
 from app.connectors.trendyol import TrendyolConnector
-from app.models.enums import OrderStatus
+from app.models.enums import OrderStatus, SettlementRecordType
 
 FIXTURES = Path(__file__).parent / "fixtures" / "trendyol"
 
@@ -322,15 +322,211 @@ async def test_commission_service_absence_is_explicit() -> None:
 
 
 @pytest.mark.asyncio
-async def test_phase_two_endpoints_are_declared_not_faked() -> None:
-    """Faz 2 uçları sahte veri döndürmez; açıkça uygulanmadığını söyler (spec §12.1)."""
-    connector = make_connector(lambda request: httpx.Response(200, json={}))
-    now = datetime.now(UTC)
+async def test_phase_two_endpoints_are_implemented_not_faked() -> None:
+    """Faz 2 uçları artık gerçek servisi çağırıyor; sahte veri üretmiyor (KVN-EK-05).
 
-    for coroutine in (
-        connector.fetch_returns(now),
-        connector.fetch_settlements(now),
-        connector.fetch_cargo_invoices(now),
-    ):
-        with pytest.raises(NotImplementedError):
-            await coroutine
+    KVN-05'te bu test uçların `NotImplementedError` fırlattığını doğruluyordu — o dönemde
+    doğru davranış buydu. Uçlar uygulandı; test yerini "boş yanıtta boş liste döner,
+    uydurma kayıt üretmez" kontrolüne bıraktı.
+    """
+    connector = make_connector(
+        lambda request: httpx.Response(200, json={"content": [], "totalPages": 0})
+    )
+    since = datetime(2026, 8, 1, tzinfo=UTC)
+    until = datetime(2026, 8, 5, tzinfo=UTC)
+
+    assert await connector.fetch_returns(since, until) == []
+    assert await connector.fetch_settlements(since, until) == []
+    assert await connector.fetch_cargo_invoices(since, until) == []
+
+
+# --- Faz 2: iadeler, hakediş, kargo faturası (KVN-EK-05) ---------------------
+
+
+def test_parse_claim_counts_quantity_from_claim_items() -> None:
+    """Adet `claimItems` sayısından gelir; tutar birim fiyat × adettir."""
+    claim = trendyol.parse_claim(load_fixture("claims_page0")["content"][0])
+
+    assert claim.external_return_id == "CLM-90010001"
+    assert claim.external_order_id == "TY-2026-000117"
+    assert len(claim.lines) == 1
+    line = claim.lines[0]
+    assert line.quantity == 2
+    assert line.refund_amount == Decimal("579.8000")
+    assert line.seller_sku == "KHV-BLD-ESP-250"
+    assert line.accepted is True
+
+
+def test_rejected_claim_is_marked_not_accepted() -> None:
+    """Reddedilen talep iade sayılmaz — kâr etkisi doğurmamalı."""
+    claim = trendyol.parse_claim(load_fixture("claims_page0")["content"][1])
+
+    assert [line.accepted for line in claim.lines] == [False]
+    assert claim.lines[0].reason == "Hasarlı geldi"
+
+
+def test_claim_carries_cargo_tracking_number() -> None:
+    """İade gönderisinin takip numarası taşınır (kargo eşleştirmesi için)."""
+    claim = trendyol.parse_claim(load_fixture("claims_page0")["content"][0])
+
+    assert claim.cargo_tracking_no == "7300000000011"
+
+
+def test_claim_without_items_yields_no_lines() -> None:
+    """Kalemi olmayan talep satır üretmez (boş `claimItems`)."""
+    assert trendyol.parse_claim_line({"orderLine": {"id": 1}, "claimItems": []}) == []
+
+
+def test_partially_accepted_claim_splits_into_two_lines() -> None:
+    """Aynı satırın kabul edilen ve edilmeyen adetleri ayrı kayda bölünür."""
+    lines = trendyol.parse_claim_line(
+        {
+            "orderLine": {"id": 42, "price": 100, "barcode": "b", "merchantSku": "SKU"},
+            "claimItems": [
+                {"claimItemStatus": {"name": "Accepted"}},
+                {"claimItemStatus": {"name": "Rejected"}},
+                {"claimItemStatus": {"name": "Rejected"}},
+            ],
+        }
+    )
+
+    by_accepted = {line.accepted: line for line in lines}
+    assert by_accepted[True].quantity == 1
+    assert by_accepted[False].quantity == 2
+    assert by_accepted[False].refund_amount == Decimal("200.0000")
+
+
+@pytest.mark.asyncio
+async def test_fetch_returns_uses_documented_path_and_size() -> None:
+    """İade servisi doğrulanmış yolla ve 200'lük sayfayla çağrılır."""
+    captured: dict[str, Any] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["path"] = request.url.path
+        captured["params"] = dict(request.url.params)
+        return httpx.Response(200, json=load_fixture("claims_page0"))
+
+    connector = make_connector(handler)
+    claims = await connector.fetch_returns(
+        datetime(2026, 8, 10, tzinfo=UTC), datetime(2026, 8, 18, tzinfo=UTC)
+    )
+
+    assert captured["path"] == "/integration/order/sellers/998877/claims"
+    assert captured["params"]["size"] == "200"
+    assert len(claims) == 2
+
+
+def test_settlement_amount_is_credit_minus_debt() -> None:
+    """Borç/alacak tek tutara indirgenir: kesinti negatif, ödeme pozitif."""
+    rows = [
+        trendyol.parse_settlement_row(item) for item in load_fixture("settlements_page0")["content"]
+    ]
+
+    by_ref = {row.external_ref: row for row in rows}
+    assert by_ref["STL-2026-08-0001"].amount == Decimal("289.9000")
+    assert by_ref["STL-2026-08-0002"].amount == Decimal("-46.3800")
+    assert by_ref["STL-2026-08-0002"].commission_rate == Decimal("16.0")
+
+
+def test_settlement_types_map_to_internal_enum() -> None:
+    """`transactionType` içeri tipe çevrilir; bilinmeyen tip sessizce ATILMAZ."""
+    rows = [
+        trendyol.parse_settlement_row(item) for item in load_fixture("settlements_page0")["content"]
+    ]
+
+    assert [row.record_type for row in rows] == ["sale", "commission", "refund", "cargo"]
+    assert trendyol.normalize_settlement_type("ProvisionPositive") is SettlementRecordType.OTHER
+    assert trendyol.normalize_settlement_type(None) is SettlementRecordType.OTHER
+
+
+@pytest.mark.asyncio
+async def test_fetch_settlements_requests_each_transaction_type() -> None:
+    """Servis tek tip kabul ettiği için her tip ayrı istekle çekilir."""
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(str(request.url.params.get("transactionType")))
+        return httpx.Response(200, json={"content": [], "totalPages": 0})
+
+    connector = make_connector(handler)
+    await connector.fetch_settlements(
+        datetime(2026, 8, 1, tzinfo=UTC), datetime(2026, 8, 10, tzinfo=UTC)
+    )
+
+    assert set(seen) == set(trendyol.SETTLEMENT_TRANSACTION_TYPES)
+
+
+@pytest.mark.asyncio
+async def test_settlement_window_never_exceeds_fifteen_days() -> None:
+    """Aralık 15 günü aşamaz — uzun aralık pencerelere bölünür."""
+    windows: set[tuple[str, str]] = set()
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        params = request.url.params
+        windows.add((str(params.get("startDate")), str(params.get("endDate"))))
+        return httpx.Response(200, json={"content": [], "totalPages": 0})
+
+    connector = make_connector(handler)
+    await connector.fetch_settlements(
+        datetime(2026, 7, 1, tzinfo=UTC), datetime(2026, 8, 15, tzinfo=UTC)
+    )
+
+    limit_ms = trendyol.SETTLEMENT_WINDOW_DAYS * 24 * 60 * 60 * 1000
+    assert windows
+    assert all(int(end) - int(start) <= limit_ms for start, end in windows)
+
+
+def test_cargo_invoice_row_is_recognised_by_label() -> None:
+    """Kesinti faturaları arasından yalnızca kargo faturası seçilir."""
+    content = load_fixture("otherfinancials_deductions")["content"]
+
+    assert [trendyol.is_cargo_invoice_row(row) for row in content] == [True, False]
+
+
+def test_parse_cargo_invoice_line_reads_documented_fields() -> None:
+    """`parcelUniqueId`, `orderNumber`, `amount`, `desi` okunur."""
+    line = trendyol.parse_cargo_invoice_line(load_fixture("cargo_invoice_items")["content"][1])
+
+    assert line.parcel_id == "7300000000022"
+    assert line.external_order_id == "TY-2026-000203"
+    assert line.amount == Decimal("94.5")
+    assert line.desi == Decimal("3.4")
+
+
+@pytest.mark.asyncio
+async def test_fetch_cargo_invoices_follows_the_two_step_chain() -> None:
+    """otherfinancials → seri numarası → cargo-invoice/{seri}/items zinciri."""
+    paths: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        paths.append(request.url.path)
+        if request.url.path.endswith("/otherfinancials"):
+            return httpx.Response(200, json=load_fixture("otherfinancials_deductions"))
+        return httpx.Response(200, json=load_fixture("cargo_invoice_items"))
+
+    connector = make_connector(handler)
+    invoices = await connector.fetch_cargo_invoices(
+        datetime(2026, 8, 1, tzinfo=UTC), datetime(2026, 8, 10, tzinfo=UTC)
+    )
+
+    # Yalnızca kargo faturası için kalem çağrısı yapılır; iade faturası atlanır.
+    assert invoices[0].invoice_no == "KRG-2026-08-0001"
+    assert "/integration/finance/che/sellers/998877/cargo-invoice/KRG-2026-08-0001/items" in paths
+    assert not any("IAD-2026-08-0009" in path for path in paths)
+    assert invoices[0].total == Decimal("204.3")
+    assert len(invoices[0].lines) == 3
+    assert invoices[0].period == "2026-08"
+
+
+def test_order_carries_cargo_tracking_number() -> None:
+    """`cargoTrackingNumber` artık taşınıyor (KVN-EK-02'de doğrulanamamıştı)."""
+    order = trendyol.parse_order(
+        {
+            "orderNumber": "TY-1",
+            "cargoTrackingNumber": 7300000000011,
+            "cargoProviderName": "Trendyol Express",
+            "lines": [],
+        }
+    )
+
+    assert order.cargo_tracking_no == "7300000000011"
