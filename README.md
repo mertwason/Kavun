@@ -109,6 +109,17 @@ maliyeti.
 dağıtılır; artık kuruş son parçaya eklenir, böylece parçaların toplamı her zaman dağıtılan
 tutara eşittir.
 
+**Değişim, kampanya, ceza.** Değişim iade değildir: müşteri parayı geri almadığı için gelir
+ve komisyon durur, yalnızca iki ek kargo bacağı gider yazılır. Kampanya indiriminin platform
+payı satıcıya geri ödendiği için gelire eklenir — ama varsayılan `seller_share_rate = 1`,
+yani platform desteği kanıtlanana kadar indirimin tamamını satıcı taşır. Siparişe eşleşmeyen
+ceza kalemleri satırlara dağıtılmaz, mağaza seviyesinde gider olarak ayrı tutulur.
+
+Spec §6.3'teki 8 edge-case senaryosunun tamamı `tests/test_profit_edge_cases.py` içinde
+senaryo numarasıyla adlandırılmış testtir; aynı dosyada para matematiğinin değişmezleri
+Hypothesis property testleriyle doğrulanır (paylaştırma kuruş kaybetmez, iade geliri aşamaz,
+maliyet arttıkça kâr azalır, şelale adımları kâra iner).
+
 Maliyet veya komisyon oranı bulunamayan satırda motor uydurma değer kullanmaz: kalem sıfır
 kalır ve satır `maliyet_yok` / `komisyon_orani_yok` uyarısıyla işaretlenir.
 
@@ -237,5 +248,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-08 — kâr motoru
-edge-case test paketi** (8 senaryo, spec §6.3).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-09 — dashboard,
+SKU marj listesi ve sipariş detayı** (waterfall, spec §10).

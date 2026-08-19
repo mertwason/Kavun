@@ -40,6 +40,11 @@ class LineProfit(Base):
     cost_service_fee: Mapped[Decimal] = mapped_column(Money, nullable=False)
     cost_return: Mapped[Decimal] = mapped_column(Money, nullable=False)
     cost_ad_alloc: Mapped[Decimal] = mapped_column(Money, nullable=False)
+    # Spec §5.4'e ek (KVN-08): §6.3.3 ve §6.3.7 senaryolarının sonucu kaybolmasın diye.
+    cost_penalty: Mapped[Decimal] = mapped_column(Money, nullable=False, server_default="0")
+    revenue_campaign_support: Mapped[Decimal] = mapped_column(
+        Money, nullable=False, server_default="0"
+    )
     vat_net: Mapped[Decimal] = mapped_column(Money, nullable=False)
     profit: Mapped[Decimal] = mapped_column(Money, nullable=False)
     margin_pct: Mapped[Decimal] = mapped_column(Pct, nullable=False)

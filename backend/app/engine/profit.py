@@ -28,8 +28,22 @@ Sonuç iki yoldan da aynıdır ve motor bunu kendi içinde doğrular:
 
 ## Kapsam
 
-Faz 1: komisyon, kargo, hizmet bedeli, iade, KDV netleştirme. Reklam payı (Faz 4)
-girdide vardır ama sıfırdır.
+Faz 1: komisyon, kargo, hizmet bedeli, iade, değişim, kampanya satıcı payı, ceza,
+KDV netleştirme. Reklam payı (Faz 4) girdide vardır ama sıfırdır.
+
+## Değişim, kampanya ve ceza (spec §6.3.2, §6.3.3, §6.3.7)
+
+- **Değişim iade değildir.** Müşteri parayı geri almaz, ürün elinde kalır: gelir,
+  komisyon ve satış KDV'si yerinde durur; yalnızca iki ek kargo bacağı (geri geliş +
+  yeni gönderi) gider yazılır. Geri gelen mal hurdaysa o adet için iki birim maliyet
+  çıkar.
+- **Kampanya:** `line_gross` müşterinin ödediği indirimli tutardır. İndirimin platform
+  payı satıcıya geri ödendiği için gelire eklenir ve satış KDV'si doğurur. Varsayılan
+  `campaign_seller_share_rate = 1` — yani aksi kanıtlanana kadar indirimin tamamını
+  satıcı taşır (muhafazakâr varsayım, CLAUDE.md §5).
+- **Ceza/tazmin:** siparişe eşleşen ceza satır gideridir (KDV'si indirilebilir sayılır,
+  `TODO(verify)` — hakediş faturasından doğrulanacak). Eşleşmeyen ceza satırlara
+  DAĞITILMAZ; `split_penalties()` onu mağaza seviyesinde ayrı tutar.
 
 ## İade modeli (spec §6.1'den bilinçli sapma)
 
@@ -52,6 +66,8 @@ maliyeti de zarar olarak kalır (spec §12C.4).
 
 from __future__ import annotations
 
+import uuid
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from decimal import Decimal
 
@@ -65,7 +81,10 @@ from app.models.enums import CommissionSource, OrderStatus
 
 ZERO = Decimal("0")
 DEFAULT_SERVICE_VAT_PERCENT = Decimal("20.00")
-"""Platform hizmetleri (komisyon, kargo, hizmet bedeli) genel KDV oranına tabidir."""
+"""Platform hizmetleri (komisyon, kargo, hizmet bedeli, ceza) genel KDV oranına tabidir."""
+
+FULL_SELLER_SHARE = Decimal("1")
+"""Kampanya indiriminin varsayılan taşıyıcısı satıcıdır — platform desteği kanıt ister."""
 
 # Maliyet kalemi üretmeyen statüler (spec §6.3.5: iptal → maliyet kalemleri sıfır).
 COSTLESS_STATUSES = frozenset({OrderStatus.CANCELLED})
@@ -94,6 +113,24 @@ class ReturnInput:
 
 
 @dataclass(frozen=True)
+class ExchangeInput:
+    """Değişim girdisi (spec §6.3.2: iade + yeni gönderi, çift kargo).
+
+    Değişim iade DEĞİLDİR: müşteri parayı geri almaz, ürünü elinde tutar. Bu yüzden
+    gelir, komisyon ve satış KDV'si **geri çevrilmez** — yalnızca iki ek kargo bacağı
+    doğar: geri geliş (`return_cargo_cost`) ve yeni gönderi (`replacement_cargo_cost`).
+
+    `restocked=False`: geri gelen mal satılamaz durumda → o adet için İKİ birim maliyet
+    çıkmış olur (biri müşterideki, biri hurdadaki).
+    """
+
+    qty: int
+    return_cargo_cost: Decimal = ZERO
+    replacement_cargo_cost: Decimal = ZERO
+    restocked: bool = True
+
+
+@dataclass(frozen=True)
 class LineInput:
     """Bir sipariş satırının kâr hesabı için gereken her şey.
 
@@ -112,7 +149,14 @@ class LineInput:
     cargo_cost: Decimal = ZERO
     service_fee: Decimal = ZERO
     ad_alloc: Decimal = ZERO
+    penalty: Decimal = ZERO
     returns: tuple[ReturnInput, ...] = ()
+    exchanges: tuple[ExchangeInput, ...] = ()
+
+    # Kampanya (spec §6.3.3): `line_gross` müşterinin ÖDEDİĞİ (indirimli) tutardır.
+    # İndirimin platform payı satıcıya geri ödenir → gelire eklenir.
+    campaign_discount: Decimal = ZERO
+    campaign_seller_share_rate: Decimal = FULL_SELLER_SHARE
 
     service_vat_percent: Decimal = DEFAULT_SERVICE_VAT_PERCENT
     is_final: bool = False
@@ -124,12 +168,14 @@ class ProfitBreakdown:
 
     revenue_gross: Decimal
     revenue_net_vat: Decimal
+    revenue_campaign_support: Decimal
     cost_cogs: Decimal
     cost_commission: Decimal
     cost_cargo: Decimal
     cost_service_fee: Decimal
     cost_return: Decimal
     cost_ad_alloc: Decimal
+    cost_penalty: Decimal
     vat_sales: Decimal
     vat_deductible: Decimal
     vat_net: Decimal
@@ -144,10 +190,12 @@ class ProfitBreakdown:
         """Sipariş detayındaki şelale grafiğinin adımları (tasarım brief'i, kalıp 4)."""
         return (
             ("satis", self.revenue_gross),
+            ("kampanya_destegi", self.revenue_campaign_support),
             ("komisyon", -self.cost_commission),
             ("kargo", -self.cost_cargo),
             ("hizmet_bedeli", -self.cost_service_fee),
             ("iade", -self.cost_return),
+            ("ceza", -self.cost_penalty),
             ("reklam", -self.cost_ad_alloc),
             ("kdv", -self.vat_net),
             ("maliyet", -self.cost_cogs),
@@ -168,12 +216,14 @@ def compute_line_profit(line: LineInput) -> ProfitBreakdown:
         return ProfitBreakdown(
             revenue_gross=ZERO,
             revenue_net_vat=ZERO,
+            revenue_campaign_support=ZERO,
             cost_cogs=ZERO,
             cost_commission=ZERO,
             cost_cargo=ZERO,
             cost_service_fee=ZERO,
             cost_return=ZERO,
             cost_ad_alloc=ZERO,
+            cost_penalty=ZERO,
             vat_sales=ZERO,
             vat_deductible=ZERO,
             vat_net=ZERO,
@@ -189,10 +239,22 @@ def compute_line_profit(line: LineInput) -> ProfitBreakdown:
     sold_qty = line.qty - returned_qty
     unit_gross = line.line_gross / line.qty if line.qty else ZERO
 
+    # Değişim gelirle oynamaz; yalnızca geri gelen mal hurdaysa fazladan maliyet doğurur.
+    exchange_scrapped_qty = min(
+        sum(item.qty for item in line.exchanges if not item.restocked), line.qty
+    )
+
     # İade edilen adetlerin geliri hesaba girmez; tamamı iade edildiyse gelir sıfırlanır.
     revenue_gross = quantize_money(unit_gross * sold_qty)
     revenue_net = net_from_gross(revenue_gross, line.vat_percent)
     vat_sales = quantize_money(revenue_gross - revenue_net)
+
+    # Kampanya indiriminin platform payı satıcıya geri ödenir (spec §6.3.3). Yalnızca
+    # satılan (iade edilmemiş) adetler için doğar.
+    platform_share = FULL_SELLER_SHARE - line.campaign_seller_share_rate
+    sold_ratio = Decimal(sold_qty) / Decimal(line.qty) if line.qty else ZERO
+    campaign_support = quantize_money(line.campaign_discount * platform_share * sold_ratio)
+    campaign_support_vat = vat_in_gross(campaign_support, line.vat_percent)
 
     # --- maliyetler (hepsi KDV dahil tutar) ---
     if line.unit_cost_net is None:
@@ -200,7 +262,7 @@ def compute_line_profit(line: LineInput) -> ProfitBreakdown:
     unit_cost_net = line.unit_cost_net or ZERO
     # COGS satılan adetler için; geri gelmeyen (hurda) iade adetleri de maliyet doğurur
     # çünkü mal stoğa dönmedi (spec §12C.4).
-    cogs_net = quantize_money(unit_cost_net * (sold_qty + scrapped_qty))
+    cogs_net = quantize_money(unit_cost_net * (sold_qty + scrapped_qty + exchange_scrapped_qty))
     cogs_vat = vat_on_net(cogs_net, line.vat_percent)
     cogs_gross = quantize_money(cogs_net + cogs_vat)
 
@@ -209,30 +271,42 @@ def compute_line_profit(line: LineInput) -> ProfitBreakdown:
     commission_rate = line.commission_rate or ZERO
     # Komisyon KDV dahil satış tutarı üzerinden hesaplanır (spec §6.1).
     commission_gross = quantize_money(revenue_gross * commission_rate)
-    cargo_gross = quantize_money(line.cargo_cost)
+    # Değişimin yeni gönderisi ikinci bir gidiş kargosudur (spec §6.3.2).
+    cargo_gross = quantize_money(
+        line.cargo_cost + sum((item.replacement_cargo_cost for item in line.exchanges), ZERO)
+    )
     service_gross = quantize_money(line.service_fee)
     ad_alloc = quantize_money(line.ad_alloc)
+    penalty_gross = quantize_money(line.penalty)
 
     # --- iade maliyeti (spec §6.1, düzeltilmiş: çift sayma yok) ---
     # Gerçek nakit kaybı dönüş kargosudur; iade tutarı gelirden zaten düşülmüştür.
-    return_cost = quantize_money(sum((item.return_cargo_cost for item in line.returns), ZERO))
+    # Değişimde de mal geri gelir → o bacak da burada sayılır.
+    return_cost = quantize_money(
+        sum((item.return_cargo_cost for item in line.returns), ZERO)
+        + sum((item.return_cargo_cost for item in line.exchanges), ZERO)
+    )
 
     # --- KDV netleştirme ---
+    vat_sales_total = quantize_money(vat_sales + campaign_support_vat)
     vat_deductible = quantize_money(
         cogs_vat
         + vat_in_gross(commission_gross, line.service_vat_percent)
         + vat_in_gross(cargo_gross, line.service_vat_percent)
         + vat_in_gross(service_gross, line.service_vat_percent)
+        + vat_in_gross(penalty_gross, line.service_vat_percent)
     )
-    vat_net = quantize_money(vat_sales - vat_deductible)
+    vat_net = quantize_money(vat_sales_total - vat_deductible)
 
     profit = quantize_money(
         revenue_gross
+        + campaign_support
         - cogs_gross
         - commission_gross
         - cargo_gross
         - service_gross
         - return_cost
+        - penalty_gross
         - ad_alloc
         - vat_net
     )
@@ -241,13 +315,15 @@ def compute_line_profit(line: LineInput) -> ProfitBreakdown:
     return ProfitBreakdown(
         revenue_gross=revenue_gross,
         revenue_net_vat=revenue_net,
+        revenue_campaign_support=campaign_support,
         cost_cogs=cogs_gross,
         cost_commission=commission_gross,
         cost_cargo=cargo_gross,
         cost_service_fee=service_gross,
         cost_return=return_cost,
         cost_ad_alloc=ad_alloc,
-        vat_sales=vat_sales,
+        cost_penalty=penalty_gross,
+        vat_sales=vat_sales_total,
         vat_deductible=vat_deductible,
         vat_net=vat_net,
         profit=profit,
@@ -255,6 +331,27 @@ def compute_line_profit(line: LineInput) -> ProfitBreakdown:
         commission_source=line.commission_source,
         is_final=line.is_final,
         warnings=tuple(warnings),
+    )
+
+
+def split_penalties(
+    items: Iterable[tuple[uuid.UUID | None, Decimal]],
+) -> tuple[dict[uuid.UUID, Decimal], Decimal]:
+    """Ceza/tazmin kalemlerini satır bazlı ve mağaza bazlı olarak ayırır (spec §6.3.7).
+
+    Sipariş satırına eşleşen ceza o satırın kârını düşürür; eşleşmeyen ceza satırlara
+    dağıtılmaz (hangi satırın suçu olduğu bilinmez) — mağaza seviyesinde gider kalır ve
+    dashboard'da ayrı gösterilir. Uydurma dağıtım yapılmaz.
+    """
+    per_line: dict[uuid.UUID, Decimal] = {}
+    store_level = ZERO
+    for line_id, amount in items:
+        if line_id is None:
+            store_level += amount
+        else:
+            per_line[line_id] = per_line.get(line_id, ZERO) + amount
+    return {key: quantize_money(value) for key, value in per_line.items()}, quantize_money(
+        store_level
     )
 
 
@@ -266,15 +363,19 @@ def profit_from_net_amounts(line: LineInput, breakdown: ProfitBreakdown) -> Deci
     net_commission = net_from_gross(breakdown.cost_commission, line.service_vat_percent)
     net_cargo = net_from_gross(breakdown.cost_cargo, line.service_vat_percent)
     net_service = net_from_gross(breakdown.cost_service_fee, line.service_vat_percent)
+    net_penalty = net_from_gross(breakdown.cost_penalty, line.service_vat_percent)
+    net_campaign_support = net_from_gross(breakdown.revenue_campaign_support, line.vat_percent)
     net_cogs = quantize_money(
         breakdown.cost_cogs - vat_in_gross(breakdown.cost_cogs, line.vat_percent)
     )
     return quantize_money(
         breakdown.revenue_net_vat
+        + net_campaign_support
         - net_cogs
         - net_commission
         - net_cargo
         - net_service
+        - net_penalty
         - breakdown.cost_return
         - breakdown.cost_ad_alloc
     )

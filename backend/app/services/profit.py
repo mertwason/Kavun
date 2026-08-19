@@ -50,6 +50,8 @@ TRACKED_FIELDS = (
     "cost_cargo",
     "cost_service_fee",
     "cost_return",
+    "cost_penalty",
+    "revenue_campaign_support",
     "vat_net",
     "profit",
 )
@@ -209,6 +211,8 @@ def _persist(
         "cost_service_fee": breakdown.cost_service_fee,
         "cost_return": breakdown.cost_return,
         "cost_ad_alloc": breakdown.cost_ad_alloc,
+        "cost_penalty": breakdown.cost_penalty,
+        "revenue_campaign_support": breakdown.revenue_campaign_support,
         "vat_net": breakdown.vat_net,
         "profit": breakdown.profit,
         "margin_pct": breakdown.margin_pct,

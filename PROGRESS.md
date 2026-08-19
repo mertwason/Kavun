@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %39** ▓▓▓▓▓▓▓▓░░░░░░░░░░░░
-Son güncelleme: 2026-08-18 23:50 · Aktif görev: KVN-08
+**TOPLAM: %45** ▓▓▓▓▓▓▓▓▓░░░░░░░░░░░
+Son güncelleme: 2026-08-19 03:10 · Aktif görev: KVN-09
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -13,8 +13,8 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-05 | Trendyol connector — orders/products/commissions sync       | 8       | ✅ Bitti    |
 | KVN-06 | raw_events + normalize pipeline + replay komutu             | 6       | ✅ Bitti    |
 | KVN-07 | Kâr motoru — çekirdek hesap (KDV netleştirme dahil)         | 8       | ✅ Bitti    |
-| KVN-08 | Kâr motoru — edge-case test paketi (8 senaryo)              | 6       | 🔄 Yapılıyor|
-| KVN-09 | Dashboard + SKU marj listesi + sipariş detayı (waterfall)   | 7       | ⏳ Sırada   |
+| KVN-08 | Kâr motoru — edge-case test paketi (8 senaryo)              | 6       | ✅ Bitti    |
+| KVN-09 | Dashboard + SKU marj listesi + sipariş detayı (waterfall)   | 7       | 🔄 Yapılıyor|
 | KVN-10 | Excel round-trip — fiyat listesi export/import + diff       | 6       | ⏳ Sırada   |
 | KVN-11 | Taslak ürün akışı                                           | 3       | ⏳ Sırada   |
 | KVN-12 | Senaryo motoru + karşılaştırma + hedef marj çözücü          | 6       | ⏳ Sırada   |
@@ -27,11 +27,55 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 39
+Toplam ağırlık: 100 · Biten ağırlık: 45
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-08 bitti
+
+**Ne bitti:** Spec §6.3'teki 8 edge-case senaryosunun tamamı test olarak yazıldı
+(`tests/test_profit_edge_cases.py`, senaryo numarasıyla adlandırıldı) + 6 Hypothesis
+property testi. Testler: 221 yeşil, motor coverage %100, genel %96.
+
+**Senaryolar (spec §6.3 sırasıyla):** 1 kısmi iade · 2 değişim (çift kargo) ·
+3 kampanya satıcı/platform payı · 4 %1 ve %20 KDV · 5 iptal · 6 pakette çoklu satır
+(desi ağırlıklı kargo) · 7 ceza/tazmin (eşleşen vs mağaza seviyesi) · 8 tarihli komisyon
+oranı değişimi. 6 ve 8 gerçek DB kayıtları üzerinden, diğerleri motoru doğrudan çağırarak.
+
+**Property testleri (para matematiği değişmezleri, CLAUDE.md §3):** brüt yol = net yol ·
+iade geliri satışı aşamaz · maliyet arttıkça kâr azalır (monotonluk) · paylaştırma kuruş
+kaybetmez/yaratmaz · ceza kârı artıramaz · şelale adımları kâra iner.
+
+**Motora eklenenler (senaryolar test edilebilsin diye):**
+- `ExchangeInput` — değişim iade DEĞİLDİR: müşteri parayı geri almadığı için gelir,
+  komisyon ve satış KDV'si durur; yalnızca iki ek kargo bacağı (geri geliş + yeni gönderi)
+  gider yazılır. Geri gelen mal hurdaysa tek satış için iki birim maliyet çıkar.
+- `campaign_discount` + `campaign_seller_share_rate` — indirimin platform payı satıcıya
+  geri ödendiği için gelire eklenir ve satış KDV'si doğurur. **Varsayılan pay 1,00**, yani
+  platform desteği kanıtlanana kadar indirimin tamamını satıcı taşır (CLAUDE.md §5:
+  muhafazakâr varsayım). Kaynak veri Faz 4'te (`promotions`) gelecek.
+- `penalty` + `split_penalties()` — siparişe eşleşen ceza satır gideri; eşleşmeyen ceza
+  satırlara DAĞITILMAZ (hangi satırın suçu olduğu bilinmez), mağaza seviyesinde ayrı durur.
+
+**Şema kararı:** `line_profit`'e iki kolon eklendi — `cost_penalty` ve
+`revenue_campaign_support` (migration `e6f148a229c0`, additive + geri alınabilir, mevcut
+satırlar `0`). Gerekçe: spec §5.4'ün kolon listesi §6.3.3/§6.3.7 sonuçlarını taşımıyordu;
+eklenmezse motor hesaplıyor ama sonuç sessizce kayboluyordu. **Spec §5.4 buna göre
+güncellenmeli.**
+
+**Test altyapısı:** kâr testlerinin DB kurulum yardımcıları `tests/profit_factories.py`'ye
+taşındı; KVN-07 ve KVN-08 testleri aynı zeminden besleniyor.
+
+**Yakalanan hata:** §6.3.1 senaryosunun docstring'indeki elle hesap yanlıştı — komisyonun
+KDV'si tutarın üstüne eklenmiş (48 × %20), oysa KDV tutarın İÇİNDEN çıkarılmalı (48 / 1,20).
+Motor doğruydu, test beklentisi yanlıştı; hesap düzeltildi ve `vat_net` de assert edildi.
+
+**Bilinen risk:** Ceza kaleminin KDV'sinin indirilebilir olduğu varsayıldı
+(`TODO(verify)` — ilk gerçek hakediş faturasından doğrulanacak). Kampanya ve ceza
+girdileri Faz 1'de her zaman sıfır; gerçek veriye Faz 2 (hakediş) ve Faz 4 (promotions)
+ile bağlanacak — o zamana kadar bu iki kolon dashboard'da hep 0 görünecek.
 
 ### 2026-08-18 — KVN-07 bitti
 
