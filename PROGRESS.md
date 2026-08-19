@@ -1,8 +1,8 @@
 # KAVUN İlerleme
 
 **TOPLAM: %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-**FAZ 2 (ek görevler): %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-Son güncelleme: 2026-08-19 06:05 · Aktif görev: — (açık görev yok)
+**FAZ 2 (ek görevler): %56** ▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░
+Son güncelleme: 2026-08-19 09:40 · Aktif görev: — (sırada: KVN-EK-05)
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -42,8 +42,16 @@ Toplam ağırlık: **110** · Biten ağırlık: 110 · **Faz 1 ve Faz 1.5 tamaml
 | KVN-EK-01 | Ekran smoke testleri (Playwright) + CI adımı              | 4       | ✅ Bitti     | KVN-20'de yazılan risk: UI regresyona karşı korumasızdı |
 | KVN-EK-02 | Kargo faturası eşleştirme + `estimated → actual` + revizyon | 6       | ✅ Bitti     | spec §5.3, §6.2 |
 | KVN-EK-03 | Hakediş mutabakatı: eşleştirme + fark motoru + ekran       | 8       | ✅ Bitti     | spec §7 — "katil özellik" |
+| KVN-EK-04 | Ayarlar ekranı: mağaza + credential + hizmet bedeli + kargo tarifesi | 5 | ✅ Bitti     | spec §10.7 — kargo tarife TABLOSU da bu görevde yazıldı (yoktu) |
+| KVN-EK-05 | Trendyol Faz 2 uçları + eksik beat programı                | 8       | ⏳ Sırada    | spec §4, §9 — iade/hakediş/kargo senkronu; `workers/tasks.py` coverage ≥ %80 |
+| KVN-EK-06 | Uyarılar ekranı + acknowledge akışı                        | 4       | ⏳ Sırada    | spec §10.6 — `acknowledged_at` yazan uç dahil |
+| KVN-EK-07 | Gerçek veri kalibrasyon haftası                            | 6       | ⏳ Sırada    | **Mert'in dosyalarına bağlı** — geldiğinde sıraya girer; kurgu fixture'lar + 3 `TODO(verify)` + `tracking_no` |
 
-Faz 2 ağırlığı: 18 · Biten: 18 · **açılan Faz 2 görevleri tamamlandı**
+Faz 2 ağırlığı: 41 · Biten: 23
+
+> **Sıra (2026-08-19, Mert onayı):** EK-04 → EK-05 → EK-06. EK-07 dosyalar geldiğinde
+> araya girer. Bu dört görev, KVN-EK-03 sonrası çıkarılan durum raporunun karşılığıdır:
+> ürün bugün "manuel/Excel beslemeli" çalışıyor, veri borusu ve ayar/uyarı ekranları eksik.
 
 > **Düzeltme (2026-08-19):** CLAUDE.md §0'daki kanonik listenin başlığı "toplam ağırlık 100"
 > diyor ama tablodaki 20 görevin ağırlıkları **110** ediyor. §0 kuralı yüzdeyi "bitmiş
@@ -55,6 +63,42 @@ Faz 2 ağırlığı: 18 · Biten: 18 · **açılan Faz 2 görevleri tamamlandı*
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-EK-04 bitti (Ayarlar + kargo tarife tablosu)
+
+**Ne bitti:** `/{marka}/settings` ekranı (spec §10.7): mağaza ekleme/düzenleme, hizmet
+bedeli, Fernet kasasına credential yazma, elle senkron tetikleme ve **kargo tarife
+tablosu**. Testler: 603 backend (+20 tarife) + 42 e2e (+3); `app/engine/cargo.py` %100.
+Ruff/format/para-float/`mypy app tools tests` temiz, tarayıcıda doğrulandı.
+
+**Kararlar / notlar:**
+- **Kapsam sürprizi: kargo tarife tablosu hiç yoktu.** Görev "tarife yönetimi UI'sı"
+  diyordu ama yönetilecek tablo yazılmamıştı — tahmin `normalize.py` içinde iki sabite
+  gömülüydü (42 TL + 18,50/desi). Spec §6.1 kargoyu `desi_bazli_tahmin(desi,
+  carrier_tarife)` diye tanımlıyor, yani tablo tasarımın parçası. Bu yüzden EK-04 önce
+  `cargo_tariffs` tablosunu, motorunu (`app/engine/cargo.py`) ve uçlarını yazdı; ekran
+  onun üstüne kondu.
+- **Bant çözümleme sırası:** firma eşleşmesi > en yeni yürürlük > dar bant. Aralık
+  `[alt, üst)` — bitişik bantlar boşluk/çakışma üretmiyor.
+- **Eşleşme yoksa varsayılan formüle düşülür**, sıfır yazılmaz. Kargosu sıfır sanılan
+  sipariş kârı olduğundan yüksek gösterirdi; eski davranış da böylece korundu (tarife
+  tanımlanmamış kurulumlarda sayılar değişmez).
+- **Tarife değişikliği geçmişi ezmiyor.** §6.2'nin tetikleyici listesinde tarife
+  değişikliği yok; sessizce geçmişe dokunmak yerine açık bir "Tahminleri yenile" eylemi
+  var: önce önizler, yalnızca `estimated` gönderilere dokunur, `actual` maliyeti ASLA
+  değiştirmez ve revizyonları `kargo_tarifesi` gerekçesiyle loglar. Tarayıcıda demo
+  veride doğrulandı: 61 kesinleşmiş gönderi "dokunulmadı" sayısına düştü.
+- **Bant silinmiyor, kapatılıyor** (`valid_to`) — geçmiş tahminin dayanağı kayıtta kalır.
+- **`system_scope` sızıntısı önlendi:** normalize marka bağlamı olmadan koşuyor;
+  `bands_for_brand()` markayı AÇIKÇA filtreliyor. Kahveji'nin tarifesiyle Alessi'nin
+  kargosunu hesaplamak sessiz bir hata olurdu — negatif testi yazıldı.
+- **Demo veri artık ekrandaki tarifeden üretiliyor:** Ayarlar'da görünen bantlar,
+  siparişlerdeki gönderi maliyetlerinin gerçek kaynağı. "Ekranda tarife var ama veri
+  başka yerden geliyor" tutarsızlığı bilinçli olarak bırakılmadı.
+
+**Ne kaldı / risk:** Sırada KVN-EK-05 (Trendyol Faz 2 uçları + eksik beat programı).
+Ayarlar ekranı mağaza/credential tarafını açtı ama **senkron hâlâ elle**: spec §9'daki
+`fetch_orders` dahil hiçbir sync job'ı zamanlanmış değil, EK-05 onu kapatacak.
 
 ### 2026-08-19 — KVN-EK-03 bitti (Faz 2'nin açılan görevleri tamamlandı)
 

@@ -64,6 +64,18 @@ export function formatCount(value: number): string {
   return integer.format(value);
 }
 
+/** Desi/ölçü değeri: Türkçe ondalık ayırıcı, gereksiz sondaki sıfırlar atılır (2,5 · 10). */
+export function formatDesi(value: string | number | null | undefined): string {
+  return new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(toNumber(value));
+}
+
+/** Sayısal alanın form girdisi hâli: nokta ondalık, sondaki sıfırlar atılmış (8.99). */
+export function toInputNumber(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "";
+  const parsed = toNumber(value);
+  return String(parsed);
+}
+
 export function formatDate(value: string): string {
   return dayMonth.format(new Date(value));
 }

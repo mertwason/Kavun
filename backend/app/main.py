@@ -24,6 +24,9 @@ from app.api import (
     tariffs,
     workspace,
 )
+
+# `settings` adı `app.core.config.Settings`'le karışmasın diye takma adla alınır.
+from app.api import settings as settings_api
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.scoping import BrandScopeViolation
@@ -72,6 +75,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Workspace router'ı en sonda: `/{brand_slug}` yakalayıcı olduğundan sabit
     # yollar (auth, holding, healthz) ondan önce eşleşmelidir.
     app.include_router(stores.router)
+    app.include_router(settings_api.router)
     app.include_router(analytics.router)
     app.include_router(pricelist.router)
     app.include_router(reconciliation.router)

@@ -400,6 +400,42 @@ Dönem seç → Önizle (hiçbir şey yazılmaz) → Uygula → açık farkları
 - Fark **açıklamasız kapatılamaz:** en az 3 karakterlik not zorunludur, `open` durumuna geri
   dönüş yoktur. Açıklamasız kapatılan fark, kapatılmamış farktan daha tehlikelidir.
 
+### Ayarlar: mağaza, bağlantı ve kargo tarifesi (KVN-EK-04)
+
+Gerçek veriye geçişin kapısı (spec §10.7). `/{marka}/settings` altında üç şey yönetilir:
+
+- **Mağaza** — kanal, satıcı no, sipariş başına hizmet bedeli. Senkron buradan elle
+  tetiklenebilir; credential yoksa uç 409 döner (boşuna kuyruğa iş atılmaz).
+- **Bağlantı bilgileri** — Fernet ile şifrelenip `store_credentials`'a yazılır.
+  **Yalnızca yazılır:** hiçbir uç içeriği geri döndürmez, ekranda sadece "kayıtlı /
+  girilmedi" ve son güncelleme zamanı görünür (CLAUDE.md §2).
+- **Kargo tarifesi** — desi bandı tablosu. Spec §6.1 kargoyu
+  `desi_bazli_tahmin(desi, carrier_tarife)` diye tanımlıyor; KVN-07'de tarife tablosu
+  yoktu ve tahmin iki sabite gömülüydü. Artık tahmin gerçekten tablodan çözülüyor.
+
+**Bant çözümleme sırası** (`app/engine/cargo.py`, saf fonksiyon):
+
+```
+firma eşleşmesi  >  en yeni yürürlük tarihi  >  dar bant
+```
+
+- Aralık **`[alt, üst)`**: bitişik bantlar (0–1, 1–2, 2–5) boşluk ve çakışma üretmez;
+  1,00 desi ikinci banda düşer. Üst sınır boşsa bant sınırsızdır ("10 desi ve üzeri").
+- Hiçbir bant eşleşmezse **varsayılan formüle** düşülür (taban + desi başı ücret) —
+  sessizce sıfır kargo yazılmaz; kargosu sıfır sanılan sipariş kârı olduğundan yüksek
+  gösterirdi.
+- Bant **silinmez, kapatılır** (`valid_to`): geçmiş tahminin hangi tarifeden çıktığı
+  kayıtta kalır.
+- **Tarife değişikliği geçmişi ezmez.** Spec §6.2'nin yeniden hesap tetikleyicileri
+  arasında tarife değişikliği yok; sessizce geçmişe dokunmak "dün gördüğüm kâr bugün
+  neden farklı" sorusunu doğurur. Bunun yerine açık bir eylem var: **Tahminleri yenile**
+  → önce önizler, yalnızca `estimated` gönderileri günceller, **kesinleşmiş (`actual`)
+  maliyete asla dokunmaz** ve değişen kârı `profit_revisions`'a `kargo_tarifesi`
+  gerekçesiyle yazar.
+
+Demo veri de bu tarifeden üretilir: Ayarlar ekranında görünen bantlar, siparişlerdeki
+gönderi maliyetlerinin gerçek kaynağıdır.
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -458,7 +494,7 @@ engeller.
 
 ```bash
 make dev && make seed-demo && make recompute   # yığın + dolu demo veri
-make e2e                                        # 37 smoke testi
+make e2e                                        # 42 smoke testi
 ```
 
 CI'da `docker compose smoke` işi ortamı kaldırır, demo veriyi yükler, kârı hesaplar ve
@@ -482,6 +518,7 @@ hazır Chromium farklı sürümdeyse `PLAYWRIGHT_CHROMIUM_PATH` ile yol verilebi
 | `/{marka}/inventory` | Stok & maliyet — eldeki adet, ortalama maliyet, hareket defteri, açılış/düzeltme |
 | `/{marka}/cargo` | Kargo faturaları — kesinleşme durumu + fatura yükleme/eşleştirme |
 | `/{marka}/reconciliation` | Hakediş mutabakatı — dönem turu, eşleşme oranı, farklar + açıklama akışı |
+| `/{marka}/settings` | Ayarlar — mağaza + şifreli bağlantı bilgileri + hizmet bedeli + kargo tarifesi |
 | `/{marka}/imports` | İthalat dosyaları + açık döviz pozisyonu (yalnızca bayrağı açık markada) |
 | `/{marka}/imports/{id}` | Dosya detayı — masraf kalemleri, dağıtım önizlemesi, ödemeler/kur farkı |
 | `/{marka}/d2b` | D2B satışlar — şablon indir/yükle + kademe bazlı özet (bayrağa bağlı) |
@@ -604,6 +641,12 @@ GET  /{brand}/cargo-invoices             # yüklenen kargo faturaları
 GET  /{brand}/cargo-invoices/cost-state  # kaç gönderi kesinleşti / tahmini kaldı
 GET  /{brand}/cargo-invoices/template    # kargo faturası şablonu (xlsx)
 POST /{brand}/cargo-invoices/import      # eşleştir + kesinleştir (?dry_run)
+
+GET  /{brand}/settings/cargo-tariffs          # desi bandı tarifesi (?include_closed)
+POST /{brand}/settings/cargo-tariffs          # bant ekle (geçersiz aralık 422)
+POST /{brand}/settings/cargo-tariffs/{id}/close    # bandı yürürlükten kaldır (silmez)
+GET  /{brand}/settings/cargo-tariffs/preview  # "bu desi kaça çıkar" + kaynağı
+POST /{brand}/settings/cargo-tariffs/reestimate    # tahminleri yenile (?dry_run)
 
 GET  /{brand}/reconciliation/periods  # hakediş kaydı olan dönemler
 GET  /{brand}/reconciliation/diffs    # eşik üstü farklar (?period&status)

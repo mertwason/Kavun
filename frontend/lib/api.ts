@@ -61,6 +61,14 @@ export type ReconciliationDiff = components["schemas"]["DiffOut"];
 export type ReconciliationRun = components["schemas"]["RunOut"];
 export type ReconciliationSummary = components["schemas"]["PeriodSummaryOut"];
 export type ExplainInput = components["schemas"]["ExplainIn"];
+export type Store = components["schemas"]["StoreSummary"];
+export type StoreInput = components["schemas"]["StoreCreate"];
+export type StorePatch = components["schemas"]["StoreUpdate"];
+export type CredentialStatus = components["schemas"]["CredentialStatus"];
+export type SyncStatus = components["schemas"]["SyncStatus"];
+export type CargoTariff = components["schemas"]["TariffOut"];
+export type CargoTariffInput = components["schemas"]["TariffCreate"];
+export type CargoReestimate = components["schemas"]["ReestimateOut"];
 
 export type HealthStatus = {
   online: boolean;
@@ -598,4 +606,82 @@ export function runReconciliation(brand: string, period: string, dryRun: boolean
 
 export function explainDiff(brand: string, diffId: string, input: ExplainInput) {
   return post<ReconciliationDiff>(brand, `/reconciliation/diffs/${diffId}/explain`, input);
+}
+
+// --- Ayarlar: mağaza, credential, kargo tarifesi (spec §10.7) ----------------
+
+/** Marka kapsamlı PATCH/DELETE — POST ile aynı disiplin, farklı yöntem. */
+async function send<T>(
+  brand: string,
+  path: string,
+  method: "PATCH" | "DELETE",
+  body?: unknown,
+): Promise<ApiResult<T> & { detail?: string }> {
+  const token = await issueToken(brand);
+  if (!token) return { ok: false, status: 401, reason: "no-session" };
+  try {
+    const response = await fetch(`${API_URL}/${brand}${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { detail?: unknown } | null;
+      const detail = typeof payload?.detail === "string" ? payload.detail : undefined;
+      return { ok: false, status: response.status, reason: "http-error", detail };
+    }
+    // 204 gövdesiz döner.
+    const text = await response.text();
+    return { ok: true, data: (text ? JSON.parse(text) : null) as T };
+  } catch {
+    return { ok: false, status: 0, reason: "unreachable" };
+  }
+}
+
+export function fetchStores(brand: string) {
+  return get<Store[]>(brand, "/stores");
+}
+
+export function createStore(brand: string, input: StoreInput) {
+  return post<Store>(brand, "/stores", input);
+}
+
+export function updateStore(brand: string, storeId: string, input: StorePatch) {
+  return send<Store>(brand, `/stores/${storeId}`, "PATCH", input);
+}
+
+/** Credential yalnızca YAZILIR; hiçbir uç içeriği geri döndürmez (CLAUDE.md §2). */
+export function saveCredentials(brand: string, storeId: string, values: Record<string, string>) {
+  return post<CredentialStatus>(brand, `/stores/${storeId}/credentials`, { values });
+}
+
+export function deleteCredentials(brand: string, storeId: string) {
+  return send<null>(brand, `/stores/${storeId}/credentials`, "DELETE");
+}
+
+export function triggerStoreSync(brand: string, storeId: string) {
+  return post<SyncStatus>(brand, `/stores/${storeId}/sync`);
+}
+
+export function fetchCargoTariffs(brand: string) {
+  return get<CargoTariff[]>(brand, "/settings/cargo-tariffs");
+}
+
+export function createCargoTariff(brand: string, input: CargoTariffInput) {
+  return post<CargoTariff>(brand, "/settings/cargo-tariffs", input);
+}
+
+export function closeCargoTariff(brand: string, tariffId: string) {
+  return post<CargoTariff>(brand, `/settings/cargo-tariffs/${tariffId}/close`);
+}
+
+export function reestimateCargo(brand: string, dryRun: boolean) {
+  return post<CargoReestimate>(
+    brand,
+    `/settings/cargo-tariffs/reestimate?dry_run=${dryRun ? "true" : "false"}`,
+  );
 }

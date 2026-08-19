@@ -39,7 +39,8 @@
     "d2b": "D2B satışlar",
     "holding": "Holding",
     "cargo": "Kargo faturaları",
-    "reconciliation": "Hakediş mutabakatı"
+    "reconciliation": "Hakediş mutabakatı",
+    "settings": "Ayarlar"
   },
   "period": {
     "label": "Dönem",
@@ -162,7 +163,8 @@
     "cargo": "Henüz kargo faturası yüklenmedi.",
     "cargoHint": "Kargo firmasının Excel dökümünü şablona doldurup yükleyin.",
     "reconciliation": "Bu dönemde fark yok.",
-    "reconciliationHint": "Mutabakatı çalıştırın; eşik üstü sapma varsa burada listelenir."
+    "reconciliationHint": "Mutabakatı çalıştırın; eşik üstü sapma varsa burada listelenir.",
+    "settings": "Bu markada mağaza yok."
   },
   "error": {
     "unreachable": "API'ye ulaşılamıyor.",
@@ -615,5 +617,53 @@
       "explained": "Açıklandı",
       "resolved": "Çözüldü"
     }
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "subtitle": "Mağaza bağlantıları, hizmet bedeli ve kargo tarifesi — gerçek veriye buradan geçilir.",
+    "storesTitle": "Mağazalar",
+    "storesSubtitle": "Kanal hesapları ve senkron durumu.",
+    "storeName": "Mağaza adı",
+    "channel": "Kanal",
+    "sellerId": "Satıcı no",
+    "serviceFee": "Hizmet bedeli / sipariş",
+    "lastSync": "Son senkron",
+    "never": "Hiç",
+    "addStore": "Mağaza ekle",
+    "save": "Kaydet",
+    "saved": "Kaydedildi.",
+    "credentials": "Bağlantı bilgileri",
+    "credentialsConfigured": "Kayıtlı",
+    "credentialsMissing": "Girilmedi",
+    "credentialsNote": "Bilgiler şifrelenerek saklanır ve hiçbir ekranda geri gösterilmez.",
+    "credentialsSave": "Bağlantıyı kaydet",
+    "credentialsDelete": "Sil",
+    "sync": "Senkronu başlat",
+    "syncQueued": "Senkron kuyruğa alındı.",
+    "tariffTitle": "Kargo tarifesi",
+    "tariffSubtitle": "Kargo tahmini bu bantlardan çözülür. Bant yoksa varsayılan formül kullanılır.",
+    "carrier": "Firma",
+    "allCarriers": "Tüm firmalar",
+    "desiRange": "Desi aralığı",
+    "desiMin": "Desi (en az)",
+    "desiMax": "Desi (en fazla)",
+    "unbounded": "ve üzeri",
+    "price": "Tutar",
+    "validFrom": "Yürürlük",
+    "addBand": "Bant ekle",
+    "closeBand": "Kapat",
+    "closeBandHint": "Bant silinmez, yürürlükten kaldırılır.",
+    "reestimate": "Tahminleri yenile",
+    "reestimatePreview": "Önizle",
+    "reestimateNote": "Yalnızca tahmini gönderiler güncellenir; kesinleşmiş maliyet değişmez.",
+    "reestimateResult": "gönderi güncellenecek",
+    "reestimateApplied": "Tahminler güncellendi; etkilenen siparişlerin kârı yeniden hesaplandı.",
+    "changed": "Değişen",
+    "skippedActual": "Kesinleşmiş (dokunulmadı)",
+    "delta": "Tahmin farkı",
+    "noBands": "Tarife bandı tanımlı değil.",
+    "noBandsHint": "Bant eklenene kadar kargo tahmini varsayılan formülden hesaplanır.",
+    "noStores": "Bu markada mağaza yok.",
+    "noStoresHint": "Mağaza ekleyip bağlantı bilgilerini girin; senkron ondan sonra çalışır."
   }
 }

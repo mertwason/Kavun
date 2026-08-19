@@ -23,6 +23,7 @@ const SHARED_PAGES = [
   { path: "/inventory", heading: "Stok & maliyet" },
   { path: "/cargo", heading: "Kargo faturaları" },
   { path: "/reconciliation", heading: "Hakediş mutabakatı" },
+  { path: "/settings", heading: "Ayarlar" },
 ] as const;
 
 /** Yalnızca bayrağı açık markada (Alessi) bulunan ekranlar. */
@@ -217,4 +218,52 @@ test("mutabakat ekranı veri yokken boş durumu gösterir", async ({ page }) => 
   await page.goto("/alessi/reconciliation");
 
   await expect(page.locator("main")).toContainText("Bu dönemde fark yok.");
+});
+
+test("ayarlarda kargo tarifesi dolu ve geçersiz bant reddedilir", async ({ page }) => {
+  await page.goto("/kahveji/settings");
+
+  // Demo tarifesi ekranda görünmeli: gönderi maliyetleri bu bantlardan üretiliyor.
+  const bands = page.locator("table tbody tr");
+  expect(await bands.count()).toBeGreaterThan(3);
+  await expect(page.locator("main")).toContainText("Tüm firmalar");
+
+  const form = page.locator("form").filter({ has: page.locator("input[name=desi_min]") });
+  await form.locator("input[name=desi_min]").fill("5");
+  await form.locator("input[name=desi_max]").fill("2");
+  await form.locator("input[name=price]").fill("10");
+  await form.getByRole("button", { name: "Bant ekle" }).click();
+
+  // Ters aralık sessizce kabul edilmez.
+  await expect(page.locator("main")).toContainText("Desi üst sınırı alt sınırdan büyük olmalı");
+});
+
+test("bağlantı bilgileri kaydedilir ama ekrana geri dönmez", async ({ page }) => {
+  await page.goto("/alessi/settings");
+
+  const form = page.locator("form").filter({ has: page.locator("input[name=cred_api_key]") }).first();
+  await form.locator("input[name=cred_api_key]").fill("E2E-KEY");
+  await form.locator("input[name=cred_api_secret]").fill("E2E-SECRET");
+  await form.locator("input[name=cred_seller_id]").fill("123456");
+  await form.getByRole("button", { name: "Bağlantıyı kaydet" }).click();
+
+  // Kaydedilen değer hiçbir alanda geri gösterilmez (CLAUDE.md §2).
+  await expect(form.locator("input[name=cred_api_key]")).toHaveValue("");
+  await expect(page.locator("main")).not.toContainText("E2E-SECRET");
+  await page.reload();
+  await expect(page.locator("main")).toContainText("Kayıtlı");
+});
+
+test("tahmin yenileme kesinleşmiş maliyete dokunmaz", async ({ page }) => {
+  await page.goto("/kahveji/settings");
+
+  await page.getByRole("button", { name: "Önizle" }).click();
+  await expect(page.getByText("Kesinleşmiş (dokunulmadı)")).toBeVisible();
+
+  // Kargo faturasıyla kesinleşmiş gönderiler önizlemede "dokunulmadı" sayısına düşer.
+  const skipped = page
+    .locator("span")
+    .filter({ hasText: /^Kesinleşmiş \(dokunulmadı\)$/ })
+    .locator("xpath=following-sibling::span");
+  expect(Number(await skipped.innerText())).toBeGreaterThan(0);
 });

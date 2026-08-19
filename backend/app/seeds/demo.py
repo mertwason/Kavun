@@ -24,7 +24,9 @@ from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session
 
 from app.core.context import system_scope
+from app.engine import cargo as cargo_engine
 from app.models.catalog import (
+    CargoTariff,
     CommissionChange,
     CommissionRate,
     Customer,
@@ -151,8 +153,19 @@ CATEGORY_COMMISSION: dict[str, str] = {
     "Hediye": "0.1800",
 }
 
-CARGO_PER_DESI = Decimal("18.50")
-CARGO_BASE = Decimal("42.00")
+# Demo kargo tarifesi (KVN-EK-04): gönderi maliyetleri Ayarlar ekranında GÖRÜNEN
+# bantlardan üretilir — ekrandaki tarife ile veri birbirini tutsun.
+DEMO_CARGO_BANDS: tuple[tuple[str | None, str, str | None, str], ...] = (
+    # (firma, desi_min, desi_max, tutar)
+    (None, "0", "1", "54.90"),
+    (None, "1", "2", "66.50"),
+    (None, "2", "3", "78.00"),
+    (None, "3", "5", "94.50"),
+    (None, "5", "10", "128.00"),
+    (None, "10", None, "175.00"),
+    # Firma özel bandı, "tüm firmalar" bandını yener (spec §6.1 çözümleme sırası).
+    ("Trendyol Express", "0", "1", "49.90"),
+)
 
 
 @dataclass
@@ -178,9 +191,41 @@ def _demo_barcode(sku: str) -> str:
     return f"869{int(digest[:12], 16) % 10_000_000_000:010d}"
 
 
-def _cargo_cost(desi: Decimal) -> Decimal:
-    """Desi bazlı kargo tahmini (gerçek tarife KVN-05/07'de gelir)."""
-    return (CARGO_BASE + desi * CARGO_PER_DESI).quantize(Decimal("0.0001"))
+def _cargo_cost(
+    desi: Decimal, bands: list[cargo_engine.Band], *, carrier: str | None = None
+) -> Decimal:
+    """Desi bazlı kargo tahmini — demo tarifesinden çözülür (spec §6.1)."""
+    return cargo_engine.estimate(desi=desi, bands=bands, carrier=carrier).amount
+
+
+def _seed_cargo_tariffs(
+    session: Session, tenant: Tenant, brand: Brand, summary: DemoSummary, today: date
+) -> list[cargo_engine.Band]:
+    """Markanın kargo tarifesini kurar ve motorun kullanacağı bantları döner."""
+    bands: list[cargo_engine.Band] = []
+    for carrier, desi_min, desi_max, price in DEMO_CARGO_BANDS:
+        row = CargoTariff(
+            tenant_id=tenant.id,
+            brand_id=brand.id,
+            carrier=carrier,
+            desi_min=Decimal(desi_min),
+            desi_max=Decimal(desi_max) if desi_max is not None else None,
+            price=Decimal(price),
+            valid_from=today - timedelta(days=180),
+        )
+        session.add(row)
+        bands.append(
+            cargo_engine.Band(
+                desi_min=row.desi_min,
+                desi_max=row.desi_max,
+                price=row.price,
+                carrier=row.carrier,
+                valid_from=row.valid_from,
+            )
+        )
+        summary.bump("cargo_tariffs")
+    session.flush()
+    return bands
 
 
 def _rounded(value: Decimal) -> Decimal:
@@ -341,10 +386,12 @@ def _seed_orders(
     now: datetime,
     *,
     prefix: str,
+    bands: list[cargo_engine.Band],
     with_returns: bool = True,
     customers: list[Customer] | None = None,
 ) -> None:
     """Sipariş + satır + gönderi + iade üretir (farklı statüler dahil)."""
+    carrier = "Trendyol Express" if prefix != "D2B" else "Aras Kargo"
     statuses = (
         [OrderStatus.DELIVERED] * 14
         + [OrderStatus.SHIPPED] * 3
@@ -427,7 +474,7 @@ def _seed_orders(
                             ("Beğenmedi", "Hasarlı geldi", "Yanlış ürün", "Geç teslimat")
                         ),
                         refund_amount=_rounded(unit_price * returned_qty),
-                        return_cargo_cost_estimated=_cargo_cost(definition.desi),
+                        return_cargo_cost_estimated=_cargo_cost(definition.desi, bands),
                         cost_state=CostState.ESTIMATED,
                         restocked=rng.randint(1, 100) <= 70,
                     )
@@ -443,10 +490,10 @@ def _seed_orders(
                     tenant_id=tenant.id,
                     brand_id=brand.id,
                     order_id=order.id,
-                    carrier="Trendyol Express" if prefix != "D2B" else "Aras Kargo",
+                    carrier=carrier,
                     tracking_no=f"TK{order.external_order_id[-10:]}",
                     desi_declared=total_desi,
-                    cargo_cost_estimated=_cargo_cost(total_desi),
+                    cargo_cost_estimated=_cargo_cost(total_desi, bands, carrier=carrier),
                     cost_state=CostState.ESTIMATED,
                 )
             )
@@ -1007,6 +1054,10 @@ def _seed_demo(session: Session) -> DemoSummary:
     _seed_commission_rates(session, kahveji_store, kahveji_products, summary, today)
     _seed_commission_rates(session, alessi_store, alessi_products, summary, today)
 
+    # Kargo tarifesi siparişlerden ÖNCE kurulur: gönderi tahminleri bu bantlardan çıkar.
+    kahveji_bands = _seed_cargo_tariffs(session, tenant, kahveji, summary, today)
+    alessi_bands = _seed_cargo_tariffs(session, tenant, alessi, summary, today)
+
     # Sipariş hacmi markalar arasında bölünür: Kahveji daha çok adet, Alessi daha yüksek sepet.
     kahveji_orders = ORDER_COUNT * 6 // 10
     _seed_orders(
@@ -1020,6 +1071,7 @@ def _seed_demo(session: Session) -> DemoSummary:
         summary,
         now,
         prefix="KHV",
+        bands=kahveji_bands,
     )
     _seed_orders(
         session,
@@ -1032,6 +1084,7 @@ def _seed_demo(session: Session) -> DemoSummary:
         summary,
         now,
         prefix="ALS",
+        bands=alessi_bands,
     )
     # D2B: komisyonsuz kurumsal satış (spec §12C.9).
     d2b_customers = _seed_customers(session, tenant, alessi, summary)
@@ -1046,6 +1099,7 @@ def _seed_demo(session: Session) -> DemoSummary:
         summary,
         now,
         prefix="D2B",
+        bands=alessi_bands,
         with_returns=False,
         customers=d2b_customers,
     )
@@ -1128,6 +1182,7 @@ def _wipe_demo(session: Session) -> int:
         delete(SkuCostState).where(SkuCostState.product_id.in_(product_ids)),
         delete(CommissionChange).where(CommissionChange.store_id.in_(store_ids)),
         delete(CommissionRate).where(CommissionRate.store_id.in_(store_ids)),
+        delete(CargoTariff).where(CargoTariff.tenant_id == tenant_id),
         delete(SkuCost).where(SkuCost.product_id.in_(product_ids)),
         delete(SkuLogistics).where(SkuLogistics.product_id.in_(product_ids)),
         delete(SkuPrice).where(SkuPrice.product_id.in_(product_ids)),

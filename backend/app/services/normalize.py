@@ -29,21 +29,21 @@ from app.connectors import trendyol
 from app.connectors.base import RawOrder, RawProduct
 from app.core.context import system_scope
 from app.core.logging import get_logger
+from app.engine import cargo as cargo_engine
 from app.models.catalog import Product, ProductChannelMap
 from app.models.enums import ChannelCode, CostState, OrderStatus
 from app.models.identity import Channel, Store
 from app.models.results import LineProfit
 from app.models.transactions import Order, OrderLine, RawEvent, Shipment
+from app.services import cargo_tariffs
 
 log = get_logger("services.normalize")
 
 DEFAULT_VAT_RATE = Decimal("20.00")
 SHIPPED_STATUSES = frozenset({OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.RETURNED})
 
-# Kargo tahmini: desi bazlı basit tarife. Gerçek tarife tablosu KVN-07'de motorun
-# girdisi olacak; burada yalnızca `cargo_cost_estimated` alanı doldurulur.
-CARGO_BASE = Decimal("42.00")
-CARGO_PER_DESI = Decimal("18.50")
+# Kargo tahmini artık tarife tablosundan çözülür (KVN-EK-04); tarife tanımlı değilse
+# motor varsayılan formüle düşer. Sabitler `app/engine/cargo.py`'de tek yerde durur.
 
 
 @dataclass
@@ -75,9 +75,17 @@ class NormalizeSummary:
         }
 
 
-def estimate_cargo(desi: Decimal | None) -> Decimal:
-    """Desi bazlı kargo tahmini (spec §6.1: `desi_bazli_tahmin`)."""
-    return (CARGO_BASE + (desi or Decimal("0")) * CARGO_PER_DESI).quantize(Decimal("0.0001"))
+def estimate_cargo(
+    desi: Decimal | None,
+    *,
+    bands: list[cargo_engine.Band] | None = None,
+    carrier: str | None = None,
+) -> Decimal:
+    """Desi bazlı kargo tahmini (spec §6.1: `desi_bazli_tahmin(desi, carrier_tarife)`).
+
+    Bant listesi verilmezse — ya da hiçbiri eşleşmezse — varsayılan formüle düşülür.
+    """
+    return cargo_engine.estimate(desi=desi, bands=bands or (), carrier=carrier).amount
 
 
 def _channel_code(session: Session, store: Store) -> ChannelCode:
@@ -134,9 +142,18 @@ def _find_product(
 
 
 def apply_order(
-    session: Session, store: Store, raw_order: RawOrder, summary: NormalizeSummary
+    session: Session,
+    store: Store,
+    raw_order: RawOrder,
+    summary: NormalizeSummary,
+    *,
+    bands: list[cargo_engine.Band] | None = None,
 ) -> Order:
-    """Ham siparişi domain tablolarına yazar (upsert)."""
+    """Ham siparişi domain tablolarına yazar (upsert).
+
+    `bands` kargo tarifesidir; koşu başında bir kez yüklenir (sipariş başına sorgu atmamak
+    için) ve gönderi tahmininde kullanılır.
+    """
     order = session.scalar(
         select(Order).where(
             Order.tenant_id == store.tenant_id,
@@ -209,20 +226,25 @@ def apply_order(
             line.product_id = product.id if product else line.product_id
         summary.lines_written += 1
 
-    _apply_shipment(session, store, order, raw_order)
+    _apply_shipment(session, store, order, raw_order, bands=bands)
     session.flush()
     return order
 
 
 def _apply_shipment(
-    session: Session, store: Store, order: Order, raw_order: RawOrder
+    session: Session,
+    store: Store,
+    order: Order,
+    raw_order: RawOrder,
+    *,
+    bands: list[cargo_engine.Band] | None = None,
 ) -> Shipment | None:
     """Kargolanmış siparişler için gönderi kaydı (tahmini maliyetle)."""
     if raw_order.status not in SHIPPED_STATUSES:
         return None
 
     shipment = session.scalar(select(Shipment).where(Shipment.order_id == order.id))
-    estimated = estimate_cargo(raw_order.desi)
+    estimated = estimate_cargo(raw_order.desi, bands=bands, carrier=raw_order.cargo_provider)
     if shipment is None:
         shipment = Shipment(
             tenant_id=store.tenant_id,
@@ -286,6 +308,8 @@ def normalize_events(
     """Verilen ham olayları domain tablolarına uygular."""
     summary = NormalizeSummary()
     store_cache: dict[uuid.UUID, tuple[Store, ChannelCode]] = {}
+    # Kargo tarifesi marka başına bir kez yüklenir: sipariş başına sorgu atmamak için.
+    band_cache: dict[uuid.UUID, list[cargo_engine.Band]] = {}
 
     for event in sorted(events, key=lambda item: (item.fetched_at, item.id)):
         cached = store_cache.get(event.store_id)
@@ -304,7 +328,11 @@ def normalize_events(
             continue
 
         if isinstance(parsed, RawOrder):
-            apply_order(session, store, parsed, summary)
+            bands = band_cache.get(store.brand_id)
+            if bands is None:
+                bands = cargo_tariffs.bands_for_brand(session, store.brand_id)
+                band_cache[store.brand_id] = bands
+            apply_order(session, store, parsed, summary, bands=bands)
         else:
             apply_products(session, store, parsed, summary)
 

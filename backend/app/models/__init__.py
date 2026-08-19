@@ -5,6 +5,7 @@ eklendiğinde buraya da import edilmelidir.
 """
 
 from app.models.catalog import (
+    CargoTariff,
     CommissionChange,
     CommissionRate,
     Customer,
@@ -65,6 +66,7 @@ __all__ = [
     "Brand",
     "BrandFeature",
     "CargoInvoice",
+    "CargoTariff",
     "Channel",
     "CommissionChange",
     "CommissionRate",

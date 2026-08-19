@@ -279,6 +279,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/settings/cargo-tariffs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Kargo tarife bantları
+         * @description Aktif markanın bantları. `include_closed` kapatılmış bantları da getirir.
+         */
+        get: operations["list_tariffs__brand_slug__settings_cargo_tariffs_get"];
+        put?: never;
+        /**
+         * Desi bandı ekle
+         * @description Yeni bant. Geçersiz aralık 422 döner — çakışan bant sessizce kabul edilmez.
+         */
+        post: operations["create_tariff__brand_slug__settings_cargo_tariffs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/settings/cargo-tariffs/{tariff_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bandı kapat (silme değil)
+         * @description Bandı yürürlükten kaldırır; geçmiş tahminlerin dayanağı kayıtta kalır.
+         */
+        post: operations["close_tariff__brand_slug__settings_cargo_tariffs__tariff_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/settings/cargo-tariffs/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Tarifeyi bir desi ile dene
+         * @description Verilen desi bugünkü tarifede kaça çıkar; hangi kaynaktan geldiğini de söyler.
+         */
+        get: operations["preview_tariff__brand_slug__settings_cargo_tariffs_preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/settings/cargo-tariffs/reestimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Tahmini gönderileri güncel tarifeyle yenile
+         * @description Yalnızca `estimated` gönderiler; kesinleşmiş maliyet ASLA ezilmez (spec §6.2).
+         */
+        post: operations["reestimate__brand_slug__settings_cargo_tariffs_reestimate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/dashboard": {
         parameters: {
             query?: never;
@@ -2844,6 +2928,22 @@ export interface components {
             dry_run: boolean;
         };
         /**
+         * ReestimateOut
+         * @description Yeniden tahmin özeti.
+         */
+        ReestimateOut: {
+            /** Dry Run */
+            dry_run: boolean;
+            /** Shipments */
+            shipments: number;
+            /** Changed */
+            changed: number;
+            /** Skipped Actual */
+            skipped_actual: number;
+            /** Delta */
+            delta: string;
+        };
+        /**
          * RowErrorOut
          * @description Reddedilen satır.
          */
@@ -3245,6 +3345,24 @@ export interface components {
             result: components["schemas"]["ScenarioResultOut"] | null;
         };
         /**
+         * TariffCreate
+         * @description Yeni desi bandı. Üst sınır boşsa bant sınırsızdır ("10 desi ve üzeri").
+         */
+        TariffCreate: {
+            /** Desi Min */
+            desi_min: number | string;
+            /** Desi Max */
+            desi_max?: number | string | null;
+            /** Price */
+            price: number | string;
+            /** Carrier */
+            carrier?: string | null;
+            /** Valid From */
+            valid_from?: string | null;
+            /** Note */
+            note?: string | null;
+        };
+        /**
          * TariffImpactIn
          * @description Toplu tarife senaryosu girdisi (spec §12B.4).
          */
@@ -3320,6 +3438,48 @@ export interface components {
             revenue_gross: string;
             /** Profit Impact */
             profit_impact: string;
+        };
+        /**
+         * TariffOut
+         * @description Tarife satırı.
+         */
+        TariffOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Carrier */
+            carrier: string | null;
+            /** Desi Min */
+            desi_min: string;
+            /** Desi Max */
+            desi_max: string | null;
+            /** Price */
+            price: string;
+            /**
+             * Valid From
+             * Format: date
+             */
+            valid_from: string;
+            /** Valid To */
+            valid_to: string | null;
+            /** Note */
+            note: string | null;
+        };
+        /**
+         * TariffPreview
+         * @description "Bu desi kaça çıkar" sonucu.
+         */
+        TariffPreview: {
+            /** Desi */
+            desi: string;
+            /** Carrier */
+            carrier: string | null;
+            /** Amount */
+            amount: string;
+            /** Source */
+            source: string;
         };
         /**
          * TariffUploadOut
@@ -4002,6 +4162,188 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CredentialStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_tariffs__brand_slug__settings_cargo_tariffs_get: {
+        parameters: {
+            query?: {
+                include_closed?: boolean;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TariffOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_tariff__brand_slug__settings_cargo_tariffs_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TariffCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TariffOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_tariff__brand_slug__settings_cargo_tariffs__tariff_id__close_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                tariff_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TariffOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_tariff__brand_slug__settings_cargo_tariffs_preview_get: {
+        parameters: {
+            query: {
+                desi: number | string;
+                carrier?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TariffPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reestimate__brand_slug__settings_cargo_tariffs_reestimate_post: {
+        parameters: {
+            query?: {
+                dry_run?: boolean;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReestimateOut"];
                 };
             };
             /** @description Validation Error */

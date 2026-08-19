@@ -112,6 +112,32 @@ class SkuLogistics(Base, TimestampMixin):
     effective_from: Mapped[date] = mapped_column(Date, nullable=False)
 
 
+class CargoTariff(Base, TimestampMixin):
+    """Desi bandı bazlı kargo tarifesi (spec §6.1 `desi_bazli_tahmin`, §10.7).
+
+    Marka kapsamlıdır: Alessi'nin anlaştığı fiyat Kahveji'yi bağlamaz. `carrier` boşsa
+    bant tüm firmalar için geçerlidir. Bantlar **silinmez, kapatılır** (`valid_to`) —
+    geçmiş tahminlerin hangi tarifeden çıktığı kaybolmasın.
+    """
+
+    __tablename__ = "cargo_tariffs"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = tenant_fk()
+    brand_id: Mapped[uuid.UUID] = brand_fk()
+    carrier: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    desi_min: Mapped[Decimal] = mapped_column(Desi, nullable=False)
+    """Dahil."""
+
+    desi_max: Mapped[Decimal | None] = mapped_column(Desi, nullable=True)
+    """Hariç; boş = üst sınırsız bant."""
+
+    price: Mapped[Decimal] = mapped_column(Money, nullable=False)
+    valid_from: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    valid_to: Mapped[date | None] = mapped_column(Date, nullable=True)
+    note: Mapped[str | None] = mapped_column(String(300), nullable=True)
+
+
 class CommissionRate(Base, TimestampMixin):
     """Versiyonlu komisyon tarifesi — çözümleme hiyerarşisi için (spec §12B.1)."""
 
