@@ -13,9 +13,11 @@ yüzden uyarı üretir.
 
 from __future__ import annotations
 
+import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
@@ -94,3 +96,98 @@ def _has_open_alert(session: Session, store: Store) -> bool:
         )
         is not None
     )
+
+
+# --- listeleme, özet ve acknowledge (spec §10.6) -----------------------------
+
+
+class AlertNotFoundError(LookupError):
+    """Uyarı bulunamadı (ya da aktif markaya ait değil)."""
+
+
+@dataclass(frozen=True)
+class AlertCounts:
+    """Uyarı özeti — ekranın KPI şeridi."""
+
+    open: int
+    acknowledged: int
+    critical_open: int
+    warning_open: int
+    info_open: int
+
+    @property
+    def total(self) -> int:
+        return self.open + self.acknowledged
+
+
+def alerts(
+    session: Session,
+    *,
+    severity: AlertSeverity | None = None,
+    alert_type: str | None = None,
+    acknowledged: bool | None = None,
+    limit: int = 200,
+) -> list[Alert]:
+    """Aktif markanın uyarıları — en yeni önce.
+
+    `acknowledged=None` hepsini getirir; `False` yalnızca açıkları, `True` kapatılmışları.
+    Kapatılmış uyarı **silinmez**: filtreyle her zaman geri görülebilir.
+    """
+    statement = select(Alert).order_by(Alert.created_at.desc()).limit(limit)
+    if severity is not None:
+        statement = statement.where(Alert.severity == severity)
+    if alert_type:
+        statement = statement.where(Alert.type == alert_type)
+    if acknowledged is True:
+        statement = statement.where(Alert.acknowledged_at.is_not(None))
+    elif acknowledged is False:
+        statement = statement.where(Alert.acknowledged_at.is_(None))
+    return list(session.scalars(statement))
+
+
+def counts(session: Session) -> AlertCounts:
+    """Seviye bazlı açık/kapalı sayımlar."""
+    rows = session.execute(
+        select(Alert.severity, Alert.acknowledged_at.is_(None), func.count()).group_by(
+            Alert.severity, Alert.acknowledged_at.is_(None)
+        )
+    ).all()
+
+    open_by_severity: dict[AlertSeverity, int] = {}
+    open_total = 0
+    acknowledged_total = 0
+    for severity, is_open, count in rows:
+        if is_open:
+            open_by_severity[severity] = open_by_severity.get(severity, 0) + count
+            open_total += count
+        else:
+            acknowledged_total += count
+
+    return AlertCounts(
+        open=open_total,
+        acknowledged=acknowledged_total,
+        critical_open=open_by_severity.get(AlertSeverity.CRITICAL, 0),
+        warning_open=open_by_severity.get(AlertSeverity.WARNING, 0),
+        info_open=open_by_severity.get(AlertSeverity.INFO, 0),
+    )
+
+
+def types(session: Session) -> list[str]:
+    """Markada geçen uyarı türleri — ekranın filtre listesi."""
+    return list(session.scalars(select(Alert.type).distinct().order_by(Alert.type)))
+
+
+def acknowledge(session: Session, alert_id: uuid.UUID, *, at: datetime | None = None) -> Alert:
+    """Uyarıyı "görüldü" olarak işaretler.
+
+    **Tek yönlüdür ve idempotenttir:** ikinci kez çağrılırsa ilk damga korunur, "görüldü"
+    zamanı geriye alınmaz. Geri alma yok çünkü acknowledge bir karar değil, bir okuma
+    kaydıdır; yanlışlıkla kapatılan uyarı silinmez, "Kapatılmış" filtresinde durur.
+    """
+    alert = session.scalar(select(Alert).where(Alert.id == alert_id))
+    if alert is None:
+        raise AlertNotFoundError(str(alert_id))
+    if alert.acknowledged_at is None:
+        alert.acknowledged_at = at or datetime.now(UTC)
+        session.flush()
+    return alert

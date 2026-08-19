@@ -869,30 +869,38 @@ def _seed_alerts_and_workspace(
     summary: DemoSummary,
 ) -> None:
     """Uyarılar, taslak ürünler, senaryolar ve B2B müşterileri."""
+    # Tür adları servislerin GERÇEKTEN yazdığı sabitlerle aynı olmalı: demo ekranda
+    # görünen filtre listesi gerçek kurulumda da aynı olsun (KVN-EK-06).
     alerts = (
-        (kahveji, AlertSeverity.CRITICAL, "negative_margin", "KHV-SMPL-50 negatif marjda: -%8,4"),
+        (kahveji, AlertSeverity.CRITICAL, "marj_tabani", "KHV-SMPL-50 negatif marjda: -%8,4"),
         (
             kahveji,
             AlertSeverity.WARNING,
-            "commission_change",
+            "komisyon_degisikligi",
             "Ekipman/Sarf komisyonu %21,0 → %22,0",
         ),
-        (kahveji, AlertSeverity.INFO, "sync_summary", "Trendyol sipariş senkronu tamamlandı"),
+        (
+            kahveji,
+            AlertSeverity.WARNING,
+            "kargo_faturasi_eslesmedi",
+            "KRG-2026-08-001 faturasında 2 satır gönderiyle eşleşmedi",
+        ),
+        (kahveji, AlertSeverity.INFO, "negatif_stok", "KHV-BLD-ESP stoğu -3 adede düştü"),
         (
             alessi,
             AlertSeverity.CRITICAL,
-            "msrp_violation",
+            "msrp_ihlali",
             "ALS-OUTL-1 liste fiyatı MSRP disiplinini bozuyor",
         ),
         (
             alessi,
             AlertSeverity.WARNING,
-            "fx_exposure",
-            "Açık EUR pozisyonu 24.500 € — kur farkı gideri artıyor",
+            "stale_sync",
+            "Alessi D2B mağazası 14 saattir senkronlanmadı",
         ),
-        (alessi, AlertSeverity.INFO, "stock_low", "ALS-KTL-01 stok 6 adete düştü"),
+        (alessi, AlertSeverity.INFO, "negatif_stok", "ALS-KTL-01 stok 6 adete düştü"),
     )
-    for brand, severity, alert_type, message in alerts:
+    for index, (brand, severity, alert_type, message) in enumerate(alerts):
         session.add(
             Alert(
                 tenant_id=tenant.id,
@@ -900,6 +908,10 @@ def _seed_alerts_and_workspace(
                 type=alert_type,
                 severity=severity,
                 message=message,
+                # Ekran hem açık hem kapatılmış durumu göstersin: sonuncusu kapatılmış.
+                acknowledged_at=(
+                    datetime.now(UTC) - timedelta(hours=3) if index == len(alerts) - 1 else None
+                ),
             )
         )
         summary.bump("alerts")

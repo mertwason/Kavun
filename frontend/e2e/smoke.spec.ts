@@ -23,6 +23,7 @@ const SHARED_PAGES = [
   { path: "/inventory", heading: "Stok & maliyet" },
   { path: "/cargo", heading: "Kargo faturaları" },
   { path: "/reconciliation", heading: "Hakediş mutabakatı" },
+  { path: "/alerts", heading: "Uyarılar" },
   { path: "/settings", heading: "Ayarlar" },
 ] as const;
 
@@ -266,4 +267,44 @@ test("tahmin yenileme kesinleşmiş maliyete dokunmaz", async ({ page }) => {
     .filter({ hasText: /^Kesinleşmiş \(dokunulmadı\)$/ })
     .locator("xpath=following-sibling::span");
   expect(Number(await skipped.innerText())).toBeGreaterThan(0);
+});
+
+test("uyarı listesi doludur ve seviye filtresi çalışır", async ({ page }) => {
+  await page.goto("/kahveji/alerts");
+
+  const all = await page.locator("table tbody tr").count();
+  expect(all).toBeGreaterThan(0);
+
+  await page.getByRole("link", { name: "Kritik", exact: true }).click();
+  await page.waitForLoadState("networkidle");
+
+  // Filtrelenmiş liste daralmalı ve yalnızca kritik satır kalmalı.
+  const filtered = await page.locator("table tbody tr").count();
+  expect(filtered).toBeLessThanOrEqual(all);
+  await expect(page.locator("table tbody")).not.toContainText("Bilgi");
+});
+
+test("uyarı kapatılır ama silinmez", async ({ page }) => {
+  await page.goto("/kahveji/alerts");
+
+  const before = await page.locator("table tbody tr").count();
+  await page.getByRole("button", { name: "Gördüm" }).first().click();
+  await page.waitForTimeout(500);
+  await page.reload();
+
+  // Açık listeden düşer...
+  await expect(page.locator("table tbody tr")).toHaveCount(before - 1);
+
+  // ...ama "Kapatılmış" filtresinde durur (spec §10.6: silme yok).
+  await page.goto("/kahveji/alerts?status=acknowledged");
+  expect(await page.locator("table tbody tr").count()).toBeGreaterThan(0);
+  await expect(page.locator("main")).toContainText("Kapatıldı");
+});
+
+test("uyarı filtreleri URL'de taşınır", async ({ page }) => {
+  await page.goto("/alessi/alerts?severity=critical");
+
+  // Paylaşılan adres doğrudan filtreli açılmalı.
+  const active = page.locator('main a[aria-current="true"]');
+  await expect(active.filter({ hasText: "Kritik" })).toHaveCount(1);
 });

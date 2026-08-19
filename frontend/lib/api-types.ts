@@ -279,6 +279,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Uyarılar
+         * @description Aktif markanın uyarıları. `acknowledged` boşsa hepsi döner.
+         */
+        get: operations["list_alerts__brand_slug__alerts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/alerts/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Uyarı özeti
+         * @description Seviye bazlı açık/kapalı sayımlar + markada geçen türler.
+         */
+        get: operations["alert_summary__brand_slug__alerts_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/alerts/{alert_id}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Uyarıyı gördüm
+         * @description Uyarıyı "görüldü" işaretler. İdempotenttir; ilk damga korunur.
+         */
+        post: operations["acknowledge_alert__brand_slug__alerts__alert_id__acknowledge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/settings/cargo-tariffs": {
         parameters: {
             query?: never;
@@ -1504,26 +1564,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/{brand_slug}/alerts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Marka uyarıları
-         * @description Aktif workspace'in uyarıları (tasarım brief'i, kalıp 7).
-         */
-        get: operations["list_alerts__brand_slug__alerts_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/{brand_slug}/import-files": {
         parameters: {
             query?: never;
@@ -1569,16 +1609,30 @@ export interface components {
             unit_cost?: number | string | null;
         };
         /**
-         * AlertSeverity
-         * @description Uyarı seviyesi — tasarım brief'i: bilgi / dikkat / kritik.
-         * @enum {string}
+         * AlertCountsOut
+         * @description Uyarı özeti: seviye bazlı açık sayımlar + markada geçen türler.
          */
-        AlertSeverity: "info" | "warning" | "critical";
+        AlertCountsOut: {
+            /** Open */
+            open: number;
+            /** Acknowledged */
+            acknowledged: number;
+            /** Critical Open */
+            critical_open: number;
+            /** Warning Open */
+            warning_open: number;
+            /** Info Open */
+            info_open: number;
+            /** Total */
+            total: number;
+            /** Types */
+            types: string[];
+        };
         /**
-         * AlertSummary
-         * @description Marka kapsamlı uyarı.
+         * AlertOut
+         * @description Tek uyarı.
          */
-        AlertSummary: {
+        AlertOut: {
             /**
              * Id
              * Format: uuid
@@ -1589,6 +1643,8 @@ export interface components {
             severity: components["schemas"]["AlertSeverity"];
             /** Message */
             message: string;
+            /** Entity Ref */
+            entity_ref: string | null;
             /**
              * Created At
              * Format: date-time
@@ -1597,6 +1653,12 @@ export interface components {
             /** Acknowledged At */
             acknowledged_at: string | null;
         };
+        /**
+         * AlertSeverity
+         * @description Uyarı seviyesi — tasarım brief'i: bilgi / dikkat / kritik.
+         * @enum {string}
+         */
+        AlertSeverity: "info" | "warning" | "critical";
         /**
          * AnalysisOut
          * @description Kâr analizi — motorun çıktısı.
@@ -4175,6 +4237,114 @@ export interface operations {
             };
         };
     };
+    list_alerts__brand_slug__alerts_get: {
+        parameters: {
+            query?: {
+                severity?: components["schemas"]["AlertSeverity"] | null;
+                type?: string | null;
+                acknowledged?: boolean | null;
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    alert_summary__brand_slug__alerts_summary_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertCountsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    acknowledge_alert__brand_slug__alerts__alert_id__acknowledge_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                alert_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_tariffs__brand_slug__settings_cargo_tariffs_get: {
         parameters: {
             query?: {
@@ -6543,42 +6713,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProductSummary"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_alerts__brand_slug__alerts_get: {
-        parameters: {
-            query?: {
-                limit?: number;
-            };
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                /** @description Workspace: alessi | kahveji */
-                brand_slug: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AlertSummary"][];
                 };
             };
             /** @description Validation Error */

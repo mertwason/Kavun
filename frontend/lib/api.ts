@@ -69,6 +69,8 @@ export type SyncStatus = components["schemas"]["SyncStatus"];
 export type CargoTariff = components["schemas"]["TariffOut"];
 export type CargoTariffInput = components["schemas"]["TariffCreate"];
 export type CargoReestimate = components["schemas"]["ReestimateOut"];
+export type AlertRow = components["schemas"]["AlertOut"];
+export type AlertCounts = components["schemas"]["AlertCountsOut"];
 
 export type HealthStatus = {
   online: boolean;
@@ -684,4 +686,24 @@ export function reestimateCargo(brand: string, dryRun: boolean) {
     brand,
     `/settings/cargo-tariffs/reestimate?dry_run=${dryRun ? "true" : "false"}`,
   );
+}
+
+export function fetchAlerts(
+  brand: string,
+  filters: { severity?: string; type?: string; acknowledged?: boolean } = {},
+) {
+  const query = new URLSearchParams();
+  if (filters.severity) query.set("severity", filters.severity);
+  if (filters.type) query.set("type", filters.type);
+  if (filters.acknowledged !== undefined) query.set("acknowledged", String(filters.acknowledged));
+  const suffix = query.toString() ? `?${query}` : "";
+  return get<AlertRow[]>(brand, `/alerts${suffix}`);
+}
+
+export function fetchAlertSummary(brand: string) {
+  return get<AlertCounts>(brand, "/alerts/summary");
+}
+
+export function acknowledgeAlert(brand: string, alertId: string) {
+  return post<AlertRow>(brand, `/alerts/${alertId}/acknowledge`);
 }

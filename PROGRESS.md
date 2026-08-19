@@ -1,8 +1,8 @@
 # KAVUN İlerleme
 
 **TOPLAM: %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-**FAZ 2 (ek görevler): %61** ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░
-Son güncelleme: 2026-08-19 12:20 · Aktif görev: — (sırada: KVN-EK-06)
+**FAZ 2 (ek görevler): %69** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░
+Son güncelleme: 2026-08-19 13:30 · Aktif görev: — (sırada: KVN-EK-08, brief bekleniyor)
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -44,11 +44,11 @@ Toplam ağırlık: **110** · Biten ağırlık: 110 · **Faz 1 ve Faz 1.5 tamaml
 | KVN-EK-03 | Hakediş mutabakatı: eşleştirme + fark motoru + ekran       | 8       | ✅ Bitti     | spec §7 — "katil özellik" |
 | KVN-EK-04 | Ayarlar ekranı: mağaza + credential + hizmet bedeli + kargo tarifesi | 5 | ✅ Bitti     | spec §10.7 — kargo tarife TABLOSU da bu görevde yazıldı (yoktu) |
 | KVN-EK-05 | Trendyol Faz 2 uçları + eksik beat programı                | 8       | ✅ Bitti     | spec §4, §9 — iade/hakediş/kargo senkronu; `workers/tasks.py` coverage ≥ %80 |
-| KVN-EK-06 | Uyarılar ekranı + acknowledge akışı                        | 4       | ⏳ Sırada    | spec §10.6 — `acknowledged_at` yazan uç dahil |
+| KVN-EK-06 | Uyarılar ekranı + acknowledge akışı                        | 4       | ✅ Bitti     | spec §10.6 — `acknowledged_at` yazan uç dahil |
 | KVN-EK-07 | Gerçek veri kalibrasyon haftası                            | 6       | ⏳ Sırada    | **Mert'in dosyalarına bağlı** — geldiğinde sıraya girer; kurgu fixture'lar + 3 `TODO(verify)` + `tracking_no` |
 | KVN-EK-08 | Tasarım sistemi rework (token seti + Tremor + TanStack)    | 10      | ⏳ Sırada    | **BLOKE:** brief'in "Kaynak Kütüphaneler" bölümü repoda yok (aşağıya bak) |
 
-Faz 2 ağırlığı: 51 · Biten: 31
+Faz 2 ağırlığı: 51 · Biten: 35
 
 > **Sıra (2026-08-19, Mert onayı):** EK-04 → EK-05 → EK-06 → **EK-08**. EK-07 dosyalar
 > geldiğinde araya girer. Bu dört görev, KVN-EK-03 sonrası çıkarılan durum raporunun karşılığıdır:
@@ -84,6 +84,36 @@ Faz 2 ağırlığı: 51 · Biten: 31
 > birlikte kullanımı ayrıca doğrulanmalı.
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-EK-06 bitti (Uyarılar ekranı + acknowledge)
+
+**Ne bitti:** `/{marka}/alerts` ekranı (spec §10.6): seviye/tür/durum filtreleri, KPI
+şeridi ve "gördüm" akışı. Backend'de listeleme, özet ve `acknowledged_at` yazan uç.
+Testler: +18 backend, +3 e2e (toplam 47 e2e). Tarayıcıda doğrulandı.
+
+**Kararlar / notlar:**
+- **`acknowledged_at` kolonu vardı ama onu yazan hiçbir uç yoktu.** Altı akış uyarı
+  üretiyordu ve hiçbiri ekranda görünmüyordu; uyarılar sonsuza kadar birikiyordu. Bu
+  görevin asıl kapattığı boşluk buydu.
+- **Acknowledge tek yönlü ve idempotent.** İkinci çağrı ilk damgayı bozmaz. Geri alma yok
+  çünkü acknowledge bir karar değil, bir okuma kaydı. Buna karşılık **kapatılan uyarı
+  silinmiyor**: "Kapatılmış" filtresinde duruyor, yani yanlışlıkla kapatılan uyarı
+  kaybolmuyor.
+- **Filtreler URL'de taşınıyor** (`?severity=&type=&status=`) — ekran paylaşılabilir ve
+  geri tuşu çalışıyor; diğer ekranlardaki dönem seçicisiyle aynı disiplin.
+- **Demo uyarı türleri gerçek sabitlerle hizalandı.** Seed `negative_margin`,
+  `commission_change` gibi uydurma türler yazıyordu; servislerin fiilen yazdığı adlar
+  (`marj_tabani`, `komisyon_degisikligi`, `msrp_ihlali`, `kargo_faturasi_eslesmedi`,
+  `stale_sync`, `negatif_stok`) kullanılıyor. Demo'daki filtre listesi artık gerçek
+  kurulumdakiyle aynı. Biri bilerek kapatılmış durumda — ekran boş ve dolu durumu birlikte
+  gösteriyor.
+- **Çakışan uç temizlendi:** `workspace.py` içindeki eski `GET /{brand}/alerts` kaldırıldı;
+  aynı yolu iki router tanımlıyordu.
+
+**Ne kaldı / risk:** Sırada KVN-EK-08 (tasarım sistemi rework) var ama **bloke**:
+`docs/KAVUN_Design_Brief.md` bu repoda güncellenmemiş, "Kaynak Kütüphaneler" bölümü yok.
+KVN-EK-07 de Mert'in fixture dosyalarını bekliyor. Yani şu an açık ve çalışılabilir görev
+kalmadı.
 
 ### 2026-08-19 — KVN-EK-05 bitti (Trendyol Faz 2 uçları + zamanlama)
 

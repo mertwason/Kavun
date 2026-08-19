@@ -40,7 +40,8 @@
     "holding": "Holding",
     "cargo": "Kargo faturaları",
     "reconciliation": "Hakediş mutabakatı",
-    "settings": "Ayarlar"
+    "settings": "Ayarlar",
+    "alerts": "Uyarılar"
   },
   "period": {
     "label": "Dönem",
@@ -164,7 +165,9 @@
     "cargoHint": "Kargo firmasının Excel dökümünü şablona doldurup yükleyin.",
     "reconciliation": "Bu dönemde fark yok.",
     "reconciliationHint": "Mutabakatı çalıştırın; eşik üstü sapma varsa burada listelenir.",
-    "settings": "Bu markada mağaza yok."
+    "settings": "Bu markada mağaza yok.",
+    "alerts": "Açık uyarı yok.",
+    "alertsHint": "Motor ve senkron bir sorun bulursa uyarı burada belirir."
   },
   "error": {
     "unreachable": "API'ye ulaşılamıyor.",
@@ -665,5 +668,38 @@
     "noBandsHint": "Bant eklenene kadar kargo tahmini varsayılan formülden hesaplanır.",
     "noStores": "Bu markada mağaza yok.",
     "noStoresHint": "Mağaza ekleyip bağlantı bilgilerini girin; senkron ondan sonra çalışır."
+  },
+  "alerts": {
+    "title": "Uyarılar",
+    "subtitle": "Motorun ve senkronun sessizce geçmediği her şey burada; görülen uyarı kapatılır, silinmez.",
+    "open": "Açık",
+    "critical": "Kritik",
+    "warning": "Dikkat",
+    "info": "Bilgi",
+    "acknowledged": "Kapatılmış",
+    "all": "Tümü",
+    "severity": "Seviye",
+    "type": "Tür",
+    "allTypes": "Tüm türler",
+    "status": "Durum",
+    "message": "Uyarı",
+    "date": "Tarih",
+    "acknowledge": "Gördüm",
+    "acknowledgedAt": "Kapatıldı",
+    "acknowledgeHint": "Kapatılan uyarı silinmez; \"Kapatılmış\" filtresinde durur.",
+    "severities": {
+      "critical": "Kritik",
+      "warning": "Dikkat",
+      "info": "Bilgi"
+    },
+    "types": {
+      "negatif_stok": "Negatif stok",
+      "komisyon_degisikligi": "Komisyon değişikliği",
+      "msrp_ihlali": "MSRP ihlali",
+      "marj_tabani": "Marj tabanı",
+      "kargo_faturasi_eslesmedi": "Kargo faturası eşleşmedi",
+      "hakedis_farki": "Hakediş farkı",
+      "stale_sync": "Senkron durdu"
+    }
   }
 }

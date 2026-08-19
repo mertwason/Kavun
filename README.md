@@ -451,6 +451,31 @@ akışıyla aynıdır (kesinleşmiş maliyet ezilmez, eşleşmeyen satır uyduru
 düşüyordu). Kargo faturası eşleştirmesinin birincil anahtarı artık gerçekten takip
 numarası.
 
+### Uyarılar ve acknowledge (KVN-EK-06)
+
+Altı ayrı akış uyarı üretiyor ama KVN-EK-06'ya kadar **hiçbiri ekranda görünmüyordu**;
+`acknowledged_at` kolonu vardı ve onu yazan tek bir uç yoktu, yani uyarılar sonsuza kadar
+birikiyordu. `/{marka}/alerts` bunu kapatır (spec §10.6).
+
+| Tür | Nereden gelir |
+|---|---|
+| `negatif_stok` | stok hareketi yazılırken (§12C.4) |
+| `komisyon_degisikligi` | günlük tarife snapshot diff'i (§12B.3) |
+| `msrp_ihlali`, `marj_tabani` | fiyat disiplini taraması (§12C.10) |
+| `kargo_faturasi_eslesmedi` | kargo faturası yüklemesi (§6.2) |
+| `hakedis_farki` | mutabakat turu (§7) |
+| `stale_sync` | saatlik `alert_scan` — senkron sessizce durmuşsa |
+
+- **Acknowledge tek yönlü ve idempotenttir.** İkinci çağrı ilk damgayı bozmaz; "görüldü"
+  zamanı geriye alınmaz. Geri alma yok çünkü acknowledge bir karar değil, bir okuma
+  kaydıdır.
+- **Kapatılan uyarı silinmez:** "Kapatılmış" filtresinde durmaya devam eder. Yanlışlıkla
+  kapatılan bir uyarı böylece kaybolmaz.
+- Filtreler (`?severity=&type=&status=`) **URL'de taşınır** — ekran paylaşılabilir, geri
+  tuşu çalışır; dönem seçicisiyle aynı disiplin.
+- Uyarı üretimi bu ekrana ait değil: her akış uyarıyı **olay anında** yazar. `alert_scan`
+  onları tekrar taramaz — aynı uyarının iki kez üretilmesi ekranı gürültüye boğardı.
+
 ### Ayarlar: mağaza, bağlantı ve kargo tarifesi (KVN-EK-04)
 
 Gerçek veriye geçişin kapısı (spec §10.7). `/{marka}/settings` altında üç şey yönetilir:
@@ -545,7 +570,7 @@ engeller.
 
 ```bash
 make dev && make seed-demo && make recompute   # yığın + dolu demo veri
-make e2e                                        # 42 smoke testi
+make e2e                                        # 47 smoke testi
 ```
 
 CI'da `docker compose smoke` işi ortamı kaldırır, demo veriyi yükler, kârı hesaplar ve
@@ -569,6 +594,7 @@ hazır Chromium farklı sürümdeyse `PLAYWRIGHT_CHROMIUM_PATH` ile yol verilebi
 | `/{marka}/inventory` | Stok & maliyet — eldeki adet, ortalama maliyet, hareket defteri, açılış/düzeltme |
 | `/{marka}/cargo` | Kargo faturaları — kesinleşme durumu + fatura yükleme/eşleştirme |
 | `/{marka}/reconciliation` | Hakediş mutabakatı — dönem turu, eşleşme oranı, farklar + açıklama akışı |
+| `/{marka}/alerts` | Uyarılar — seviye/tür/durum filtreleri + "gördüm" akışı |
 | `/{marka}/settings` | Ayarlar — mağaza + şifreli bağlantı bilgileri + hizmet bedeli + kargo tarifesi |
 | `/{marka}/imports` | İthalat dosyaları + açık döviz pozisyonu (yalnızca bayrağı açık markada) |
 | `/{marka}/imports/{id}` | Dosya detayı — masraf kalemleri, dağıtım önizlemesi, ödemeler/kur farkı |
@@ -693,6 +719,10 @@ GET  /{brand}/cargo-invoices/cost-state  # kaç gönderi kesinleşti / tahmini k
 GET  /{brand}/cargo-invoices/template    # kargo faturası şablonu (xlsx)
 POST /{brand}/cargo-invoices/import      # eşleştir + kesinleştir (?dry_run)
 
+GET  /{brand}/alerts                 # uyarılar (?severity&type&acknowledged)
+GET  /{brand}/alerts/summary         # seviye bazlı açık/kapalı sayımlar + türler
+POST /{brand}/alerts/{id}/acknowledge  # "gördüm" — tek yönlü, idempotent
+
 GET  /{brand}/settings/cargo-tariffs          # desi bandı tarifesi (?include_closed)
 POST /{brand}/settings/cargo-tariffs          # bant ekle (geçersiz aralık 422)
 POST /{brand}/settings/cargo-tariffs/{id}/close    # bandı yürürlükten kaldır (silmez)
@@ -706,7 +736,6 @@ POST /{brand}/reconciliation/run      # dönemi mutabakatla (?dry_run — önizl
 POST /{brand}/reconciliation/diffs/{id}/explain  # farkı açıkla/çöz (not zorunlu)
 
 GET  /{brand}/products      # marka kapsamlı ürün listesi
-GET  /{brand}/alerts        # marka kapsamlı uyarılar
 GET  /{brand}/import-files  # yalnızca `import_files` bayrağı açık markada (aksi halde 404)
 
 GET  /holding/summary       # markalar arası sayımlar (holding_viewer, salt okunur)

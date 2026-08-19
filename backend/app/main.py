@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api import (
+    alerts,
     analytics,
     auth,
     b2b,
@@ -75,6 +76,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Workspace router'ı en sonda: `/{brand_slug}` yakalayıcı olduğundan sabit
     # yollar (auth, holding, healthz) ondan önce eşleşmelidir.
     app.include_router(stores.router)
+    app.include_router(alerts.router)
     app.include_router(settings_api.router)
     app.include_router(analytics.router)
     app.include_router(pricelist.router)

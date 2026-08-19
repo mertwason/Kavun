@@ -12,8 +12,7 @@ from sqlalchemy import select
 from app.api.deps import Workspace, get_workspace, require_feature
 from app.models.catalog import Product
 from app.models.inventory import ImportFile
-from app.models.results import Alert
-from app.schemas.workspace import AlertSummary, ImportFileSummary, ProductSummary
+from app.schemas.workspace import ImportFileSummary, ProductSummary
 
 router = APIRouter(prefix="/{brand_slug}", tags=["workspace"])
 
@@ -22,16 +21,6 @@ router = APIRouter(prefix="/{brand_slug}", tags=["workspace"])
 def list_products(workspace: Workspace = Depends(get_workspace), limit: int = 100) -> list[Product]:
     """Aktif workspace'in ürünleri. Filtre yazılmasa bile guard markayı uygular."""
     return list(workspace.session.scalars(select(Product).order_by(Product.sku).limit(limit)).all())
-
-
-@router.get("/alerts", response_model=list[AlertSummary], summary="Marka uyarıları")
-def list_alerts(workspace: Workspace = Depends(get_workspace), limit: int = 50) -> list[Alert]:
-    """Aktif workspace'in uyarıları (tasarım brief'i, kalıp 7)."""
-    return list(
-        workspace.session.scalars(
-            select(Alert).order_by(Alert.created_at.desc()).limit(limit)
-        ).all()
-    )
 
 
 @router.get(
