@@ -113,6 +113,10 @@ seed-demo: ## Demo tenant'ını gerçekçi örnek veriyle doldurur (kâr hesabı
 recompute: ## Kâr kaydı olmayan satırların kârını hesaplar (spec §6)
 	$(COMPOSE) exec -T api python -m app.cli recompute --pending
 
+.PHONY: e2e
+e2e: ## Ekran smoke testleri (çalışan yığına karşı; önce `make dev` + `make seed-demo`)
+	cd frontend && npx playwright test
+
 .PHONY: acceptance
 acceptance: $(VENV) ## Kabul turu: golden dataset + uçtan uca tutarlılık (docs/ACCEPTANCE.md)
 	cd $(BACKEND) && .venv/bin/pytest tests/test_golden_dataset.py tests/test_acceptance.py -v

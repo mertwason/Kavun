@@ -1,7 +1,8 @@
 # KAVUN İlerleme
 
 **TOPLAM: %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-Son güncelleme: 2026-08-19 04:30 · Aktif görev: — (Faz 1 + 1.5 tamamlandı)
+**FAZ 2 (ek görevler): %22** ▓▓▓▓░░░░░░░░░░░░░░░░
+Son güncelleme: 2026-08-19 05:10 · Aktif görev: KVN-EK-02
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -27,7 +28,22 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ✅ Bitti    |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ✅ Bitti    |
 
-Toplam ağırlık: **110** · Biten ağırlık: 110 · **Faz 1 ve Faz 1.5 tamamlandı** · Sırada: spec Faz 2 (kargo faturası + hakediş mutabakatı)
+Toplam ağırlık: **110** · Biten ağırlık: 110 · **Faz 1 ve Faz 1.5 tamamlandı**
+
+### Faz 2 ve ek görevler (KVN-EK)
+
+> CLAUDE.md §0 kuralı 4: kanonik liste dışındaki ihtiyaçlar `KVN-EK-xx` id'siyle listenin
+> sonuna eklenir ve not düşülür. Aşağıdakiler spec §7'nin (Faz 2) ve KVN-20'de risk olarak
+> yazılan boşluğun karşılığıdır. **Yüzde ayrı tutulur**: kanonik listenin %100'ü Faz 1+1.5'in
+> tamamlandığını gösterir, aşağıdaki yüzde Faz 2'nin ilerlemesidir.
+
+| ID        | İş Akışı                                                  | Ağırlık | Durum        | Not |
+|-----------|-----------------------------------------------------------|---------|--------------|-----|
+| KVN-EK-01 | Ekran smoke testleri (Playwright) + CI adımı              | 4       | ✅ Bitti     | KVN-20'de yazılan risk: UI regresyona karşı korumasızdı |
+| KVN-EK-02 | Kargo faturası eşleştirme + `estimated → actual` + revizyon | 6       | 🔄 Yapılıyor | spec §5.3, §6.2 |
+| KVN-EK-03 | Hakediş mutabakatı: eşleştirme + fark motoru + ekran       | 8       | ⏳ Sırada    | spec §7 — "katil özellik" |
+
+Faz 2 ağırlığı: 18 · Biten: 4
 
 > **Düzeltme (2026-08-19):** CLAUDE.md §0'daki kanonik listenin başlığı "toplam ağırlık 100"
 > diyor ama tablodaki 20 görevin ağırlıkları **110** ediyor. §0 kuralı yüzdeyi "bitmiş
@@ -39,6 +55,34 @@ Toplam ağırlık: **110** · Biten ağırlık: 110 · **Faz 1 ve Faz 1.5 tamaml
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-EK-01 bitti
+
+**Ne bitti:** Ekran smoke testleri (Playwright) ve CI adımı. 30 test: her marka için 9
+ortak ekran + Alessi'ye özel 2 ekran açılıyor mu, konsol temiz mi; panelde demo verisi
+görünüyor mu; SKU listesi dolu ve negatif filtre çalışıyor mu; sipariş detayında şelale
+render oluyor mu; kapalı modül Kahveji menüsünde yok ama sayfası hata değil "kapalı"
+durumu gösteriyor mu; holding markaları yan yana veriyor mu; aktif menü öğesi vurgulu mu;
+hasar formu kayıt yazıyor mu; açılış stoku ikinci kez reddediliyor mu; fiyat listesi
+marka önekli dosya adıyla iniyor mu.
+
+CI'ın `docker compose smoke` işi artık demo veriyi yükleyip kârı hesaplıyor ve testleri
+gerçek yığına karşı koşuyor; başarısızlıkta Playwright izleri artifact olarak yükleniyor.
+`make e2e` yerelde aynısını yapıyor.
+
+**Kararlar / notlar:**
+- Testler **çalışan yığına** bağlanır, kendi sunucusunu başlatmaz. Amaç "gerçek ortam
+  gerçekten açılıyor mu" sorusudur; mock'lanmış bir frontend bu soruyu yanıtlamaz.
+- Ortamdaki hazır Chromium (1194) ile `@playwright/test` 1.62.1'in beklediği sürüm
+  (1234) uyuşmuyor; yapılandırma `PLAYWRIGHT_CHROMIUM_PATH` ile ezilebiliyor. CI kendi
+  tarayıcısını kurduğu için orada bu değişken gerekmiyor.
+- Kapsam bilinçli olarak dar: ayrıntılı davranış backend testlerinde. Buradaki ağ,
+  ekranların **sessizce** bozulmasını engellemek için.
+
+**Bilinen risk:** Smoke testleri demo veriye bağlı; `seed-demo` çıktısı değişirse
+(ör. ürün sayısı) birkaç eşik (`> 5 satır`) güncellenmeli. Eşikler bilinçli olarak gevşek
+tutuldu ama veri seti küçülürse kırılırlar.
+
 
 ### 2026-08-19 — KVN-20 bitti · Faz 1 + Faz 1.5 tamam
 

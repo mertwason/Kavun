@@ -63,6 +63,7 @@ make seed-demo   # demo veri: 50 SKU, ~210 sipariş, iade, fatura, tarife, alert
 make recompute   # kâr kaydı olmayan satırların kârını hesaplar
 make stock       # satış/iade stok hareketlerini deftere yaz (idempotent)
 make acceptance  # kabul turu: golden dataset + uçtan uca tutarlılık
+make e2e         # ekran smoke testleri (çalışan yığına karşı)
 make wipe-demo   # demo verisini sil (gerçek tenant'a dokunmaz)
 make gen-api     # OpenAPI şemasından frontend tipleri
 ```
@@ -395,6 +396,22 @@ tutarlılığı doğrular: dashboard kârı SKU listesinin toplamına, mağaza k
 günlük seri dönem kârına, şelale adımları satır kârına, stok değeri adet × ortalama
 maliyete, holding cirosu markaların toplamına eşit olmalı. Bir halka koparsa hangi
 ekranın yalan söylediği buradan görülür.
+
+### Ekran smoke testleri (KVN-EK-01)
+
+`frontend/e2e/` altındaki Playwright testleri **çalışan yığına** bağlanır (kendi sunucusunu
+başlatmaz): her ekran açılıyor mu, konsol temiz mi, demo veri görünüyor mu, kapalı modül
+menüde yok mu, formlar kayıt yazıyor mu. Ayrıntılı davranış backend testlerinde; buradaki
+ağ ekranların **sessizce** bozulmasını engeller.
+
+```bash
+make dev && make seed-demo && make recompute   # yığın + dolu demo veri
+make e2e                                        # 30 smoke testi
+```
+
+CI'da `docker compose smoke` işi ortamı kaldırır, demo veriyi yükler, kârı hesaplar ve
+aynı testleri koşar; başarısızlıkta Playwright izleri artifact olarak yüklenir. Ortamdaki
+hazır Chromium farklı sürümdeyse `PLAYWRIGHT_CHROMIUM_PATH` ile yol verilebilir.
 
 ## Ekranlar
 

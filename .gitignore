@@ -16,6 +16,12 @@ node_modules/
 out/
 npm-debug.log*
 
+# Playwright (e2e) çıktıları
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
 # Ortam
 .env
 .env.local
