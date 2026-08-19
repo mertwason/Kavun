@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAFAF9;color:#1C1917;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#57534E;text-decoration:none}
+a:hover{color:#1C1917}
+button{font-family:inherit}
+input{font-family:inherit}
+</style>
+</helmet>
+<div data-screen-label="Fatura Yükleme &amp; Eşleştirme" style="display:flex;min-height:100vh;position:relative;font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums">
+  <dc-import name="Sidebar" aktif="faturalar" workspace="kahveji" uyari-sayisi="3" hint-size="240px,900px" style="width:240px;flex-shrink:0;align-self:stretch"></dc-import>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:56px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E7E5E4;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:20;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <span style="font-size:12px;color:#A8A29E">Stok</span>
+        <span style="font-size:12px;color:#D6D3D1">/</span>
+        <span style="font-size:14px;font-weight:600">Fatura Yükleme</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#78716C"><span style="width:6px;height:6px;border-radius:999px;background:#16A34A;display:inline-block"></span><span>Son senkron: 12 dk önce</span></div>
+        <button style="position:relative;width:32px;height:32px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F5F5F4">
+          <img src="https://api.iconify.design/lucide/bell.svg?color=%2357534E" width="16" height="16" alt="Uyarılar">
+          <span style="position:absolute;top:1px;right:1px;min-width:15px;height:15px;border-radius:999px;background:#DC2626;color:#FFFFFF;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid #FFFFFF;box-sizing:content-box;padding:0 2px">3</span>
+        </button>
+        <div style="width:28px;height:28px;border-radius:999px;background:#E7E5E4;color:#57534E;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer">SA</div>
+      </div>
+    </div>
+    <sc-if value="{{ dolu }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div style="flex:1;display:grid;grid-template-columns:45fr 55fr;min-height:0">
+          <div style="border-right:1px solid #E7E5E4;background:#F5F5F4;display:flex;flex-direction:column;min-width:0">
+            <div style="height:44px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E7E5E4;display:flex;align-items:center;justify-content:space-between;padding:0 16px">
+              <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                <img src="https://api.iconify.design/lucide/file-text.svg?color=%2378716C" width="14" height="14" alt="">
+                <span style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">fatura-A-2207-kavrulmus.pdf</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px">
+                <button style="width:26px;height:26px;border-radius:6px;border:1px solid #E7E5E4;background:#FFFFFF;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#FAFAF9"><img src="https://api.iconify.design/lucide/chevron-left.svg?color=%2357534E" width="13" height="13" alt="Önceki sayfa"></button>
+                <span style="font-size:12px;color:#78716C;padding:0 4px">1 / 2</span>
+                <button style="width:26px;height:26px;border-radius:6px;border:1px solid #E7E5E4;background:#FFFFFF;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#FAFAF9"><img src="https://api.iconify.design/lucide/chevron-right.svg?color=%2357534E" width="13" height="13" alt="Sonraki sayfa"></button>
+              </div>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:20px;display:flex;justify-content:center">
+              <div style="width:100%;max-width:440px;aspect-ratio:0.707;background:#FFFFFF;border:1px solid #E7E5E4;border-radius:4px;box-shadow:0 2px 8px rgba(28,25,23,0.06);padding:28px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                  <div>
+                    <div style="height:10px;width:120px;background:#D6D3D1;border-radius:2px"></div>
+                    <div style="height:7px;width:88px;background:#EBE9E7;border-radius:2px;margin-top:6px"></div>
+                    <div style="height:7px;width:104px;background:#EBE9E7;border-radius:2px;margin-top:4px"></div>
+                  </div>
+                  <div style="text-align:right">
+                    <div style="font-family:'Geist Mono',monospace;font-size:10px;color:#78716C">FATURA #A-2207</div>
+                    <div style="height:7px;width:72px;background:#EBE9E7;border-radius:2px;margin-top:6px;margin-left:auto"></div>
+                  </div>
+                </div>
+                <div style="height:1px;background:#EBE9E7"></div>
+                <div style="display:flex;flex-direction:column;gap:7px">
+                  <div style="display:flex;gap:8px"><div style="height:8px;flex:3;background:#EBE9E7;border-radius:2px"></div><div style="height:8px;flex:1;background:#F5F5F4;border-radius:2px"></div><div style="height:8px;flex:1;background:#EBE9E7;border-radius:2px"></div></div>
+                  <div style="display:flex;gap:8px;background:#FFFBEB;outline:2px solid #FDE68A;border-radius:2px"><div style="height:8px;flex:3;background:#EBE9E7;border-radius:2px"></div><div style="height:8px;flex:1;background:#F5F5F4;border-radius:2px"></div><div style="height:8px;flex:1;background:#EBE9E7;border-radius:2px"></div></div>
+                  <div style="display:flex;gap:8px"><div style="height:8px;flex:3;background:#EBE9E7;border-radius:2px"></div><div style="height:8px;flex:1;background:#F5F5F4;border-radius:2px"></div><div style="height:8px;flex:1;background:#EBE9E7;border-radius:2px"></div></div>
+                  <div style="display:flex;gap:8px"><div style="height:8px;flex:3;background:#EBE9E7;border-radius:2px"></div><div style="height:8px;flex:1;background:#F5F5F4;border-radius:2px"></div><div style="height:8px;flex:1;background:#EBE9E7;border-radius:2px"></div></div>
+                  <div style="display:flex;gap:8px"><div style="height:8px;flex:3;background:#EBE9E7;border-radius:2px"></div><div style="height:8px;flex:1;background:#F5F5F4;border-radius:2px"></div><div style="height:8px;flex:1;background:#EBE9E7;border-radius:2px"></div></div>
+                </div>
+                <div style="flex:1"></div>
+                <div style="display:flex;justify-content:flex-end">
+                  <div style="text-align:right">
+                    <div style="font-size:9px;color:#A8A29E;letter-spacing:0.04em">GENEL TOPLAM</div>
+                    <div style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:500;margin-top:2px">₺48.220,00</div>
+                  </div>
+                </div>
+                <div style="font-size:9px;color:#C7C2BE;text-align:center;font-family:'Geist Mono',monospace">— pdf önizleme · vurgulu satır seçili kalem —</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;min-width:0;background:#FAFAF9">
+            <div style="height:44px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E7E5E4;display:flex;align-items:center;justify-content:space-between;padding:0 20px">
+              <span style="font-size:13px;font-weight:600">Ayrıştırılan satırlar · 5</span>
+              <span style="font-size:12px;color:#78716C">Tedarikçi: Kavrulmuş A.Ş. · 18 Ağu 2026</span>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px">
+              <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:12px 16px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <img src="https://api.iconify.design/lucide/circle-check.svg?color=%2316A34A" width="16" height="16" alt="Eşleşti">
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">ETIYOPYA YIRGACHEFFE CEK. 250GR</div>
+                    <div style="font-size:12px;color:#78716C;margin-top:1px">120 adet × ₺176,00 = ₺21.120,00</div>
+                  </div>
+                  <span style="display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:500;background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0;white-space:nowrap"><span style="font-family:'Geist Mono',monospace">KHV-001</span>· otomatik</span>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:12px 16px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <img src="https://api.iconify.design/lucide/circle-check.svg?color=%2316A34A" width="16" height="16" alt="Eşleşti">
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">KOLOMBIYA SUPREMO 1000GR</div>
+                    <div style="font-size:12px;color:#78716C;margin-top:1px">24 adet × ₺890,00 = ₺21.360,00</div>
+                  </div>
+                  <span style="display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:500;background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0;white-space:nowrap"><span style="font-family:'Geist Mono',monospace">KHV-014</span>· otomatik</span>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #FDE68A;border-radius:10px;padding:12px 16px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <img src="https://api.iconify.design/lucide/triangle-alert.svg?color=%23D97706" width="16" height="16" alt="Öneri">
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">BREZILYA SANTOS YESIL CEK. 500G</div>
+                    <div style="font-size:12px;color:#78716C;margin-top:1px">40 adet × ₺118,00 = ₺4.720,00</div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+                    <span style="display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:500;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;white-space:nowrap">öneri: <span style="font-family:'Geist Mono',monospace">KHV-033</span> %87</span>
+                    <button style="height:26px;padding:0 10px;border-radius:8px;border:none;background:#B45309;color:#FFFFFF;font-size:12px;font-weight:500;cursor:pointer" style-hover="background:#92400E">Onayla</button>
+                    <button style="height:26px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;font-weight:500;color:#44403C;cursor:pointer" style-hover="background:#FAFAF9">Değiştir</button>
+                  </div>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:12px 16px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <img src="https://api.iconify.design/lucide/circle.svg?color=%23A8A29E" width="16" height="16" alt="Eşleşmedi">
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">KRAFT KUTU AMBALAJ 24LU</div>
+                    <div style="font-size:12px;color:#78716C;margin-top:1px">10 adet × ₺62,00 = ₺620,00</div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;flex-shrink:0;min-width:180px;cursor:text" style-hover="border-color:#D6D3D1">
+                    <img src="https://api.iconify.design/lucide/search.svg?color=%23A8A29E" width="13" height="13" alt="">
+                    <span style="font-size:12.5px;color:#A8A29E">SKU ara veya oluştur…</span>
+                    <img src="https://api.iconify.design/lucide/chevron-down.svg?color=%23A8A29E" width="12" height="12" alt="" style="margin-left:auto">
+                  </div>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:12px 16px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <img src="https://api.iconify.design/lucide/circle-check.svg?color=%2316A34A" width="16" height="16" alt="Eşleşti">
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">GUATEMALA ANTIGUA 250GR</div>
+                    <div style="font-size:12px;color:#78716C;margin-top:1px">40 adet × ₺169,00 = ₺6.760,00</div>
+                  </div>
+                  <span style="display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:500;background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0;white-space:nowrap"><span style="font-family:'Geist Mono',monospace">KHV-005</span>· otomatik</span>
+                </div>
+              </div>
+              <div style="font-size:12px;color:#A8A29E;padding:2px 4px">Eşleşen satırlar ortalama maliyeti günceller; ambalaj gibi stok dışı kalemleri "gider" olarak işaretleyebilirsin.</div>
+            </div>
+            <sc-if value="{{ uyumlu }}" hint-placeholder-val="{{ true }}">
+              <div style="flex-shrink:0;background:#FFFFFF;border-top:1px solid #E7E5E4;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;bottom:0">
+                <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+                  <img src="https://api.iconify.design/lucide/circle-check.svg?color=%2316A34A" width="15" height="15" alt="">
+                  <span>Satır toplamı <span style="font-weight:600">₺48.220,00</span> — fatura toplamıyla uyumlu</span>
+                </div>
+                <button style="height:34px;padding:0 14px;border-radius:8px;border:none;background:#B45309;color:#FFFFFF;font-size:13px;font-weight:500;cursor:pointer" style-hover="background:#92400E">Onayla ve Stoğa İşle</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ uyumsuz }}" hint-placeholder-val="{{ false }}">
+              <div style="flex-shrink:0;background:#FEF2F2;border-top:1px solid #FECACA;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;bottom:0">
+                <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#B91C1C">
+                  <img src="https://api.iconify.design/lucide/triangle-alert.svg?color=%23DC2626" width="15" height="15" alt="">
+                  <span>Satır toplamı <span style="font-weight:600">₺47.600,00</span> ≠ fatura toplamı <span style="font-weight:600">₺48.220,00</span> — fark ₺620,00</span>
+                </div>
+                <button disabled style="height:34px;padding:0 14px;border-radius:8px;border:none;background:#E7E5E4;color:#A8A29E;font-size:13px;font-weight:500;cursor:not-allowed">Onayla ve Stoğa İşle</button>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ bos }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;box-sizing:border-box;width:100%;max-width:1360px;padding:24px">
+        <div style="max-width:560px;margin:64px auto 0">
+          <div style="border:1.5px dashed #D6D3D1;border-radius:12px;background:#FFFFFF;padding:48px 32px;text-align:center;cursor:pointer" style-hover="border-color:#B45309;background:#FFFDFB">
+            <img src="https://api.iconify.design/lucide/file-up.svg?color=%23A8A29E" width="28" height="28" alt="">
+            <div style="font-size:14px;font-weight:600;margin-top:12px">Henüz fatura yok</div>
+            <div style="font-size:13px;color:#78716C;margin-top:4px">PDF'i buraya sürükle ya da tıkla — satırlar otomatik ayrıştırılır.</div>
+            <button style="margin-top:16px;height:32px;padding:0 12px;border-radius:8px;border:none;background:#B45309;color:#FFFFFF;font-size:13px;font-weight:500;cursor:pointer" style-hover="background:#92400E">PDF Seç</button>
+          </div>
+          <div style="text-align:center;font-size:12px;color:#A8A29E;margin-top:12px">Desteklenen: e-fatura PDF, e-arşiv PDF · maks. 10 MB</div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;durum&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dolu · toplam uyumlu&quot;,&quot;dolu · toplam uyumsuz&quot;,&quot;boş&quot;],&quot;default&quot;:&quot;dolu · toplam uyumlu&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Durum&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const durum = this.props.durum ?? "dolu · toplam uyumlu";
+    const bos = durum === "boş";
+    const uyumsuz = durum === "dolu · toplam uyumsuz";
+    return { bos, dolu: !bos, uyumlu: !bos && !uyumsuz, uyumsuz: !bos && uyumsuz };
+  }
+}
+</script>
+</body>
+</html>

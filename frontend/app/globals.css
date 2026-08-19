@@ -9,11 +9,9 @@
 
   body {
     @apply bg-canvas text-ink antialiased;
-  }
-
-  /* Tablolarda ondalıkların alt alta hizalanması zorunlu (Design Brief). */
-  table,
-  .tabular {
+    font-size: 14px;
+    line-height: 1.5;
+    /* Handoff: tabular-nums TÜM rakamlarda zorunlu — kök elemana uygulanır. */
     font-variant-numeric: tabular-nums;
   }
 }
@@ -21,5 +19,22 @@
 @layer components {
   .card {
     @apply rounded-card border border-hairline bg-surface;
+  }
+
+  /* Kolon başlığı kalıbı (handoff: 10.5px/600, uppercase, 0.06em, muted). */
+  .col-head {
+    @apply text-column uppercase text-ink-muted;
+  }
+
+  /* Rozet kalıbı: 20px yükseklik, 11px/500, pill, tint zemin + 1px kenar. */
+  .badge {
+    @apply inline-flex h-5 items-center gap-1 rounded-pill border px-2 text-micro font-medium;
+  }
+}
+
+@layer utilities {
+  /* Gösterim katmanında yuvarlanan rakamların hizası bozulmasın. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
   }
 }

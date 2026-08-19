@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAFAF9;color:#1C1917;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#57534E;text-decoration:none}
+a:hover{color:#1C1917}
+</style>
+</helmet>
+<div style="width:240px;box-sizing:border-box;height:100%;min-height:100vh;position:sticky;top:0;background:#FAFAF9;border-right:1px solid #E7E5E4;display:flex;flex-direction:column;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;font-size:13px;font-variant-numeric:tabular-nums">
+  <div style="padding:10px 12px 8px">
+    <a href="Holding.dc.html" title="Çalışma alanını değiştir — Holding görünümüne git" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent;text-decoration:none" style-hover="background:#F5F5F4;border-color:#E7E5E4">
+      <span style="width:18px;height:18px;border-radius:5px;background:{{ wsRenk }};display:inline-flex;align-items:center;justify-content:center;color:#FFFFFF;font-size:10px;font-weight:600;flex-shrink:0">{{ wsHarf }}</span>
+      <span style="flex:1;font-weight:600;color:#1C1917;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ wsAd }}</span>
+      <img src="https://api.iconify.design/lucide/chevrons-up-down.svg?color=%23A8A29E" width="14" height="14" alt="">
+    </a>
+  </div>
+  <div style="height:1px;background:#E7E5E4;margin:0 12px;opacity:0.7"></div>
+  <div style="flex:1;overflow-y:auto;padding:10px 12px 12px">
+    <sc-for list="{{ gruplar }}" as="grup" hint-placeholder-count="4">
+      <div style="margin-bottom:6px">
+        <div style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:8px 8px 4px">{{ grup.ad }}</div>
+        <sc-for list="{{ grup.ogeler }}" as="oge" hint-placeholder-count="2">
+          <a href="{{ oge.href }}" style="display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:8px;font-size:13px;font-weight:500;color:{{ oge.renk }};background:{{ oge.zemin }};box-shadow:{{ oge.golge }};margin-bottom:1px" style-hover="background:{{ oge.zeminHover }}">
+            <img src="{{ oge.ikonUrl }}" width="15" height="15" alt="" style="flex-shrink:0">
+            <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ oge.ad }}</span>
+            <sc-if value="{{ oge.rozet }}" hint-placeholder-val="{{ false }}">
+              <span style="min-width:17px;height:17px;border-radius:999px;background:#DC2626;color:#FFFFFF;font-size:10px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;box-sizing:border-box">{{ oge.rozet }}</span>
+            </sc-if>
+          </a>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+  <div style="border-top:1px solid #E7E5E4;padding:12px 16px 14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px"><span style="font-weight:600;color:#57534E">Büyüme Planı</span><span style="color:#A8A29E">2/3 mağaza</span></div>
+    <div style="height:4px;border-radius:999px;background:#E7E5E4;margin-top:6px;overflow:hidden"><div style="width:66%;height:100%;background:#78716C;border-radius:999px"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px"><span style="font-weight:700;font-size:12.5px;letter-spacing:0.01em;color:#57534E">kavun</span><span style="font-size:10.5px;color:#A8A29E">v0.4 · beta</span></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:240,&quot;height&quot;:880},&quot;aktif&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dashboard&quot;,&quot;uyarilar&quot;,&quot;siparisler&quot;,&quot;marjlar&quot;,&quot;mutabakat&quot;,&quot;urunler&quot;,&quot;senaryolar&quot;,&quot;komisyonlar&quot;,&quot;stok&quot;,&quot;faturalar&quot;,&quot;ayarlar&quot;],&quot;default&quot;:&quot;dashboard&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Navigasyon&quot;},&quot;workspace&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;kahveji&quot;,&quot;alessi&quot;,&quot;holding&quot;],&quot;default&quot;:&quot;kahveji&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Navigasyon&quot;},&quot;uyariSayisi&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:3,&quot;min&quot;:0,&quot;max&quot;:99,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Navigasyon&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const aktif = this.props.aktif ?? "dashboard";
+    const wsKey = this.props.workspace ?? "kahveji";
+    const n = this.props.uyariSayisi ?? 3;
+    const WS = {
+      kahveji: { ad: "Kahveji", renk: "#B45309", harf: "K" },
+      alessi: { ad: "Alessi", renk: "#C8102E", harf: "A" },
+      holding: { ad: "Holding", renk: "#292524", harf: "H" }
+    };
+    const ws = WS[wsKey] || WS.kahveji;
+    const enc = h => "%23" + h.slice(1);
+    const NAV = [
+      ["Genel Bakış", [
+        ["dashboard", "Dashboard", "layout-dashboard", "Dashboard.dc.html"],
+        ["uyarilar", "Uyarılar", "bell", "Uyarilar.dc.html", true]
+      ]],
+      ["Satış", [
+        ["siparisler", "Siparişler", "shopping-cart", "Siparis Detayi.dc.html"],
+        ["marjlar", "SKU Marjları", "trending-up", "SKU Marjlari.dc.html"],
+        ["mutabakat", "Mutabakat", "scale", "Mutabakat.dc.html"]
+      ]],
+      ["Ürün & Fiyat", [
+        ["urunler", "Ürün Çalışma Alanı", "package", "Urun Calisma Alani.dc.html"],
+        ["senaryolar", "Senaryolar", "git-compare-arrows", "Senaryolar.dc.html"],
+        ["komisyonlar", "Komisyon Tarifeleri", "percent", "Komisyon Tarifeleri.dc.html"]
+      ]],
+      ["Stok", [
+        ["stok", "Stok & Maliyet", "boxes", "Stok ve Maliyet.dc.html"],
+        ["faturalar", "Fatura Yükleme", "file-up", "Fatura Yukleme.dc.html"]
+      ]],
+      ["Yönetim", [
+        ["ayarlar", "Ayarlar", "settings", "Ayarlar.dc.html"]
+      ]]
+    ];
+    const gruplar = NAV.map(([ad, list]) => ({
+      ad,
+      ogeler: list.map(([id, adi, ikon, href, rozetli]) => {
+        const a = id === aktif;
+        return {
+          ad: adi, href,
+          renk: a ? ws.renk : "#57534E",
+          zemin: a ? "#FFFFFF" : "transparent",
+          zeminHover: a ? "#FFFFFF" : "#F5F5F4",
+          golge: a ? ("inset 2px 0 0 " + ws.renk + ", inset 0 0 0 1px #E7E5E4") : "none",
+          ikonUrl: "https://api.iconify.design/lucide/" + ikon + ".svg?color=" + enc(a ? ws.renk : "#78716C"),
+          rozet: rozetli && n > 0 ? n : null
+        };
+      })
+    }));
+    return { gruplar, wsAd: ws.ad, wsRenk: ws.renk, wsHarf: ws.harf };
+  }
+}
+</script>
+</body>
+</html>

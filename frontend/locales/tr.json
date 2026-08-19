@@ -2,7 +2,9 @@
   "app": {
     "name": "Kavun",
     "tagline": "Pazaryeri kârlılık ve mutabakat platformu",
-    "owner": "Mokka Teknoloji"
+    "owner": "Mokka Teknoloji",
+    "wordmark": "kavun",
+    "version": "v0.4 · beta"
   },
   "system": {
     "apiStatusTitle": "Sistem durumu",
@@ -23,7 +25,8 @@
     "kahveji": "Kahveji",
     "holding": "Holding",
     "switch": "Workspace değiştir",
-    "current": "Aktif workspace"
+    "current": "Aktif workspace",
+    "switchHint": "Çalışma alanını değiştir — Holding görünümüne git"
   },
   "nav": {
     "dashboard": "Panel",
@@ -41,7 +44,14 @@
     "cargo": "Kargo faturaları",
     "reconciliation": "Hakediş mutabakatı",
     "settings": "Ayarlar",
-    "alerts": "Uyarılar"
+    "alerts": "Uyarılar",
+    "groups": {
+      "overview": "Genel Bakış",
+      "sales": "Satış",
+      "product": "Ürün & Fiyat",
+      "stock": "Stok",
+      "admin": "Yönetim"
+    }
   },
   "period": {
     "label": "Dönem",
@@ -701,5 +711,12 @@
       "hakedis_farki": "Hakediş farkı",
       "stale_sync": "Senkron durdu"
     }
+  },
+  "shell": {
+    "period": "Son 30 gün",
+    "syncedAgo": "Son senkron: {value}",
+    "neverSynced": "Henüz senkron yok",
+    "plan": "Büyüme Planı",
+    "planUsage": "{used}/{total} mağaza"
   }
 }

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAFAF9;color:#1C1917;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#57534E;text-decoration:none}
+a:hover{color:#1C1917}
+button{font-family:inherit}
+</style>
+</helmet>
+<div data-screen-label="Stok &amp; Maliyet" style="display:flex;min-height:100vh;position:relative;font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums">
+  <dc-import name="Sidebar" aktif="stok" workspace="kahveji" uyari-sayisi="3" hint-size="240px,900px" style="width:240px;flex-shrink:0;align-self:stretch"></dc-import>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:56px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E7E5E4;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:20;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <span style="font-size:12px;color:#A8A29E">Stok</span>
+        <span style="font-size:12px;color:#D6D3D1">/</span>
+        <span style="font-size:14px;font-weight:600">Stok &amp; Maliyet</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#78716C"><span style="width:6px;height:6px;border-radius:999px;background:#16A34A;display:inline-block"></span><span>Son senkron: 12 dk önce</span></div>
+        <button style="position:relative;width:32px;height:32px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F5F5F4">
+          <img src="https://api.iconify.design/lucide/bell.svg?color=%2357534E" width="16" height="16" alt="Uyarılar">
+          <span style="position:absolute;top:1px;right:1px;min-width:15px;height:15px;border-radius:999px;background:#DC2626;color:#FFFFFF;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid #FFFFFF;box-sizing:content-box;padding:0 2px">3</span>
+        </button>
+        <div style="width:28px;height:28px;border-radius:999px;background:#E7E5E4;color:#57534E;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer">SA</div>
+      </div>
+    </div>
+    <div style="flex:1;box-sizing:border-box;width:100%;max-width:1360px;padding:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="font-size:13px;color:#78716C">Toplam stok değeri <span style="font-weight:600;color:#1C1917">₺318.460</span> · 42 SKU · ortalama maliyet yöntemi</div>
+        <a href="Fatura Yukleme.dc.html" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:13px;font-weight:500;color:#44403C" style-hover="border-color:#D6D3D1;background:#FAFAF9">
+          <img src="https://api.iconify.design/lucide/file-up.svg?color=%2357534E" width="14" height="14" alt="">
+          <span>Fatura Yükle</span>
+        </a>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;overflow:hidden;margin-top:16px">
+        <table style="width:100%;border-collapse:separate;border-spacing:0">
+          <thead>
+            <tr>
+              <th style="background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px 9px 20px;border-bottom:1px solid #E7E5E4">SKU</th>
+              <th style="background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4">Ürün</th>
+              <th style="background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4;white-space:nowrap">Eldeki Adet</th>
+              <th style="background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4;white-space:nowrap">Ort. Maliyet</th>
+              <th style="background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4;white-space:nowrap">Stok Değeri</th>
+              <th style="background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 20px 9px 12px;border-bottom:1px solid #E7E5E4;white-space:nowrap">Son Hareket</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr onClick="{{ panelAc }}" style="cursor:pointer;background:{{ seciliZemin }}" style-hover="background:#FAFAF9">
+              <td style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#78716C;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4">KHV-001</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4">Etiyopya Yirgacheffe 250g</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">184</td>
+              <td style="font-size:13px;font-weight:500;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺114,93</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺21.147</td>
+              <td style="font-size:12px;color:#78716C;padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4">18 Ağu · satış</td>
+            </tr>
+            <tr style="cursor:pointer" style-hover="background:#FAFAF9">
+              <td style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#78716C;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4">KHV-014</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4">Kolombiya Supremo 1kg</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">31</td>
+              <td style="font-size:13px;font-weight:500;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺890,00</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺27.590</td>
+              <td style="font-size:12px;color:#78716C;padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4">17 Ağu · satış</td>
+            </tr>
+            <tr style="cursor:pointer" style-hover="background:#FAFAF9">
+              <td style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#78716C;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4">KHV-007</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4">Kenya AA 250g</td>
+              <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#DC2626;justify-content:flex-end"><span data-tip="Kritik stok — 14 günlük satış hızının altında" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="width:6px;height:6px;border-radius:999px;background:#DC2626;display:inline-block;cursor:default"></span>12</span></td>
+              <td style="font-size:13px;font-weight:500;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺187,00</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺2.244</td>
+              <td style="font-size:12px;color:#78716C;padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4">18 Ağu · satış</td>
+            </tr>
+            <tr style="cursor:pointer" style-hover="background:#FAFAF9">
+              <td style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#78716C;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4">KHV-023</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4">Filtre Kağıdı 100'lü</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">642</td>
+              <td style="font-size:13px;font-weight:500;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺46,80</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺30.046</td>
+              <td style="font-size:12px;color:#78716C;padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4">16 Ağu · alış</td>
+            </tr>
+            <tr style="cursor:pointer" style-hover="background:#FAFAF9">
+              <td style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#78716C;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4">KHV-064</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4">Chemex 6 Cup</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">9</td>
+              <td style="font-size:13px;font-weight:500;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺1.120,00</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺10.080</td>
+              <td style="font-size:12px;color:#78716C;padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4">11 Ağu · hasar</td>
+            </tr>
+            <tr style="cursor:pointer" style-hover="background:#FAFAF9">
+              <td style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#78716C;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4">KHV-033</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4">Brezilya Santos 500g</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">96</td>
+              <td style="font-size:13px;font-weight:500;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺289,00</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺27.744</td>
+              <td style="font-size:12px;color:#78716C;padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4">15 Ağu · satış</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid #E7E5E4">
+          <div style="font-size:12px;color:#78716C">6 / 42 SKU gösteriliyor</div>
+          <div style="font-size:12px;color:#A8A29E">Satıra tıkla → maliyet zaman çizelgesi</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <sc-if value="{{ panelAcik }}" hint-placeholder-val="{{ true }}">
+    <div onClick="{{ panelKapat }}" style="position:fixed;inset:0;background:rgba(28,25,23,0.2);z-index:40"></div>
+    <div style="position:fixed;top:0;right:0;bottom:0;width:420px;max-width:90vw;background:#FFFFFF;border-left:1px solid #E7E5E4;box-shadow:-12px 0 32px rgba(28,25,23,0.1);z-index:45;display:flex;flex-direction:column">
+      <div style="padding:18px 24px;border-bottom:1px solid #E7E5E4;display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-size:14px;font-weight:600">Etiyopya Yirgacheffe 250g</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+            <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A8A29E">KHV-001</span>
+            <span style="font-size:12px;color:#78716C">184 adet · ort. ₺114,93 · ₺21.147</span>
+          </div>
+        </div>
+        <button onClick="{{ panelKapat }}" style="width:28px;height:28px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" style-hover="background:#F5F5F4">
+          <img src="https://api.iconify.design/lucide/x.svg?color=%2357534E" width="15" height="15" alt="Kapat">
+        </button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:20px 24px">
+        <div style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;margin-bottom:12px">Maliyet Zaman Çizelgesi</div>
+        <div style="display:flex;gap:12px">
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <span style="width:24px;height:24px;border-radius:999px;background:#F0FDF4;border:1px solid #BBF7D0;display:flex;align-items:center;justify-content:center;flex-shrink:0"><img src="https://api.iconify.design/lucide/arrow-down.svg?color=%2316A34A" width="12" height="12" alt="Alış"></span>
+            <div style="width:1px;flex:1;background:#E7E5E4;margin-top:4px"></div>
+          </div>
+          <div style="padding-bottom:20px;min-width:0;flex:1">
+            <div style="display:flex;justify-content:space-between;gap:8px"><span style="font-size:13px;font-weight:600">Alış faturası #A-2207</span><span style="font-size:12px;color:#A8A29E;white-space:nowrap">16 Ağu</span></div>
+            <div style="font-size:12.5px;color:#57534E;margin-top:2px">120 adet @ ₺176,00</div>
+            <div style="font-size:12px;margin-top:4px;display:inline-flex;align-items:center;gap:6px;color:#78716C">ortalama <span style="color:#A8A29E">₺100,00</span><img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23A8A29E" width="11" height="11" alt=""><span style="font-weight:600;color:#1C1917">₺114,93</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <span style="width:24px;height:24px;border-radius:999px;background:#F5F5F4;border:1px solid #E7E5E4;display:flex;align-items:center;justify-content:center;flex-shrink:0"><img src="https://api.iconify.design/lucide/arrow-up.svg?color=%2378716C" width="12" height="12" alt="Satış"></span>
+            <div style="width:1px;flex:1;background:#E7E5E4;margin-top:4px"></div>
+          </div>
+          <div style="padding-bottom:20px;min-width:0;flex:1">
+            <div style="display:flex;justify-content:space-between;gap:8px"><span style="font-size:13px;font-weight:600">Satış · 46 sipariş</span><span style="font-size:12px;color:#A8A29E;white-space:nowrap">9–16 Ağu</span></div>
+            <div style="font-size:12.5px;color:#57534E;margin-top:2px">−58 adet · maliyet ₺100,00 üzerinden düşüldü</div>
+            <div style="font-size:12px;color:#A8A29E;margin-top:4px">ortalama değişmez</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <span style="width:24px;height:24px;border-radius:999px;background:#FEF2F2;border:1px solid #FECACA;display:flex;align-items:center;justify-content:center;flex-shrink:0"><img src="https://api.iconify.design/lucide/x.svg?color=%23DC2626" width="12" height="12" alt="Hasar"></span>
+            <div style="width:1px;flex:1;background:#E7E5E4;margin-top:4px"></div>
+          </div>
+          <div style="padding-bottom:20px;min-width:0;flex:1">
+            <div style="display:flex;justify-content:space-between;gap:8px"><span style="font-size:13px;font-weight:600">Hasar kaydı</span><span style="font-size:12px;color:#A8A29E;white-space:nowrap">8 Ağu</span></div>
+            <div style="font-size:12.5px;color:#57534E;margin-top:2px">−4 adet · depo iade kontrolü</div>
+            <div style="font-size:12px;margin-top:4px;display:inline-flex;align-items:center;gap:6px;color:#78716C">stok değeri <span style="font-weight:600;color:#DC2626">−₺400,00</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <span style="width:24px;height:24px;border-radius:999px;background:#F0FDF4;border:1px solid #BBF7D0;display:flex;align-items:center;justify-content:center;flex-shrink:0"><img src="https://api.iconify.design/lucide/arrow-down.svg?color=%2316A34A" width="12" height="12" alt="Alış"></span>
+          </div>
+          <div style="min-width:0;flex:1">
+            <div style="display:flex;justify-content:space-between;gap:8px"><span style="font-size:13px;font-weight:600">Alış faturası #A-2201</span><span style="font-size:12px;color:#A8A29E;white-space:nowrap">12 Tem</span></div>
+            <div style="font-size:12.5px;color:#57534E;margin-top:2px">100 adet @ ₺120,00</div>
+            <div style="font-size:12px;margin-top:4px;display:inline-flex;align-items:center;gap:6px;color:#78716C">ortalama <span style="color:#A8A29E">₺84,10</span><img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23A8A29E" width="11" height="11" alt=""><span style="font-weight:600;color:#1C1917">₺100,00</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid #E7E5E4;display:flex;align-items:center;justify-content:space-between;background:#FAFAF9">
+        <span style="font-size:12px;color:#78716C">4 hareket · Tem–Ağu 2026</span>
+        <a href="Fatura Yukleme.dc.html" style="font-size:12.5px;font-weight:500;color:#B45309;display:inline-flex;align-items:center;gap:4px">Fatura yükle<img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23B45309" width="12" height="12" alt=""></a>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ tipVar }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:{{ tipX }}px;top:{{ tipY }}px;transform:translate(-50%,-100%);background:#1C1917;color:#FAFAF9;font-size:12px;line-height:1.4;padding:6px 10px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);pointer-events:none;z-index:60;white-space:nowrap">{{ tipText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;panelAcik&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Durum&quot;}}">
+class Component extends DCLogic {
+  state = { panel: null, tip: null };
+  renderVals() {
+    const panel = this.state.panel ?? (this.props.panelAcik ?? true);
+    const tip = this.state.tip;
+    return {
+      panelAcik: panel,
+      seciliZemin: panel ? "#FAFAF9" : "#FFFFFF",
+      panelAc: () => this.setState({ panel: true }),
+      panelKapat: () => this.setState({ panel: false }),
+      tipVar: !!tip, tipText: tip ? tip.t : "", tipX: tip ? tip.x : 0, tipY: tip ? tip.y : 0,
+      tipGoster: e => {
+        const r = e.currentTarget.getBoundingClientRect();
+        this.setState({ tip: { t: e.currentTarget.dataset.tip, x: r.left + r.width / 2 + window.scrollX, y: r.top + window.scrollY - 8 } });
+      },
+      tipGizle: () => this.setState({ tip: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

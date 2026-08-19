@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAFAF9;color:#1C1917;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#57534E;text-decoration:none}
+a:hover{color:#1C1917}
+button{font-family:inherit}
+</style>
+</helmet>
+<div data-screen-label="Sipariş Detayı — Waterfall" style="display:flex;min-height:100vh;position:relative;font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums">
+  <dc-import name="Sidebar" aktif="siparisler" workspace="kahveji" uyari-sayisi="3" hint-size="240px,900px" style="width:240px;flex-shrink:0;align-self:stretch"></dc-import>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:56px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E7E5E4;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:20;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <a href="#" style="font-size:12px;color:#A8A29E">Siparişler</a>
+        <span style="font-size:12px;color:#D6D3D1">/</span>
+        <span style="font-size:14px;font-weight:600">Sipariş #TY-8402913</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button style="display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:13px;color:#44403C;cursor:pointer" style-hover="border-color:#D6D3D1;background:#FAFAF9">
+          <img src="https://api.iconify.design/lucide/calendar.svg?color=%2378716C" width="14" height="14" alt="">
+          <span>Son 30 gün</span>
+          <img src="https://api.iconify.design/lucide/chevron-down.svg?color=%23A8A29E" width="12" height="12" alt="">
+        </button>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#78716C"><span style="width:6px;height:6px;border-radius:999px;background:#16A34A;display:inline-block"></span><span>Son senkron: 12 dk önce</span></div>
+        <button style="position:relative;width:32px;height:32px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F5F5F4">
+          <img src="https://api.iconify.design/lucide/bell.svg?color=%2357534E" width="16" height="16" alt="Uyarılar">
+          <span style="position:absolute;top:1px;right:1px;min-width:15px;height:15px;border-radius:999px;background:#DC2626;color:#FFFFFF;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid #FFFFFF;box-sizing:content-box;padding:0 2px">3</span>
+        </button>
+        <div style="width:28px;height:28px;border-radius:999px;background:#E7E5E4;color:#57534E;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer">SA</div>
+      </div>
+    </div>
+    <div style="flex:1;box-sizing:border-box;width:100%;max-width:1360px;padding:24px">
+      <div style="display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:14px;font-weight:600">#TY-8402913</span>
+              <button data-tip="Sipariş numarasını kopyala" onClick="{{ kopyala }}" onMouseLeave="{{ tipGizle }}" style="width:24px;height:24px;border:none;background:transparent;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F5F5F4">
+                <img src="https://api.iconify.design/lucide/copy.svg?color=%23A8A29E" width="13" height="13" alt="Kopyala">
+              </button>
+            </div>
+            <div style="font-size:12px;color:#A8A29E;margin-top:2px">17 Ağu 2026, 14:32</div>
+            <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;font-size:13px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:#78716C">Kanal</span><span style="display:inline-flex;align-items:center;gap:6px;font-weight:500"><span style="width:16px;height:16px;border-radius:4px;background:#F5F5F4;color:#57534E;font-size:9px;font-weight:600;display:inline-flex;align-items:center;justify-content:center">T</span>Trendyol</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:#78716C">Müşteri şehri</span><span style="font-weight:500">İzmir</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:#78716C">Kargo</span><span style="font-weight:500">Aras · 2,3 desi</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:#78716C">Durum</span><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0">Teslim Edildi</span></div>
+            </div>
+            <div style="border-top:1px solid #F5F5F4;margin-top:16px;padding-top:14px">
+              <div style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E">Kalem</div>
+              <div style="font-size:13px;font-weight:500;margin-top:6px">Kolombiya Supremo 1kg</div>
+              <div style="font-family:'Geist Mono',monospace;font-size:11px;color:#A8A29E;margin-top:1px">KHV-014</div>
+              <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:13px"><span style="color:#78716C">1 adet × ₺2.400,00</span><span style="font-weight:500">₺2.400,00</span></div>
+            </div>
+            <div style="border-top:1px solid #F5F5F4;margin-top:14px;padding-top:14px;display:flex;justify-content:space-between;font-size:13px">
+              <span style="color:#78716C">Hakediş dönemi</span><span style="font-weight:500">16–31 Ağu</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+          <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:20px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+              <div>
+                <div style="font-size:14px;font-weight:600">Kâr Şelalesi</div>
+                <div style="font-size:12px;color:#A8A29E;margin-top:2px">Sipariş satırı bazında net kâr dağılımı</div>
+              </div>
+              <sc-if value="{{ sStd }}" hint-placeholder-val="{{ true }}">
+                <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#B45309;padding-top:2px"><span style="width:6px;height:6px;border-radius:999px;background:#D97706"></span>1 tahmini kalem — kargo faturası bekleniyor</span>
+              </sc-if>
+              <sc-if value="{{ sKesin }}" hint-placeholder-val="{{ false }}">
+                <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#15803D;padding-top:2px"><span style="width:6px;height:6px;border-radius:999px;background:#16A34A"></span>Tüm kalemler kesinleşti</span>
+              </sc-if>
+              <sc-if value="{{ sEksik }}" hint-placeholder-val="{{ false }}">
+                <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#DC2626;padding-top:2px"><span style="width:6px;height:6px;border-radius:999px;background:#DC2626"></span>Ürün maliyeti eksik — net kâr hesaplanamıyor</span>
+              </sc-if>
+            </div>
+            <sc-if value="{{ grafikVar }}" hint-placeholder-val="{{ true }}">
+              <div>
+                <div style="display:flex;margin-top:20px">
+                  <div style="width:44px;position:relative;height:324px;flex-shrink:0">
+                    <span style="position:absolute;top:17px;right:8px;font-size:11px;color:#A8A29E">₺2.400</span>
+                    <span style="position:absolute;top:92px;right:8px;font-size:11px;color:#A8A29E">₺1.800</span>
+                    <span style="position:absolute;top:167px;right:8px;font-size:11px;color:#A8A29E">₺1.200</span>
+                    <span style="position:absolute;top:242px;right:8px;font-size:11px;color:#A8A29E">₺600</span>
+                    <span style="position:absolute;top:317px;right:8px;font-size:11px;color:#A8A29E">₺0</span>
+                  </div>
+                  <div style="flex:1;min-width:0;position:relative;height:324px">
+                    <div style="position:absolute;left:0;right:0;top:24px;border-top:1px dashed #EBE9E7"></div>
+                    <div style="position:absolute;left:0;right:0;top:99px;border-top:1px dashed #EBE9E7"></div>
+                    <div style="position:absolute;left:0;right:0;top:174px;border-top:1px dashed #EBE9E7"></div>
+                    <div style="position:absolute;left:0;right:0;top:249px;border-top:1px dashed #EBE9E7"></div>
+                    <div style="position:absolute;left:0;right:0;top:324px;border-top:1px solid #E7E5E4"></div>
+                    <div style="position:absolute;left:0;right:0;top:24px;height:300px;display:grid;grid-template-columns:repeat(7,1fr)">
+                      <div style="position:relative">
+                        <div style="position:absolute;top:-22px;left:0;right:0;text-align:center;font-size:12px;font-weight:600;color:#44403C">₺2.400,00</div>
+                        <div data-tip="Trendyol satış fiyatı — API" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="position:absolute;left:20%;right:20%;top:0;height:300px;background:#E7E5E4;border:1px solid #D6D3D1;border-radius:3px;box-sizing:border-box;cursor:default" style-hover="background:#DDD9D6"></div>
+                      </div>
+                      <div style="position:relative">
+                        <div style="position:absolute;top:0;left:-18%;width:36%;border-top:1px dashed #D6D3D1"></div>
+                        <div style="position:absolute;top:-22px;left:0;right:0;text-align:center;font-size:12px;font-weight:600;color:#DC2626">−₺516,00</div>
+                        <div data-tip="Kategori: Kahve · %21,5 komisyon — API" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="position:absolute;left:20%;right:20%;top:0;height:64.5px;background:rgba(220,38,38,0.8);border-radius:3px;cursor:default" style-hover="background:rgba(185,28,28,0.85)"></div>
+                      </div>
+                      <div style="position:relative">
+                        <div style="position:absolute;top:64.5px;left:-18%;width:36%;border-top:1px dashed #D6D3D1"></div>
+                        <div style="position:absolute;top:22px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;font-weight:600;color:#DC2626">
+                          <sc-if value="{{ kargoTahmini }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:5px"><span data-tip="Tahmini — kargo faturası bekleniyor" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="width:6px;height:6px;border-radius:999px;background:#D97706;display:inline-block;cursor:default"></span>−₺74,90</span></sc-if>
+                          <sc-if value="{{ sKesin }}" hint-placeholder-val="{{ false }}"><span>−₺78,20</span></sc-if>
+                        </div>
+                        <div data-tip="{{ kargoTip }}" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="position:absolute;left:20%;right:20%;top:64.5px;height:9.5px;background:rgba(220,38,38,0.8);border-radius:2px;cursor:default" style-hover="background:rgba(185,28,28,0.85)"></div>
+                      </div>
+                      <div style="position:relative">
+                        <div style="position:absolute;top:74px;left:-18%;width:36%;border-top:1px dashed #D6D3D1"></div>
+                        <div style="position:absolute;top:32px;left:0;right:0;text-align:center;font-size:12px;font-weight:600;color:#DC2626">−₺12,90</div>
+                        <div data-tip="Trendyol hizmet bedeli tarifesi" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="position:absolute;left:20%;right:20%;top:74px;height:2px;background:rgba(220,38,38,0.8);cursor:default"></div>
+                      </div>
+                      <div style="position:relative">
+                        <div style="position:absolute;top:76px;left:-18%;width:36%;border-top:1px dashed #D6D3D1"></div>
+                        <div style="position:absolute;top:54px;left:0;right:0;text-align:center;font-size:12px;font-weight:600;color:#DC2626">−₺180,20</div>
+                        <div data-tip="Satış KDV'si − alış KDV indirimi" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="position:absolute;left:20%;right:20%;top:76px;height:22.5px;background:rgba(220,38,38,0.8);border-radius:2px;cursor:default" style-hover="background:rgba(185,28,28,0.85)"></div>
+                      </div>
+                      <div style="position:relative">
+                        <div style="position:absolute;top:98.5px;left:-18%;width:36%;border-top:1px dashed #D6D3D1"></div>
+                        <div style="position:absolute;top:76.5px;left:0;right:0;text-align:center;font-size:12px;font-weight:600;color:#DC2626">−₺890,00</div>
+                        <div data-tip="Ortalama maliyet — alış faturası #A-2201" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="position:absolute;left:20%;right:20%;top:98.5px;height:111.5px;background:rgba(220,38,38,0.8);border-radius:3px;cursor:default" style-hover="background:rgba(185,28,28,0.85)"></div>
+                      </div>
+                      <div style="position:relative">
+                        <div style="position:absolute;top:210px;left:-18%;width:36%;border-top:1px dashed #D6D3D1"></div>
+                        <div style="position:absolute;top:188px;left:0;right:0;text-align:center;font-size:12px;font-weight:600;color:#15803D">
+                          <sc-if value="{{ kargoTahmini }}" hint-placeholder-val="{{ true }}"><span>₺726,00</span></sc-if>
+                          <sc-if value="{{ sKesin }}" hint-placeholder-val="{{ false }}"><span>₺722,70</span></sc-if>
+                        </div>
+                        <div data-tip="{{ netTip }}" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="position:absolute;left:20%;right:20%;top:210px;height:90px;background:#16A34A;border-radius:3px;cursor:default" style-hover="background:#15803D"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);margin-left:44px;margin-top:10px">
+                  <div style="text-align:center;font-size:12px;color:#57534E">Satış Fiyatı</div>
+                  <div style="text-align:center;font-size:12px;color:#57534E">Komisyon</div>
+                  <div style="text-align:center;font-size:12px;color:#57534E">Kargo</div>
+                  <div style="text-align:center;font-size:12px;color:#57534E">Hizmet Bedeli</div>
+                  <div style="text-align:center;font-size:12px;color:#57534E">Net KDV</div>
+                  <div style="text-align:center;font-size:12px;color:#57534E">Ürün Maliyeti</div>
+                  <div style="text-align:center;font-size:12px;color:#57534E;font-weight:600">Net Kâr</div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ sEksik }}" hint-placeholder-val="{{ false }}">
+              <div style="height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1px dashed #E7E5E4;border-radius:8px;margin-top:20px;padding:0 24px;text-align:center">
+                <div style="font-size:14px;font-weight:600">Şelale hesaplanamıyor</div>
+                <div style="font-size:13px;color:#78716C;max-width:400px;line-height:1.55">KHV-014 için birim maliyet tanımlı değil. Maliyet eklendiğinde net kâr bu sipariş ve geçmiş satışlar için otomatik hesaplanır.</div>
+                <button style="margin-top:8px;height:32px;padding:0 12px;border-radius:8px;border:none;background:#B45309;color:#FFFFFF;font-size:13px;font-weight:500;cursor:pointer" style-hover="background:#92400E">Maliyet Ekle</button>
+              </div>
+            </sc-if>
+          </div>
+          <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;overflow:hidden">
+            <div style="padding:16px 20px;border-bottom:1px solid #F5F5F4;font-size:14px;font-weight:600">Kalem Dökümü</div>
+            <table style="width:100%;border-collapse:collapse">
+              <thead>
+                <tr style="background:#FAFAF9">
+                  <th style="text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 20px;border-bottom:1px solid #E7E5E4">Kalem</th>
+                  <th style="text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 20px;border-bottom:1px solid #E7E5E4">Kaynak</th>
+                  <th style="text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 20px;border-bottom:1px solid #E7E5E4">Tutar</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style-hover="background:#FAFAF9">
+                  <td style="font-size:13px;padding:11px 20px;border-bottom:1px solid #F5F5F4">Satış Fiyatı</td>
+                  <td style="padding:11px 20px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4;white-space:nowrap">API · kesin</span></td>
+                  <td style="font-size:13px;font-weight:500;padding:11px 20px;border-bottom:1px solid #F5F5F4;text-align:right">₺2.400,00</td>
+                </tr>
+                <tr style-hover="background:#FAFAF9">
+                  <td style="font-size:13px;padding:11px 20px;border-bottom:1px solid #F5F5F4">Komisyon (%21,5)</td>
+                  <td style="padding:11px 20px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4;white-space:nowrap">API · kesin</span></td>
+                  <td style="font-size:13px;font-weight:500;color:#DC2626;padding:11px 20px;border-bottom:1px solid #F5F5F4;text-align:right">−₺516,00</td>
+                </tr>
+                <tr style-hover="background:#FAFAF9">
+                  <td style="font-size:13px;padding:11px 20px;border-bottom:1px solid #F5F5F4">Kargo</td>
+                  <td style="padding:11px 20px;border-bottom:1px solid #F5F5F4">
+                    <sc-if value="{{ kargoTahmini }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;white-space:nowrap"><span style="width:5px;height:5px;border-radius:999px;background:#D97706"></span>desi tahmini</span></sc-if>
+                    <sc-if value="{{ sKesin }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4;white-space:nowrap">fatura · kesin</span></sc-if>
+                  </td>
+                  <td style="font-size:13px;font-weight:500;color:#DC2626;padding:11px 20px;border-bottom:1px solid #F5F5F4;text-align:right">
+                    <sc-if value="{{ kargoTahmini }}" hint-placeholder-val="{{ true }}"><span>−₺74,90</span></sc-if>
+                    <sc-if value="{{ sKesin }}" hint-placeholder-val="{{ false }}"><span>−₺78,20</span></sc-if>
+                  </td>
+                </tr>
+                <tr style-hover="background:#FAFAF9">
+                  <td style="font-size:13px;padding:11px 20px;border-bottom:1px solid #F5F5F4">Hizmet Bedeli</td>
+                  <td style="padding:11px 20px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4;white-space:nowrap">tarife · kesin</span></td>
+                  <td style="font-size:13px;font-weight:500;color:#DC2626;padding:11px 20px;border-bottom:1px solid #F5F5F4;text-align:right">−₺12,90</td>
+                </tr>
+                <tr style-hover="background:#FAFAF9">
+                  <td style="font-size:13px;padding:11px 20px;border-bottom:1px solid #F5F5F4">Net KDV</td>
+                  <td style="padding:11px 20px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#EFF6FF;color:#2563EB;border:1px solid #DBEAFE;white-space:nowrap">hesaplanan</span></td>
+                  <td style="font-size:13px;font-weight:500;color:#DC2626;padding:11px 20px;border-bottom:1px solid #F5F5F4;text-align:right">−₺180,20</td>
+                </tr>
+                <tr style-hover="background:#FAFAF9">
+                  <td style="font-size:13px;padding:11px 20px;border-bottom:1px solid #F5F5F4">Ürün Maliyeti</td>
+                  <td style="padding:11px 20px;border-bottom:1px solid #F5F5F4">
+                    <sc-if value="{{ maliyetVar }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4;white-space:nowrap">fatura · ort. maliyet</span></sc-if>
+                    <sc-if value="{{ sEksik }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;white-space:nowrap">maliyet eksik</span></sc-if>
+                  </td>
+                  <td style="font-size:13px;font-weight:500;padding:11px 20px;border-bottom:1px solid #F5F5F4;text-align:right">
+                    <sc-if value="{{ maliyetVar }}" hint-placeholder-val="{{ true }}"><span style="color:#DC2626">−₺890,00</span></sc-if>
+                    <sc-if value="{{ sEksik }}" hint-placeholder-val="{{ false }}"><span style="color:#A8A29E">—</span></sc-if>
+                  </td>
+                </tr>
+                <tr style="background:#FAFAF9">
+                  <td style="font-size:13px;font-weight:600;padding:13px 20px">Net Kâr</td>
+                  <td style="padding:13px 20px">
+                    <sc-if value="{{ sStd }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0;white-space:nowrap">Marj %30,3</span></sc-if>
+                    <sc-if value="{{ sKesin }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0;white-space:nowrap">Marj %30,1</span></sc-if>
+                    <sc-if value="{{ sEksik }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#78716C;border:1px solid #E7E5E4;white-space:nowrap">Marj —</span></sc-if>
+                  </td>
+                  <td style="font-size:14px;font-weight:600;padding:13px 20px;text-align:right">
+                    <sc-if value="{{ sStd }}" hint-placeholder-val="{{ true }}"><span style="color:#15803D;display:inline-flex;align-items:center;gap:6px"><span data-tip="Tahmini kalem içerir — kargo" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="width:6px;height:6px;border-radius:999px;background:#D97706;display:inline-block;cursor:default"></span>₺726,00</span></sc-if>
+                    <sc-if value="{{ sKesin }}" hint-placeholder-val="{{ false }}"><span style="color:#15803D">₺722,70</span></sc-if>
+                    <sc-if value="{{ sEksik }}" hint-placeholder-val="{{ false }}"><span style="color:#A8A29E">—</span></sc-if>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <sc-if value="{{ tipVar }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:{{ tipX }}px;top:{{ tipY }}px;transform:translate(-50%,-100%);background:#1C1917;color:#FAFAF9;font-size:12px;line-height:1.4;padding:6px 10px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);pointer-events:none;z-index:60;white-space:nowrap">{{ tipText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;senaryo&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;standart&quot;,&quot;kargo faturası geldi&quot;,&quot;maliyet eksik&quot;],&quot;default&quot;:&quot;standart&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Durum&quot;}}">
+class Component extends DCLogic {
+  state = { tip: null };
+  renderVals() {
+    const s = this.props.senaryo ?? "standart";
+    const sKesin = s === "kargo faturası geldi";
+    const sEksik = s === "maliyet eksik";
+    const sStd = !sKesin && !sEksik;
+    const tip = this.state.tip;
+    const goster = (el, t) => {
+      const r = el.getBoundingClientRect();
+      this.setState({ tip: { t, x: r.left + r.width / 2 + window.scrollX, y: r.top + window.scrollY - 8 } });
+    };
+    return {
+      sStd, sKesin, sEksik,
+      grafikVar: !sEksik,
+      kargoTahmini: !sKesin,
+      maliyetVar: !sEksik,
+      kargoTip: sKesin ? "Aras Kargo faturası #K-88231 — kesin" : "Desi 2,3 üzerinden tahmin — kargo faturası bekleniyor",
+      netTip: sKesin ? "Tüm kalemler kesinleşti" : "Tahmini kalem içerir — kargo",
+      tipVar: !!tip, tipText: tip ? tip.t : "", tipX: tip ? tip.x : 0, tipY: tip ? tip.y : 0,
+      tipGoster: e => goster(e.currentTarget, e.currentTarget.dataset.tip),
+      tipGizle: () => this.setState({ tip: null }),
+      kopyala: e => {
+        try { navigator.clipboard.writeText("TY-8402913"); } catch (x) {}
+        goster(e.currentTarget, "Kopyalandı");
+        clearTimeout(this._kt);
+        this._kt = setTimeout(() => this.setState({ tip: null }), 1200);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

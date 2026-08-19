@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAFAF9;color:#1C1917;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#57534E;text-decoration:none}
+a:hover{color:#1C1917}
+button{font-family:inherit}
+</style>
+</helmet>
+<div data-screen-label="Dashboard" style="display:flex;min-height:100vh;position:relative;font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums">
+  <dc-import name="Sidebar" aktif="dashboard" workspace="kahveji" uyari-sayisi="{{ uyariBadge }}" hint-size="240px,900px" style="width:240px;flex-shrink:0;align-self:stretch"></dc-import>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:56px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E7E5E4;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:20;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <span style="font-size:12px;color:#A8A29E">Genel Bakış</span>
+        <span style="font-size:12px;color:#D6D3D1">/</span>
+        <span style="font-size:14px;font-weight:600">Dashboard</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button style="display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:13px;color:#44403C;cursor:pointer" style-hover="border-color:#D6D3D1;background:#FAFAF9">
+          <img src="https://api.iconify.design/lucide/calendar.svg?color=%2378716C" width="14" height="14" alt="">
+          <span>Son 30 gün</span>
+          <img src="https://api.iconify.design/lucide/chevron-down.svg?color=%23A8A29E" width="12" height="12" alt="">
+        </button>
+        <sc-if value="{{ dolu }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#78716C"><span style="width:6px;height:6px;border-radius:999px;background:#16A34A;display:inline-block"></span><span>Son senkron: 12 dk önce</span></div>
+        </sc-if>
+        <sc-if value="{{ bos }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#A8A29E"><span style="width:6px;height:6px;border-radius:999px;background:#D6D3D1;display:inline-block"></span><span>Henüz senkron yok</span></div>
+        </sc-if>
+        <button style="position:relative;width:32px;height:32px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F5F5F4">
+          <img src="https://api.iconify.design/lucide/bell.svg?color=%2357534E" width="16" height="16" alt="Uyarılar">
+          <sc-if value="{{ dolu }}" hint-placeholder-val="{{ true }}">
+            <span style="position:absolute;top:1px;right:1px;min-width:15px;height:15px;border-radius:999px;background:#DC2626;color:#FFFFFF;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid #FFFFFF;box-sizing:content-box;padding:0 2px">3</span>
+          </sc-if>
+        </button>
+        <div style="width:28px;height:28px;border-radius:999px;background:#E7E5E4;color:#57534E;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer">SA</div>
+      </div>
+    </div>
+    <div style="flex:1;box-sizing:border-box;width:100%;max-width:1360px;padding:24px">
+      <sc-if value="{{ dolu }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+            <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:18px 20px">
+              <div style="font-size:13px;color:#78716C">Ciro</div>
+              <div style="display:flex;align-items:baseline;gap:3px;margin-top:8px"><span style="font-size:17px;font-weight:500;color:#A8A29E">₺</span><span style="font-size:29px;font-weight:600;letter-spacing:-0.02em;line-height:1.1">284.650</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;color:#16A34A"><img src="https://api.iconify.design/lucide/arrow-up-right.svg?color=%2316A34A" width="12" height="12" alt="">+%12,4<span style="color:#A8A29E;font-weight:400"> · 30 gün</span></span>
+                <svg width="64" height="24" viewBox="0 0 64 24" style="display:block"><polyline points="2,19 10,16 18,17 26,13 34,14 42,10 50,11 58,6" fill="none" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"></polyline></svg>
+              </div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:18px 20px">
+              <div style="font-size:13px;color:#78716C">Net Kâr</div>
+              <div style="display:flex;align-items:baseline;gap:3px;margin-top:8px"><span style="font-size:17px;font-weight:500;color:#A8A29E">₺</span><span style="font-size:29px;font-weight:600;letter-spacing:-0.02em;line-height:1.1">96.470</span></div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:#78716C;margin-top:6px;flex-wrap:wrap"><span>₺84.320 kesin</span><span style="color:#D6D3D1">·</span><span data-tip="Tahmini — kargo faturası bekleniyor" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="width:6px;height:6px;border-radius:999px;background:#D97706;display:inline-block;cursor:default;flex-shrink:0"></span><span style="color:#B45309">₺12.150 tahmini</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;color:#16A34A"><img src="https://api.iconify.design/lucide/arrow-up-right.svg?color=%2316A34A" width="12" height="12" alt="">+%8,2<span style="color:#A8A29E;font-weight:400"> · 30 gün</span></span>
+                <svg width="64" height="24" viewBox="0 0 64 24" style="display:block"><polyline points="2,17 10,18 18,14 26,15 34,11 42,12 50,8 58,5" fill="none" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"></polyline></svg>
+              </div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:18px 20px">
+              <div style="font-size:13px;color:#78716C">Marj</div>
+              <div style="display:flex;align-items:baseline;gap:3px;margin-top:8px"><span style="font-size:17px;font-weight:500;color:#A8A29E">%</span><span style="font-size:29px;font-weight:600;letter-spacing:-0.02em;line-height:1.1">33,9</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;color:#DC2626"><img src="https://api.iconify.design/lucide/arrow-down-right.svg?color=%23DC2626" width="12" height="12" alt="">−1,2 pt<span style="color:#A8A29E;font-weight:400"> · 30 gün</span></span>
+                <svg width="64" height="24" viewBox="0 0 64 24" style="display:block"><polyline points="2,7 10,9 18,8 26,12 34,11 42,15 50,14 58,18" fill="none" stroke="#DC2626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"></polyline></svg>
+              </div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:18px 20px">
+              <div style="font-size:13px;color:#78716C">İade Oranı</div>
+              <div style="display:flex;align-items:baseline;gap:3px;margin-top:8px"><span style="font-size:17px;font-weight:500;color:#A8A29E">%</span><span style="font-size:29px;font-weight:600;letter-spacing:-0.02em;line-height:1.1">4,6</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;color:#DC2626"><img src="https://api.iconify.design/lucide/arrow-up-right.svg?color=%23DC2626" width="12" height="12" alt="">+0,7 pt<span style="color:#A8A29E;font-weight:400"> · 30 gün</span></span>
+                <svg width="64" height="24" viewBox="0 0 64 24" style="display:block"><polyline points="2,18 10,17 18,18 26,14 34,15 42,11 50,12 58,7" fill="none" stroke="#DC2626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"></polyline></svg>
+              </div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;margin-top:16px;align-items:stretch">
+            <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:20px;min-width:0">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+                <div>
+                  <div style="font-size:14px;font-weight:600">Günlük Net Kâr</div>
+                  <div style="font-size:12px;color:#A8A29E;margin-top:2px">21 Tem – 19 Ağu · kesinleşen + tahmini</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:14px;padding-top:2px">
+                  <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#78716C"><span style="width:10px;height:10px;border-radius:3px;background:rgba(22,163,74,0.75)"></span>Kesinleşen</span>
+                  <sc-if value="{{ tahminiBandi }}" hint-placeholder-val="{{ true }}">
+                    <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#78716C"><span style="width:10px;height:10px;border-radius:3px;background:rgba(22,163,74,0.12);border:1px dashed rgba(22,163,74,0.5);box-sizing:border-box"></span>Tahmini</span>
+                  </sc-if>
+                </div>
+              </div>
+              <div style="display:flex;margin-top:18px">
+                <div style="width:44px;position:relative;height:260px;flex-shrink:0">
+                  <span style="position:absolute;top:3px;right:8px;font-size:11px;color:#A8A29E">₺6.000</span>
+                  <span style="position:absolute;top:83px;right:8px;font-size:11px;color:#A8A29E">₺4.000</span>
+                  <span style="position:absolute;top:163px;right:8px;font-size:11px;color:#A8A29E">₺2.000</span>
+                  <span style="position:absolute;top:243px;right:8px;font-size:11px;color:#A8A29E">₺0</span>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <svg width="100%" height="260" viewBox="0 0 1000 260" preserveAspectRatio="none" style="display:block">
+                    <line x1="0" y1="10" x2="1000" y2="10" stroke="#E7E5E4" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"></line>
+                    <line x1="0" y1="90" x2="1000" y2="90" stroke="#E7E5E4" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"></line>
+                    <line x1="0" y1="170" x2="1000" y2="170" stroke="#E7E5E4" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"></line>
+                    <sc-if value="{{ tahminiBandi }}" hint-placeholder-val="{{ true }}">
+                      <path d="{{ alanToplam }}" fill="rgba(22,163,74,0.07)"></path>
+                      <path d="{{ cizgiToplam }}" fill="none" stroke="rgba(22,163,74,0.45)" stroke-width="1.5" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"></path>
+                    </sc-if>
+                    <path d="{{ alanKesin }}" fill="rgba(22,163,74,0.15)"></path>
+                    <path d="{{ cizgiKesin }}" fill="none" stroke="#16A34A" stroke-width="1.8" vector-effect="non-scaling-stroke"></path>
+                    <line x1="0" y1="250" x2="1000" y2="250" stroke="#E7E5E4" vector-effect="non-scaling-stroke"></line>
+                  </svg>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-left:44px;margin-top:8px;font-size:11px;color:#A8A29E">
+                <span>21 Tem</span><span>28 Tem</span><span>4 Ağu</span><span>11 Ağu</span><span>18 Ağu</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+              <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:16px 20px">
+                <div style="font-size:14px;font-weight:600">Bugün</div>
+                <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:13px">
+                  <div style="display:flex;justify-content:space-between"><span style="color:#78716C">Sipariş</span><span style="font-weight:500">46</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:#78716C">Ciro</span><span style="font-weight:500">₺18.640</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:#78716C">Net Kâr</span><span style="font-weight:500;display:inline-flex;align-items:center;gap:6px"><span data-tip="Tahmini — kargo faturası bekleniyor" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="width:6px;height:6px;border-radius:999px;background:#D97706;display:inline-block;cursor:default"></span>₺4.120</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:#78716C">İade</span><span style="font-weight:500">3</span></div>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:16px 20px;flex:1">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-size:14px;font-weight:600">Son Uyarılar</div>
+                  <a href="Uyarilar.dc.html" style="font-size:12px;color:#78716C">Tümü</a>
+                </div>
+                <div style="margin-top:6px">
+                  <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0" style-hover="background:#FAFAF9">
+                    <span style="width:6px;height:6px;border-radius:999px;background:#DC2626;margin-top:6px;flex-shrink:0"></span>
+                    <span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="KHV-023 Filtre Kağıdı negatif marja düştü: −%3,2">KHV-023 negatif marja düştü: −%3,2</span>
+                    <span style="font-size:11px;color:#A8A29E;flex-shrink:0">14:02</span>
+                  </div>
+                  <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:1px solid #F5F5F4">
+                    <span style="width:6px;height:6px;border-radius:999px;background:#D97706;margin-top:6px;flex-shrink:0"></span>
+                    <span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Trendyol komisyon güncellemesi: Kahve %21,5 → %23,0">Trendyol komisyonu: Kahve %21,5 → %23,0</span>
+                    <span style="font-size:11px;color:#A8A29E;flex-shrink:0">11:30</span>
+                  </div>
+                  <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:1px solid #F5F5F4">
+                    <span style="width:6px;height:6px;border-radius:999px;background:#D97706;margin-top:6px;flex-shrink:0"></span>
+                    <span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Hakediş farkı ₺214,60 — 2 kayıt açıklanamadı">Hakediş farkı ₺214,60 — 2 kayıt açık</span>
+                    <span style="font-size:11px;color:#A8A29E;flex-shrink:0">Dün</span>
+                  </div>
+                  <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:1px solid #F5F5F4">
+                    <span style="width:6px;height:6px;border-radius:999px;background:#A8A29E;margin-top:6px;flex-shrink:0"></span>
+                    <span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">KHV-007 stok 12 adede düştü</span>
+                    <span style="font-size:11px;color:#A8A29E;flex-shrink:0">Dün</span>
+                  </div>
+                  <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:1px solid #F5F5F4">
+                    <span style="width:6px;height:6px;border-radius:999px;background:#A8A29E;margin-top:6px;flex-shrink:0"></span>
+                    <span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Hepsiburada senkronu bitti — 312 sipariş</span>
+                    <span style="font-size:11px;color:#A8A29E;flex-shrink:0">18 Ağu</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+            <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:20px">
+              <div style="font-size:14px;font-weight:600">Kanal Kırılımı</div>
+              <div style="font-size:12px;color:#A8A29E;margin-top:2px">Ciro · Son 30 gün</div>
+              <div style="margin-top:16px;display:flex;flex-direction:column;gap:14px">
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="width:18px;height:18px;border-radius:5px;background:#F5F5F4;color:#57534E;font-size:10px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">T</span>
+                    <span style="flex:1;font-size:13px;font-weight:500">Trendyol</span>
+                    <span style="font-size:13px;font-weight:500">₺182.400</span>
+                    <span style="font-size:12px;color:#A8A29E;width:34px;text-align:right">%64</span>
+                  </div>
+                  <div style="height:8px;border-radius:999px;background:#F5F5F4;margin-top:6px;overflow:hidden"><div style="width:64%;height:100%;background:#57534E;border-radius:999px"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="width:18px;height:18px;border-radius:5px;background:#F5F5F4;color:#57534E;font-size:10px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">H</span>
+                    <span style="flex:1;font-size:13px;font-weight:500">Hepsiburada</span>
+                    <span style="font-size:13px;font-weight:500">₺79.700</span>
+                    <span style="font-size:12px;color:#A8A29E;width:34px;text-align:right">%28</span>
+                  </div>
+                  <div style="height:8px;border-radius:999px;background:#F5F5F4;margin-top:6px;overflow:hidden"><div style="width:28%;height:100%;background:#78716C;border-radius:999px"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="width:18px;height:18px;border-radius:5px;background:#F5F5F4;color:#57534E;font-size:10px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">A</span>
+                    <span style="flex:1;font-size:13px;font-weight:500">Amazon TR</span>
+                    <span style="font-size:13px;font-weight:500">₺22.550</span>
+                    <span style="font-size:12px;color:#A8A29E;width:34px;text-align:right">%8</span>
+                  </div>
+                  <div style="height:8px;border-radius:999px;background:#F5F5F4;margin-top:6px;overflow:hidden"><div style="width:8%;height:100%;background:#A8A29E;border-radius:999px"></div></div>
+                </div>
+              </div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:20px;min-width:0">
+              <div style="font-size:14px;font-weight:600">SKU Kâr Uçları</div>
+              <div style="font-size:12px;color:#A8A29E;margin-top:2px">Net kâr · Son 30 gün</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-top:14px">
+                <div style="border-right:1px solid #F5F5F4;padding-right:20px;min-width:0">
+                  <div style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E">En Kârlı 5</div>
+                  <div style="margin-top:6px">
+                    <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A8A29E;width:56px;flex-shrink:0">KHV-001</span><span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Etiyopya Yirgacheffe 250g</span><span style="font-size:13px;font-weight:500;color:#16A34A">₺18.420</span></div>
+                    <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A8A29E;width:56px;flex-shrink:0">KHV-014</span><span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Kolombiya Supremo 1kg</span><span style="font-size:13px;font-weight:500;color:#16A34A">₺12.850</span></div>
+                    <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A8A29E;width:56px;flex-shrink:0">KHV-102</span><span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">V60 Başlangıç Seti</span><span style="font-size:13px;font-weight:500;color:#16A34A">₺9.640</span></div>
+                    <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A8A29E;width:56px;flex-shrink:0">KHV-033</span><span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brezilya Santos 500g</span><span style="font-size:13px;font-weight:500;color:#16A34A">₺8.210</span></div>
+                    <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A8A29E;width:56px;flex-shrink:0">KHV-058</span><span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Espresso Blend 250g</span><span style="font-size:13px;font-weight:500;color:#16A34A">₺6.930</span></div>
+                  </div>
+                </div>
+                <div style="min-width:0">
+                  <div style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E">Zarar Eden 5</div>
+                  <div style="margin-top:6px">
+                    <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A8A29E;width:56px;flex-shrink:0">KHV-023</span><span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Filtre Kağıdı 100'lü</span><span style="font-size:13px;font-weight:500;color:#DC2626">−₺1.240</span></div>
+                    <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A8A29E;width:56px;flex-shrink:0">KHV-091</span><span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cam Kupa 350ml</span><span style="font-size:13px;font-weight:500;color:#DC2626">−₺860</span></div>
+                    <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A8A29E;width:56px;flex-shrink:0">KHV-047</span><span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Dekaf Kolombiya 250g</span><span style="font-size:13px;font-weight:500;color:#DC2626">−₺540</span></div>
+                    <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A8A29E;width:56px;flex-shrink:0">KHV-112</span><span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cold Brew Şişesi</span><span style="font-size:13px;font-weight:500;color:#DC2626">−₺390</span></div>
+                    <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A8A29E;width:56px;flex-shrink:0">KHV-076</span><span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">El Değirmeni</span><span style="font-size:13px;font-weight:500;color:#DC2626">−₺210</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ bos }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:600px;margin:56px auto 0">
+          <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:12px;padding:32px">
+            <div style="font-size:17px;font-weight:600">Kavun'a hoş geldin</div>
+            <div style="font-size:13.5px;color:#78716C;margin-top:6px;line-height:1.55">Kahveji çalışma alanı hazır. Gerçek kârını görmek için üç adım kaldı — ilk senkrondan sonra bu ekran dolar.</div>
+            <div style="margin-top:24px">
+              <div style="display:flex;gap:14px">
+                <div style="display:flex;flex-direction:column;align-items:center">
+                  <div style="width:26px;height:26px;border-radius:999px;background:#B45309;color:#FFFFFF;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+                  <div style="width:1px;flex:1;background:#E7E5E4;margin:4px 0"></div>
+                </div>
+                <div style="padding-bottom:22px;min-width:0">
+                  <div style="font-size:14px;font-weight:600">Mağazanı bağla</div>
+                  <div style="font-size:13px;color:#78716C;margin-top:2px">Trendyol veya Hepsiburada API anahtarını ekle — okuma izni yeterli.</div>
+                  <button style="margin-top:10px;height:32px;padding:0 12px;border-radius:8px;border:none;background:#B45309;color:#FFFFFF;font-size:13px;font-weight:500;cursor:pointer" style-hover="background:#92400E">Mağaza Bağla</button>
+                </div>
+              </div>
+              <div style="display:flex;gap:14px">
+                <div style="display:flex;flex-direction:column;align-items:center">
+                  <div style="width:26px;height:26px;border-radius:999px;background:#FFFFFF;border:1px solid #D6D3D1;color:#A8A29E;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box">2</div>
+                  <div style="width:1px;flex:1;background:#E7E5E4;margin:4px 0"></div>
+                </div>
+                <div style="padding-bottom:22px;min-width:0">
+                  <div style="font-size:14px;font-weight:600;color:#57534E">Maliyetleri yükle</div>
+                  <div style="font-size:13px;color:#78716C;margin-top:2px">Alış faturası PDF'i sürükle ya da Excel şablonuyla birim maliyetleri aktar.</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:14px">
+                <div style="display:flex;flex-direction:column;align-items:center">
+                  <div style="width:26px;height:26px;border-radius:999px;background:#FFFFFF;border:1px solid #D6D3D1;color:#A8A29E;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box">3</div>
+                </div>
+                <div style="min-width:0">
+                  <div style="font-size:14px;font-weight:600;color:#57534E">İlk senkronu başlat</div>
+                  <div style="font-size:13px;color:#78716C;margin-top:2px">Son 90 günün siparişleri çekilir; net kâr otomatik hesaplanır.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:center;font-size:12px;color:#A8A29E;margin-top:12px">Kurulum ort. 8 dakika sürer · <a href="#">Kurulum rehberi</a></div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+  <sc-if value="{{ tipVar }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:{{ tipX }}px;top:{{ tipY }}px;transform:translate(-50%,-100%);background:#1C1917;color:#FAFAF9;font-size:12px;line-height:1.4;padding:6px 10px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);pointer-events:none;z-index:60;white-space:nowrap">{{ tipText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;durum&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dolu&quot;,&quot;boş&quot;],&quot;default&quot;:&quot;dolu&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Durum&quot;},&quot;tahminiBandi&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Grafik&quot;}}">
+class Component extends DCLogic {
+  state = { tip: null };
+  grafik() {
+    const alt = 250, ust = 10;
+    const y = v => alt - (v / 6000) * (alt - ust);
+    const gun = [];
+    for (let i = 0; i < 30; i++) {
+      let v = 3300 + 1050 * Math.sin(i / 4.2 + 0.6) + 650 * Math.sin(i / 1.9 + 2.1) + (((i * 53) % 17) - 8) * 38;
+      gun.push(Math.max(1500, Math.round(v)));
+    }
+    const oran = i => i < 24 ? 0.97 : [0.85, 0.7, 0.5, 0.32, 0.16, 0.06][i - 24];
+    const x = i => +(i * (1000 / 29)).toFixed(1);
+    const pts = f => gun.map((v, i) => x(i) + "," + y(f(v, i)).toFixed(1)).join(" L ");
+    const cizgiToplam = "M " + pts(v => v);
+    const cizgiKesin = "M " + pts((v, i) => v * oran(i));
+    const kapat = " L 1000,250 L 0,250 Z";
+    return { cizgiToplam, alanToplam: cizgiToplam + kapat, cizgiKesin, alanKesin: cizgiKesin + kapat };
+  }
+  renderVals() {
+    const durum = this.props.durum ?? "dolu";
+    const dolu = durum !== "boş";
+    const tip = this.state.tip;
+    return {
+      dolu, bos: !dolu,
+      tahminiBandi: this.props.tahminiBandi ?? true,
+      uyariBadge: dolu ? 3 : 0,
+      ...this.grafik(),
+      tipVar: !!tip, tipText: tip ? tip.t : "", tipX: tip ? tip.x : 0, tipY: tip ? tip.y : 0,
+      tipGoster: e => {
+        const r = e.currentTarget.getBoundingClientRect();
+        this.setState({ tip: { t: e.currentTarget.dataset.tip, x: r.left + r.width / 2 + window.scrollX, y: r.top + window.scrollY - 8 } });
+      },
+      tipGizle: () => this.setState({ tip: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAFAF9;color:#1C1917;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#57534E;text-decoration:none}
+a:hover{color:#1C1917}
+button{font-family:inherit}
+input{font-family:inherit}
+</style>
+</helmet>
+<div data-screen-label="Ayarlar" style="display:flex;min-height:100vh;position:relative;font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums">
+  <dc-import name="Sidebar" aktif="ayarlar" workspace="kahveji" uyari-sayisi="3" hint-size="240px,900px" style="width:240px;flex-shrink:0;align-self:stretch"></dc-import>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:56px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E7E5E4;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:20;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <span style="font-size:12px;color:#A8A29E">Yönetim</span>
+        <span style="font-size:12px;color:#D6D3D1">/</span>
+        <span style="font-size:14px;font-weight:600">Ayarlar</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#78716C"><span style="width:6px;height:6px;border-radius:999px;background:#16A34A;display:inline-block"></span><span>Son senkron: 12 dk önce</span></div>
+        <button style="position:relative;width:32px;height:32px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F5F5F4">
+          <img src="https://api.iconify.design/lucide/bell.svg?color=%2357534E" width="16" height="16" alt="Uyarılar">
+          <span style="position:absolute;top:1px;right:1px;min-width:15px;height:15px;border-radius:999px;background:#DC2626;color:#FFFFFF;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid #FFFFFF;box-sizing:content-box;padding:0 2px">3</span>
+        </button>
+        <div style="width:28px;height:28px;border-radius:999px;background:#E7E5E4;color:#57534E;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer">SA</div>
+      </div>
+    </div>
+    <div style="flex:1;box-sizing:border-box;width:100%;max-width:1360px;padding:24px">
+      <div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:1px;position:sticky;top:80px">
+          <button onClick="{{ bMagazalar }}" style="display:flex;align-items:center;gap:9px;padding:7px 10px;border:none;border-radius:8px;font-size:13px;font-weight:500;text-align:left;cursor:pointer;background:{{ z1 }};color:{{ r1 }};box-shadow:{{ g1 }}"><img src="https://api.iconify.design/lucide/store.svg?color=%2378716C" width="15" height="15" alt="">Mağazalar</button>
+          <button onClick="{{ bEkip }}" style="display:flex;align-items:center;gap:9px;padding:7px 10px;border:none;border-radius:8px;font-size:13px;font-weight:500;text-align:left;cursor:pointer;background:{{ z2 }};color:{{ r2 }};box-shadow:{{ g2 }}"><img src="https://api.iconify.design/lucide/users.svg?color=%2378716C" width="15" height="15" alt="">Ekip &amp; Roller</button>
+          <button onClick="{{ bParametreler }}" style="display:flex;align-items:center;gap:9px;padding:7px 10px;border:none;border-radius:8px;font-size:13px;font-weight:500;text-align:left;cursor:pointer;background:{{ z3 }};color:{{ r3 }};box-shadow:{{ g3 }}"><img src="https://api.iconify.design/lucide/sliders-horizontal.svg?color=%2378716C" width="15" height="15" alt="">Parametreler</button>
+          <button onClick="{{ bFaturalama }}" style="display:flex;align-items:center;gap:9px;padding:7px 10px;border:none;border-radius:8px;font-size:13px;font-weight:500;text-align:left;cursor:pointer;background:{{ z4 }};color:{{ r4 }};box-shadow:{{ g4 }}"><img src="https://api.iconify.design/lucide/credit-card.svg?color=%2378716C" width="15" height="15" alt="">Faturalama</button>
+        </div>
+        <div style="min-width:0">
+          <sc-if value="{{ magazalar }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <div>
+                  <div style="font-size:15px;font-weight:600">Bağlı Mağazalar</div>
+                  <div style="font-size:12.5px;color:#78716C;margin-top:2px">Satış verisi bu bağlantılardan çekilir; anahtarlar şifreli saklanır.</div>
+                </div>
+                <button onClick="{{ akisAc }}" style="display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:none;background:#B45309;color:#FFFFFF;font-size:13px;font-weight:500;cursor:pointer;flex-shrink:0" style-hover="background:#92400E">
+                  <img src="https://api.iconify.design/lucide/plus.svg?color=%23FFFFFF" width="14" height="14" alt="">
+                  <span>Mağaza Bağla</span>
+                </button>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+                <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:18px 20px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <span style="width:28px;height:28px;border-radius:8px;background:#F5F5F4;color:#57534E;font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center">T</span>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:13.5px;font-weight:600">Trendyol · Kahveji</div>
+                      <div style="font-size:12px;color:#78716C">Satıcı ID 48*****2</div>
+                    </div>
+                    <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0"><span style="width:5px;height:5px;border-radius:999px;background:#16A34A"></span>Bağlı</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid #F5F5F4">
+                    <span style="font-size:12px;color:#78716C">Son senkron: 12 dk önce · 15 dk'da bir</span>
+                    <button style="height:26px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;font-weight:500;color:#44403C;cursor:pointer" style-hover="border-color:#D6D3D1;background:#FAFAF9">Bağlantıyı Test Et</button>
+                  </div>
+                </div>
+                <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:18px 20px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <span style="width:28px;height:28px;border-radius:8px;background:#F5F5F4;color:#57534E;font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center">H</span>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:13.5px;font-weight:600">Hepsiburada · Kahveji</div>
+                      <div style="font-size:12px;color:#78716C">Mağaza kodu KH****9</div>
+                    </div>
+                    <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A"><span style="width:5px;height:5px;border-radius:999px;background:#D97706"></span>Yavaş yanıt</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid #F5F5F4">
+                    <span style="font-size:12px;color:#78716C">Son senkron: 2 sa önce · API kotası %81</span>
+                    <button style="height:26px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;font-weight:500;color:#44403C;cursor:pointer" style-hover="border-color:#D6D3D1;background:#FAFAF9">Bağlantıyı Test Et</button>
+                  </div>
+                </div>
+              </div>
+              <sc-if value="{{ akisAcik }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;margin-top:16px;overflow:hidden">
+                  <div style="padding:16px 20px;border-bottom:1px solid #F5F5F4;display:flex;align-items:center;justify-content:space-between">
+                    <div style="font-size:13.5px;font-weight:600">Yeni mağaza bağla</div>
+                    <button onClick="{{ akisKapat }}" style="width:26px;height:26px;border:none;background:transparent;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F5F5F4"><img src="https://api.iconify.design/lucide/x.svg?color=%2357534E" width="14" height="14" alt="Kapat"></button>
+                  </div>
+                  <div style="padding:18px 20px">
+                    <div style="display:flex;align-items:center;gap:0">
+                      <div style="display:flex;align-items:center;gap:7px"><span style="width:22px;height:22px;border-radius:999px;background:#B45309;color:#FFFFFF;font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center">1</span><span style="font-size:12.5px;font-weight:600">Kanal seç</span></div>
+                      <div style="flex:1;height:1px;background:#E7E5E4;margin:0 10px;max-width:48px"></div>
+                      <div style="display:flex;align-items:center;gap:7px"><span style="width:22px;height:22px;border-radius:999px;background:#FFFFFF;border:1px solid #D6D3D1;color:#A8A29E;font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box">2</span><span style="font-size:12.5px;color:#78716C">API bilgileri</span></div>
+                      <div style="flex:1;height:1px;background:#E7E5E4;margin:0 10px;max-width:48px"></div>
+                      <div style="display:flex;align-items:center;gap:7px"><span style="width:22px;height:22px;border-radius:999px;background:#FFFFFF;border:1px solid #D6D3D1;color:#A8A29E;font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box">3</span><span style="font-size:12.5px;color:#78716C">Doğrulama</span></div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px">
+                      <button style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:10px;border:1px solid #B45309;background:#FFFDFB;cursor:pointer;text-align:left">
+                        <span style="width:26px;height:26px;border-radius:8px;background:#F5F5F4;color:#57534E;font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center">T</span>
+                        <div><div style="font-size:13px;font-weight:600">Trendyol</div><div style="font-size:11.5px;color:#78716C">API anahtarı ile</div></div>
+                      </button>
+                      <button style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:10px;border:1px solid #E7E5E4;background:#FFFFFF;cursor:pointer;text-align:left" style-hover="border-color:#D6D3D1;background:#FAFAF9">
+                        <span style="width:26px;height:26px;border-radius:8px;background:#F5F5F4;color:#57534E;font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center">H</span>
+                        <div><div style="font-size:13px;font-weight:600">Hepsiburada</div><div style="font-size:11.5px;color:#78716C">Mağaza kodu ile</div></div>
+                      </button>
+                      <button style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:10px;border:1px solid #E7E5E4;background:#FFFFFF;cursor:pointer;text-align:left" style-hover="border-color:#D6D3D1;background:#FAFAF9">
+                        <span style="width:26px;height:26px;border-radius:8px;background:#F5F5F4;color:#57534E;font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center">A</span>
+                        <div><div style="font-size:13px;font-weight:600">Amazon TR</div><div style="font-size:11.5px;color:#78716C">SP-API ile</div></div>
+                      </button>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
+                      <button onClick="{{ akisKapat }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:13px;font-weight:500;color:#44403C;cursor:pointer" style-hover="background:#FAFAF9">İptal</button>
+                      <button style="height:32px;padding:0 12px;border-radius:8px;border:none;background:#B45309;color:#FFFFFF;font-size:13px;font-weight:500;cursor:pointer" style-hover="background:#92400E">Devam</button>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ ekip }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <div>
+                  <div style="font-size:15px;font-weight:600">Ekip &amp; Roller</div>
+                  <div style="font-size:12.5px;color:#78716C;margin-top:2px">Roller marka bazında atanır; Holding görünümü ayrı yetki ister.</div>
+                </div>
+                <button style="display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:none;background:#B45309;color:#FFFFFF;font-size:13px;font-weight:500;cursor:pointer;flex-shrink:0" style-hover="background:#92400E">
+                  <img src="https://api.iconify.design/lucide/plus.svg?color=%23FFFFFF" width="14" height="14" alt="">
+                  <span>Davet Et</span>
+                </button>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;overflow:hidden;margin-top:16px">
+                <div style="display:flex;align-items:center;gap:12px;padding:12px 20px" style-hover="background:#FAFAF9">
+                  <span style="width:30px;height:30px;border-radius:999px;background:#E7E5E4;color:#57534E;font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">SA</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">Selin Aydın</div><div style="font-size:12px;color:#78716C">selin@kahveji.com</div></div>
+                  <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4">Sahip · tüm markalar</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid #F5F5F4" style-hover="background:#FAFAF9">
+                  <span style="width:30px;height:30px;border-radius:999px;background:#E7E5E4;color:#57534E;font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">MK</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">Mert Kaya</div><div style="font-size:12px;color:#78716C">mert@kahveji.com</div></div>
+                  <div style="display:flex;gap:6px">
+                    <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4"><span style="width:5px;height:5px;border-radius:999px;background:#B45309"></span>Kahveji · Operasyon</span>
+                    <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4"><span style="width:5px;height:5px;border-radius:999px;background:#C8102E"></span>Alessi · Görüntüleme</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid #F5F5F4" style-hover="background:#FAFAF9">
+                  <span style="width:30px;height:30px;border-radius:999px;background:#E7E5E4;color:#57534E;font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">DY</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">Deniz Yıldız</div><div style="font-size:12px;color:#78716C">deniz@alessi.com.tr · davet bekliyor</div></div>
+                  <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A"><span style="width:5px;height:5px;border-radius:999px;background:#C8102E"></span>Alessi · Finans</span>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ parametreler }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="font-size:15px;font-weight:600">Parametreler</div>
+              <div style="font-size:12.5px;color:#78716C;margin-top:2px">Kâr hesabında kullanılan sabitler — değişiklik geriye dönük yeniden hesap tetikler.</div>
+              <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:18px 20px;margin-top:16px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                  <div><div style="font-size:13px;font-weight:500">Hizmet bedeli (sipariş başı)</div><div style="font-size:12px;color:#78716C">Trendyol sabit kesintisi</div></div>
+                  <div style="display:flex;align-items:center;gap:5px;height:30px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;box-sizing:border-box" style-hover="border-color:#D6D3D1"><span style="font-size:11px;color:#A8A29E">₺</span><input value="12,90" style="border:none;outline:none;background:transparent;font-size:13px;font-weight:500;width:56px;text-align:right;color:#1C1917;font-variant-numeric:tabular-nums"></div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid #F5F5F4">
+                  <div><div style="font-size:13px;font-weight:500">KDV oranı — kahve</div><div style="font-size:12px;color:#78716C">net KDV hesabında kullanılır</div></div>
+                  <div style="display:flex;align-items:center;gap:5px;height:30px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;box-sizing:border-box" style-hover="border-color:#D6D3D1"><span style="font-size:11px;color:#A8A29E">%</span><input value="10" style="border:none;outline:none;background:transparent;font-size:13px;font-weight:500;width:56px;text-align:right;color:#1C1917;font-variant-numeric:tabular-nums"></div>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;overflow:hidden;margin-top:16px">
+                <div style="padding:14px 20px;border-bottom:1px solid #F5F5F4;display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-size:13px;font-weight:600">Kargo tarifesi — Aras · desi bazlı</div>
+                  <button style="height:26px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;font-weight:500;color:#44403C;cursor:pointer" style-hover="background:#FAFAF9">Satır Ekle</button>
+                </div>
+                <table style="width:100%;border-collapse:separate;border-spacing:0">
+                  <thead>
+                    <tr>
+                      <th style="background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:8px 12px 8px 20px;border-bottom:1px solid #E7E5E4">Desi</th>
+                      <th style="background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:8px 12px;border-bottom:1px solid #E7E5E4">Tutar</th>
+                      <th style="background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:8px 20px 8px 12px;border-bottom:1px solid #E7E5E4">Yürürlük</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style-hover="background:#FAFAF9"><td style="font-size:13px;padding:9px 12px 9px 20px;border-bottom:1px solid #F5F5F4">0 – 2</td><td style="font-size:13px;font-weight:500;padding:9px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺32,90</td><td style="font-size:12px;color:#78716C;padding:9px 20px 9px 12px;border-bottom:1px solid #F5F5F4">1 Tem 2026</td></tr>
+                    <tr style-hover="background:#FAFAF9"><td style="font-size:13px;padding:9px 12px 9px 20px;border-bottom:1px solid #F5F5F4">2 – 5</td><td style="font-size:13px;font-weight:500;padding:9px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺45,50</td><td style="font-size:12px;color:#78716C;padding:9px 20px 9px 12px;border-bottom:1px solid #F5F5F4">1 Tem 2026</td></tr>
+                    <tr style-hover="background:#FAFAF9"><td style="font-size:13px;padding:9px 12px 9px 20px;border-bottom:1px solid #F5F5F4">5 – 10</td><td style="font-size:13px;font-weight:500;padding:9px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺74,90</td><td style="font-size:12px;color:#78716C;padding:9px 20px 9px 12px;border-bottom:1px solid #F5F5F4">1 Tem 2026</td></tr>
+                    <tr style-hover="background:#FAFAF9"><td style="font-size:13px;padding:9px 12px 9px 20px">10 – 20</td><td style="font-size:13px;font-weight:500;padding:9px 12px;text-align:right">₺118,00</td><td style="font-size:12px;color:#78716C;padding:9px 20px 9px 12px">1 Tem 2026</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ faturalama }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="font-size:15px;font-weight:600">Faturalama</div>
+              <div style="font-size:12.5px;color:#78716C;margin-top:2px">Plan ve kullanım — çok kiracılı sürüm için hazırlık.</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+                <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:20px">
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <div style="font-size:13.5px;font-weight:600">Büyüme Planı</div>
+                    <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0">Aktif</span>
+                  </div>
+                  <div style="display:flex;align-items:baseline;gap:3px;margin-top:10px"><span style="font-size:15px;font-weight:500;color:#A8A29E">₺</span><span style="font-size:26px;font-weight:600;letter-spacing:-0.02em">1.490</span><span style="font-size:12.5px;color:#78716C">/ ay · yıllık ödeme</span></div>
+                  <div style="font-size:12.5px;color:#78716C;margin-top:8px;line-height:1.6">3 mağaza · 2 marka çalışma alanı · sınırsız kullanıcı · saatlik senkron</div>
+                  <div style="display:flex;gap:8px;margin-top:14px">
+                    <button style="height:30px;padding:0 12px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12.5px;font-weight:500;color:#44403C;cursor:pointer" style-hover="background:#FAFAF9">Faturaları Gör</button>
+                    <button style="height:30px;padding:0 12px;border-radius:8px;border:none;background:#B45309;color:#FFFFFF;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#92400E">Planı Yükselt</button>
+                  </div>
+                </div>
+                <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:20px">
+                  <div style="font-size:13.5px;font-weight:600">Kullanım</div>
+                  <div style="margin-top:12px;display:flex;flex-direction:column;gap:12px">
+                    <div>
+                      <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:#78716C">Bağlı mağaza</span><span style="font-weight:500">2 / 3</span></div>
+                      <div style="height:5px;border-radius:999px;background:#F5F5F4;margin-top:5px;overflow:hidden"><div style="width:66%;height:100%;background:#78716C;border-radius:999px"></div></div>
+                    </div>
+                    <div>
+                      <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:#78716C">Aylık sipariş satırı</span><span style="font-weight:500">8.412 / 20.000</span></div>
+                      <div style="height:5px;border-radius:999px;background:#F5F5F4;margin-top:5px;overflow:hidden"><div style="width:42%;height:100%;background:#78716C;border-radius:999px"></div></div>
+                    </div>
+                    <div>
+                      <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:#78716C">Fatura ayrıştırma</span><span style="font-weight:500">61 / 100</span></div>
+                      <div style="height:5px;border-radius:999px;background:#F5F5F4;margin-top:5px;overflow:hidden"><div style="width:61%;height:100%;background:#78716C;border-radius:999px"></div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;bolum&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;mağazalar&quot;,&quot;ekip &amp; roller&quot;,&quot;parametreler&quot;,&quot;faturalama&quot;],&quot;default&quot;:&quot;mağazalar&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Durum&quot;}}">
+class Component extends DCLogic {
+  state = { bolum: null, akis: false };
+  renderVals() {
+    const props = { "mağazalar": "magazalar", "ekip & roller": "ekip", "parametreler": "parametreler", "faturalama": "faturalama" };
+    const b = this.state.bolum ?? props[this.props.bolum] ?? "magazalar";
+    const enc = h => "%23" + h.slice(1);
+    const st = (ad, ikon, akt) => ({
+      z: akt ? "#FFFFFF" : "transparent", r: akt ? "#B45309" : "#57534E",
+      g: akt ? "inset 2px 0 0 #B45309, inset 0 0 0 1px #E7E5E4" : "none",
+      i: "https://api.iconify.design/lucide/" + ikon + ".svg?color=" + enc(akt ? "#B45309" : "#78716C")
+    });
+    const s1 = st("magazalar", "store", b === "magazalar");
+    const s2 = st("ekip", "users", b === "ekip");
+    const s3 = st("parametreler", "sliders-horizontal", b === "parametreler");
+    const s4 = st("faturalama", "credit-card", b === "faturalama");
+    return {
+      magazalar: b === "magazalar", ekip: b === "ekip", parametreler: b === "parametreler", faturalama: b === "faturalama",
+      bMagazalar: () => this.setState({ bolum: "magazalar" }),
+      bEkip: () => this.setState({ bolum: "ekip" }),
+      bParametreler: () => this.setState({ bolum: "parametreler" }),
+      bFaturalama: () => this.setState({ bolum: "faturalama" }),
+      z1: s1.z, r1: s1.r, g1: s1.g, i1: s1.i,
+      z2: s2.z, r2: s2.r, g2: s2.g, i2: s2.i,
+      z3: s3.z, r3: s3.r, g3: s3.g, i3: s3.i,
+      z4: s4.z, r4: s4.r, g4: s4.g, i4: s4.i,
+      akisAcik: this.state.akis,
+      akisAc: () => this.setState({ akis: true }),
+      akisKapat: () => this.setState({ akis: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

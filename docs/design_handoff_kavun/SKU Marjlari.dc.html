@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAFAF9;color:#1C1917;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#57534E;text-decoration:none}
+a:hover{color:#1C1917}
+button{font-family:inherit}
+input{font-family:inherit}
+</style>
+</helmet>
+<div data-screen-label="SKU Marjları" style="display:flex;min-height:100vh;position:relative;font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums">
+  <dc-import name="Sidebar" aktif="marjlar" workspace="kahveji" uyari-sayisi="3" hint-size="240px,900px" style="width:240px;flex-shrink:0;align-self:stretch"></dc-import>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:56px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E7E5E4;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:20;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <span style="font-size:12px;color:#A8A29E">Satış</span>
+        <span style="font-size:12px;color:#D6D3D1">/</span>
+        <span style="font-size:14px;font-weight:600">SKU Marjları</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button style="display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:13px;color:#44403C;cursor:pointer" style-hover="border-color:#D6D3D1;background:#FAFAF9">
+          <img src="https://api.iconify.design/lucide/calendar.svg?color=%2378716C" width="14" height="14" alt="">
+          <span>Son 30 gün</span>
+          <img src="https://api.iconify.design/lucide/chevron-down.svg?color=%23A8A29E" width="12" height="12" alt="">
+        </button>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#78716C"><span style="width:6px;height:6px;border-radius:999px;background:#16A34A;display:inline-block"></span><span>Son senkron: 12 dk önce</span></div>
+        <button style="position:relative;width:32px;height:32px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F5F5F4">
+          <img src="https://api.iconify.design/lucide/bell.svg?color=%2357534E" width="16" height="16" alt="Uyarılar">
+          <span style="position:absolute;top:1px;right:1px;min-width:15px;height:15px;border-radius:999px;background:#DC2626;color:#FFFFFF;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid #FFFFFF;box-sizing:content-box;padding:0 2px">3</span>
+        </button>
+        <div style="width:28px;height:28px;border-radius:999px;background:#E7E5E4;color:#57534E;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer">SA</div>
+      </div>
+    </div>
+    <div style="flex:1;box-sizing:border-box;width:100%;max-width:1360px;padding:24px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;flex:1;max-width:280px;box-sizing:border-box">
+          <img src="https://api.iconify.design/lucide/search.svg?color=%23A8A29E" width="14" height="14" alt="">
+          <input value="{{ arama }}" onChange="{{ aramaDegisti }}" placeholder="SKU veya ürün ara" style="border:none;outline:none;background:transparent;font-size:13px;flex:1;min-width:0;color:#1C1917">
+        </div>
+        <button style="display:flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:13px;color:#44403C;cursor:pointer" style-hover="border-color:#D6D3D1;background:#FAFAF9">
+          <span>Kanal: Tümü</span>
+          <img src="https://api.iconify.design/lucide/chevron-down.svg?color=%23A8A29E" width="12" height="12" alt="">
+        </button>
+        <button style="display:flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:13px;color:#44403C;cursor:pointer" style-hover="border-color:#D6D3D1;background:#FAFAF9">
+          <span>Kategori: Tümü</span>
+          <img src="https://api.iconify.design/lucide/chevron-down.svg?color=%23A8A29E" width="12" height="12" alt="">
+        </button>
+        <div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 12px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;box-sizing:border-box">
+          <span style="font-size:12px;color:#78716C;white-space:nowrap">Marj aralığı</span>
+          <div style="position:relative;width:110px;height:12px;display:flex;align-items:center">
+            <div style="position:absolute;left:0;right:0;height:3px;border-radius:999px;background:#E7E5E4"></div>
+            <div style="position:absolute;left:18%;right:30%;height:3px;border-radius:999px;background:#78716C"></div>
+            <div style="position:absolute;left:18%;width:12px;height:12px;border-radius:999px;background:#FFFFFF;border:1px solid #A8A29E;box-sizing:border-box;transform:translateX(-6px);cursor:grab"></div>
+            <div style="position:absolute;right:30%;width:12px;height:12px;border-radius:999px;background:#FFFFFF;border:1px solid #A8A29E;box-sizing:border-box;transform:translateX(6px);cursor:grab"></div>
+          </div>
+          <span style="font-size:12px;color:#44403C;white-space:nowrap">−%10 – %45</span>
+        </div>
+        <button onClick="{{ negatifDegisti }}" style="display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:8px;border:1px solid {{ negKenar }};background:{{ negZemin }};font-size:13px;color:{{ negRenk }};cursor:pointer;font-weight:500">
+          <span style="width:26px;height:15px;border-radius:999px;background:{{ negAnahtarZemin }};position:relative;display:inline-block;transition:background 0.15s">
+            <span style="position:absolute;top:2px;left:{{ negTopSol }};width:11px;height:11px;border-radius:999px;background:#FFFFFF;box-shadow:0 1px 2px rgba(0,0,0,0.2);transition:left 0.15s"></span>
+          </span>
+          <span>Sadece negatif marj</span>
+        </button>
+        <div style="flex:1"></div>
+        <button style="display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:none;background:#B45309;color:#FFFFFF;font-size:13px;font-weight:500;cursor:pointer" style-hover="background:#92400E">
+          <img src="https://api.iconify.design/lucide/download.svg?color=%23FFFFFF" width="14" height="14" alt="">
+          <span>Excel'e Aktar</span>
+        </button>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;overflow:hidden;margin-top:16px">
+        <div style="max-height:560px;overflow-y:auto">
+          <table style="width:100%;border-collapse:separate;border-spacing:0">
+            <thead>
+              <tr>
+                <th style="position:sticky;top:0;z-index:5;background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px 9px 20px;border-bottom:1px solid #E7E5E4;white-space:nowrap">SKU</th>
+                <th style="position:sticky;top:0;z-index:5;background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4">Ürün Adı</th>
+                <th style="position:sticky;top:0;z-index:5;background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4">Kanal</th>
+                <th style="position:sticky;top:0;z-index:5;background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4;white-space:nowrap">Adet</th>
+                <th style="position:sticky;top:0;z-index:5;background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4">Ciro</th>
+                <th style="position:sticky;top:0;z-index:5;background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4;white-space:nowrap">Birim Maliyet</th>
+                <th style="position:sticky;top:0;z-index:5;background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4">Komisyon</th>
+                <th style="position:sticky;top:0;z-index:5;background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4">Kargo</th>
+                <th style="position:sticky;top:0;z-index:5;background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4;white-space:nowrap">Net Kâr</th>
+                <th style="position:sticky;top:0;z-index:5;background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 20px 9px 12px;border-bottom:1px solid #E7E5E4;white-space:nowrap">Marj %</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ satirlar }}" as="s" hint-placeholder-count="10">
+                <tr style="background:{{ s.zemin }};cursor:pointer" style-hover="background:{{ s.zeminHover }}">
+                  <td style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#78716C;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4;white-space:nowrap">{{ s.sku }}</td>
+                  <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.ad }}</td>
+                  <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#57534E;white-space:nowrap"><span style="width:15px;height:15px;border-radius:4px;background:#F5F5F4;color:#57534E;font-size:9px;font-weight:600;display:inline-flex;align-items:center;justify-content:center">{{ s.kanalHarf }}</span>{{ s.kanal }}</span></td>
+                  <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">{{ s.adet }}</td>
+                  <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">{{ s.ciro }}</td>
+                  <td style="font-size:13px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">{{ s.maliyet }}</td>
+                  <td style="font-size:13px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">{{ s.komisyon }}</td>
+                  <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right"><span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;color:#57534E;justify-content:flex-end"><sc-if value="{{ s.kargoTahmini }}" hint-placeholder-val="{{ false }}"><span data-tip="Tahmini — kargo faturası bekleniyor" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="width:6px;height:6px;border-radius:999px;background:#D97706;display:inline-block;cursor:default;flex-shrink:0"></span></sc-if>{{ s.kargo }}</span></td>
+                  <td style="font-size:13px;font-weight:500;color:{{ s.karRenk }};padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">{{ s.netKar }}</td>
+                  <td style="font-size:13px;font-weight:600;color:{{ s.marjRenk }};padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">{{ s.marj }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <sc-if value="{{ bosSonuc }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:48px 24px;text-align:center">
+              <div style="font-size:14px;font-weight:600">Sonuç yok</div>
+              <div style="font-size:13px;color:#78716C;margin-top:4px">Filtreleri gevşetmeyi ya da aramayı temizlemeyi dene.</div>
+            </div>
+          </sc-if>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid #E7E5E4;background:#FFFFFF">
+          <div style="font-size:12px;color:#78716C">{{ ozet }}</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button style="height:28px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;color:#A8A29E;cursor:default">Önceki</button>
+            <button style="height:28px;min-width:28px;padding:0 8px;border-radius:8px;border:1px solid #D6D3D1;background:#F5F5F4;font-size:12px;font-weight:600;color:#1C1917;cursor:pointer">1</button>
+            <button style="height:28px;min-width:28px;padding:0 8px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;color:#57534E;cursor:pointer" style-hover="background:#FAFAF9">2</button>
+            <button style="height:28px;min-width:28px;padding:0 8px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;color:#57534E;cursor:pointer" style-hover="background:#FAFAF9">3</button>
+            <button style="height:28px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;color:#57534E;cursor:pointer" style-hover="background:#FAFAF9">Sonraki</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <sc-if value="{{ tipVar }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:{{ tipX }}px;top:{{ tipY }}px;transform:translate(-50%,-100%);background:#1C1917;color:#FAFAF9;font-size:12px;line-height:1.4;padding:6px 10px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);pointer-events:none;z-index:60;white-space:nowrap">{{ tipText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { tip: null, arama: "", sadeceNegatif: false };
+  veri() {
+    const t = ["Trendyol", "T"], h = ["Hepsiburada", "H"], a = ["Amazon TR", "A"];
+    // [sku, ad, kanal, adet, birimFiyat, birimMaliyet, komisyonOran, kargoBirim, kargoTahmini]
+    return [
+      ["KHV-001", "Etiyopya Yirgacheffe 250g", t, 214, 385, 176, 0.215, 32.9, false],
+      ["KHV-014", "Kolombiya Supremo 1kg", t, 58, 2400, 890, 0.215, 74.9, true],
+      ["KHV-058", "Espresso Blend 250g", h, 182, 342, 158, 0.19, 32.9, false],
+      ["KHV-033", "Brezilya Santos 500g", t, 121, 610, 289, 0.215, 45.5, false],
+      ["KHV-102", "V60 Başlangıç Seti", h, 64, 940, 412, 0.16, 58.4, false],
+      ["KHV-047", "Dekaf Kolombiya 250g", t, 96, 398, 233, 0.215, 32.9, true],
+      ["KHV-023", "Filtre Kağıdı 100'lü", t, 348, 89, 41, 0.23, 32.9, false],
+      ["KHV-091", "Cam Kupa 350ml", h, 117, 129, 62, 0.21, 45.5, false],
+      ["KHV-076", "El Değirmeni", a, 41, 449, 268, 0.155, 45.5, false],
+      ["KHV-112", "Cold Brew Şişesi", t, 74, 219, 118, 0.23, 45.5, true],
+      ["KHV-005", "Guatemala Antigua 250g", t, 143, 372, 169, 0.215, 32.9, false],
+      ["KHV-118", "Süt Köpürtücü", h, 52, 259, 146, 0.21, 45.5, false],
+      ["KHV-064", "Chemex 6 Cup", a, 18, 1890, 1120, 0.155, 74.9, false],
+      ["KHV-029", "Kenya AA 250g", t, 87, 405, 187, 0.215, 32.9, false]
+    ];
+  }
+  tl(v) {
+    const n = Math.abs(v);
+    const s = n.toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    return (v < 0 ? "−₺" : "₺") + s;
+  }
+  renderVals() {
+    const tip = this.state.tip;
+    const q = this.state.arama.trim().toLowerCase();
+    const neg = this.state.sadeceNegatif;
+    let toplamCiro = 0, toplamKar = 0;
+    const tum = this.veri().map(([sku, ad, kanal, adet, fiyat, maliyet, kOran, kargo, kargoTahmini]) => {
+      const ciro = adet * fiyat;
+      const komisyon = ciro * kOran;
+      const kargoT = adet * kargo;
+      const hizmet = adet * 12.9;
+      const kdv = ciro * 0.075;
+      const maliyetT = adet * maliyet;
+      const kar = ciro - komisyon - kargoT - hizmet - kdv - maliyetT;
+      const marj = kar / ciro * 100;
+      return { sku, ad, kanal: kanal[0], kanalHarf: kanal[1], adet, ciro, maliyet, komisyon, kargoT, kar, marj, kargoTahmini };
+    });
+    const filtreli = tum.filter(r =>
+      (!q || r.sku.toLowerCase().includes(q) || r.ad.toLowerCase().includes(q)) &&
+      (!neg || r.marj < 0)
+    );
+    const satirlar = filtreli.map(r => {
+      toplamCiro += r.ciro; toplamKar += r.kar;
+      const negatif = r.marj < 0;
+      return {
+        sku: r.sku, ad: r.ad, kanal: r.kanal, kanalHarf: r.kanalHarf,
+        adet: r.adet.toLocaleString("tr-TR"),
+        ciro: this.tl(r.ciro),
+        maliyet: this.tl(r.maliyet),
+        komisyon: "−" + this.tl(r.komisyon).slice(1),
+        kargo: "−" + this.tl(r.kargoT).slice(1),
+        kargoTahmini: r.kargoTahmini,
+        netKar: this.tl(Math.round(r.kar)),
+        karRenk: negatif ? "#DC2626" : "#15803D",
+        marj: (negatif ? "−%" : "%") + Math.abs(r.marj).toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+        marjRenk: negatif ? "#DC2626" : "#1C1917",
+        zemin: negatif ? "#FEF7F7" : "#FFFFFF",
+        zeminHover: negatif ? "#FDF0F0" : "#FAFAF9"
+      };
+    });
+    return {
+      satirlar,
+      bosSonuc: satirlar.length === 0,
+      ozet: satirlar.length + " / 214 SKU · Ciro " + this.tl(toplamCiro) + " · Net kâr " + this.tl(Math.round(toplamKar)),
+      arama: this.state.arama,
+      aramaDegisti: e => this.setState({ arama: e.target.value }),
+      negatifDegisti: () => this.setState(s => ({ sadeceNegatif: !s.sadeceNegatif })),
+      negZemin: neg ? "#FEF2F2" : "#FFFFFF",
+      negKenar: neg ? "#FECACA" : "#E7E5E4",
+      negRenk: neg ? "#DC2626" : "#44403C",
+      negAnahtarZemin: neg ? "#DC2626" : "#D6D3D1",
+      negTopSol: neg ? "13px" : "2px",
+      tipVar: !!tip, tipText: tip ? tip.t : "", tipX: tip ? tip.x : 0, tipY: tip ? tip.y : 0,
+      tipGoster: e => {
+        const r = e.currentTarget.getBoundingClientRect();
+        this.setState({ tip: { t: e.currentTarget.dataset.tip, x: r.left + r.width / 2 + window.scrollX, y: r.top + window.scrollY - 8 } });
+      },
+      tipGizle: () => this.setState({ tip: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

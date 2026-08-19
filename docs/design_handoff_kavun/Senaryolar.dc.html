@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAFAF9;color:#1C1917;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#57534E;text-decoration:none}
+a:hover{color:#1C1917}
+button{font-family:inherit}
+input{font-family:inherit}
+</style>
+</helmet>
+<div data-screen-label="Senaryolar" style="display:flex;min-height:100vh;position:relative;font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums">
+  <dc-import name="Sidebar" aktif="senaryolar" workspace="kahveji" uyari-sayisi="3" hint-size="240px,900px" style="width:240px;flex-shrink:0;align-self:stretch"></dc-import>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:56px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E7E5E4;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:20;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <span style="font-size:12px;color:#A8A29E">Ürün &amp; Fiyat</span>
+        <span style="font-size:12px;color:#D6D3D1">/</span>
+        <span style="font-size:14px;font-weight:600">Senaryolar</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#78716C"><span style="width:6px;height:6px;border-radius:999px;background:#16A34A;display:inline-block"></span><span>Son senkron: 12 dk önce</span></div>
+        <button style="position:relative;width:32px;height:32px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F5F5F4">
+          <img src="https://api.iconify.design/lucide/bell.svg?color=%2357534E" width="16" height="16" alt="Uyarılar">
+          <span style="position:absolute;top:1px;right:1px;min-width:15px;height:15px;border-radius:999px;background:#DC2626;color:#FFFFFF;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid #FFFFFF;box-sizing:content-box;padding:0 2px">3</span>
+        </button>
+        <div style="width:28px;height:28px;border-radius:999px;background:#E7E5E4;color:#57534E;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer">SA</div>
+      </div>
+    </div>
+    <div style="flex:1;box-sizing:border-box;width:100%;max-width:1360px;padding:24px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button style="display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:13px;cursor:pointer" style-hover="border-color:#D6D3D1;background:#FAFAF9">
+          <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#A8A29E">KHV-014</span>
+          <span style="font-weight:500">Kolombiya Supremo 1kg</span>
+          <img src="https://api.iconify.design/lucide/chevron-down.svg?color=%23A8A29E" width="12" height="12" alt="">
+        </button>
+        <span style="font-size:12px;color:#78716C">Maliyet ₺890,00 · komisyon %21,5 · güncel fiyat ₺2.400,00</span>
+        <div style="flex:1"></div>
+        <button style="display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:13px;font-weight:500;color:#44403C;cursor:pointer" style-hover="border-color:#D6D3D1;background:#FAFAF9">
+          <img src="https://api.iconify.design/lucide/plus.svg?color=%2357534E" width="14" height="14" alt="">
+          <span>Senaryo Ekle</span>
+        </button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px">
+        <sc-for list="{{ senaryolar }}" as="sn" hint-placeholder-count="3">
+          <div style="background:#FFFFFF;border:1px solid {{ sn.kenar }};border-radius:10px;padding:20px;min-width:0">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <span style="font-size:14px;font-weight:600">{{ sn.ad }}</span>
+              <sc-if value="{{ sn.enIyi }}" hint-placeholder-val="{{ false }}">
+                <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0;white-space:nowrap">en iyi toplam kâr</span>
+              </sc-if>
+            </div>
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <span style="font-size:12.5px;color:#78716C">Satış fiyatı</span>
+                <div style="display:flex;align-items:center;gap:5px;height:30px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;width:110px;justify-content:flex-end;box-sizing:border-box" style-hover="border-color:#D6D3D1">
+                  <span style="font-size:11px;color:#A8A29E">₺</span>
+                  <input value="{{ sn.fiyat }}" onChange="{{ sn.fiyatDegisti }}" style="border:none;outline:none;background:transparent;font-size:13px;font-weight:500;width:70px;text-align:right;color:#1C1917;font-variant-numeric:tabular-nums">
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <span style="font-size:12.5px;color:#78716C">Kampanya indirimi</span>
+                <div style="display:flex;align-items:center;gap:5px;height:30px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;width:110px;justify-content:flex-end;box-sizing:border-box" style-hover="border-color:#D6D3D1">
+                  <span style="font-size:11px;color:#A8A29E">%</span>
+                  <input value="{{ sn.kampanya }}" onChange="{{ sn.kampanyaDegisti }}" style="border:none;outline:none;background:transparent;font-size:13px;font-weight:500;width:70px;text-align:right;color:#1C1917;font-variant-numeric:tabular-nums">
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <span style="font-size:12.5px;color:#78716C">Kargo kim öder</span>
+                <button onClick="{{ sn.kargoDegisti }}" style="display:flex;align-items:center;height:30px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;padding:2px;cursor:pointer;box-sizing:border-box">
+                  <span style="height:24px;padding:0 9px;border-radius:6px;font-size:12px;font-weight:500;display:inline-flex;align-items:center;background:{{ sn.kargoSaticiZemin }};color:{{ sn.kargoSaticiRenk }}">Satıcı</span>
+                  <span style="height:24px;padding:0 9px;border-radius:6px;font-size:12px;font-weight:500;display:inline-flex;align-items:center;background:{{ sn.kargoAliciZemin }};color:{{ sn.kargoAliciRenk }}">Alıcı</span>
+                </button>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <span style="font-size:12.5px;color:#78716C">Aylık adet</span>
+                <div style="display:flex;align-items:center;height:30px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;width:110px;justify-content:flex-end;box-sizing:border-box" style-hover="border-color:#D6D3D1">
+                  <input value="{{ sn.adet }}" onChange="{{ sn.adetDegisti }}" style="border:none;outline:none;background:transparent;font-size:13px;font-weight:500;width:70px;text-align:right;color:#1C1917;font-variant-numeric:tabular-nums">
+                </div>
+              </div>
+            </div>
+            <div style="border-top:1px solid #F5F5F4;margin-top:16px;padding-top:14px;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12.5px;color:#78716C">Birim kâr</span><span style="font-size:14px;font-weight:600;color:{{ sn.birimRenk }}">{{ sn.birimKar }}</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12.5px;color:#78716C">Marj</span><span style="font-size:14px;font-weight:600;color:{{ sn.marjRenk }}">{{ sn.marj }}</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12.5px;color:#78716C">Aylık toplam kâr</span><span style="font-size:17px;font-weight:600;color:{{ sn.toplamRenk }}">{{ sn.toplamKar }}</span></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:16px 20px;margin-top:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <img src="https://api.iconify.design/lucide/target.svg?color=%2357534E" width="15" height="15" alt="">
+          <span style="font-size:13px;font-weight:600">Hedef Marj Hesaplayıcı</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12.5px;color:#78716C">Hedef marj</span>
+          <div style="display:flex;align-items:center;gap:4px;height:30px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;box-sizing:border-box" style-hover="border-color:#D6D3D1">
+            <span style="font-size:11px;color:#A8A29E">%</span>
+            <input value="{{ hedefMarj }}" onChange="{{ hedefDegisti }}" style="border:none;outline:none;background:transparent;font-size:13px;font-weight:500;width:44px;text-align:right;color:#1C1917;font-variant-numeric:tabular-nums">
+          </div>
+        </div>
+        <img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23A8A29E" width="14" height="14" alt="">
+        <span style="font-size:13px;color:#57534E">Bu marj için minimum fiyat: <span style="font-size:15px;font-weight:600;color:#1C1917">{{ hedefFiyat }}</span></span>
+        <span style="font-size:12px;color:#A8A29E">komisyon, kargo, hizmet bedeli ve KDV dahil</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = {
+    senaryolar: [
+      { ad: "Mevcut", fiyat: 2400, kampanya: 0, saticiKargo: true, adet: 60 },
+      { ad: "Kampanya %15", fiyat: 2400, kampanya: 15, saticiKargo: true, adet: 95 },
+      { ad: "Zam + alıcı kargo", fiyat: 2580, kampanya: 0, saticiKargo: false, adet: 52 }
+    ],
+    hedefMarj: 35
+  };
+  sabit() { return { maliyet: 890, komisyon: 0.215, kargo: 74.9, hizmet: 12.9, kdvOran: 0.075 }; }
+  hesap(s) {
+    const c = this.sabit();
+    const net = s.fiyat * (1 - s.kampanya / 100);
+    const kargo = s.saticiKargo ? c.kargo : 0;
+    const birim = net - net * c.komisyon - kargo - c.hizmet - net * c.kdvOran - c.maliyet;
+    return { birim, marj: net > 0 ? birim / net * 100 : 0, toplam: birim * s.adet };
+  }
+  tl(v, kurus) {
+    const n = Math.abs(v);
+    const s = n.toLocaleString("tr-TR", { minimumFractionDigits: kurus ? 2 : 0, maximumFractionDigits: kurus ? 2 : 0 });
+    return (v < 0 ? "−₺" : "₺") + s;
+  }
+  guncelle(i, alan, deger) {
+    this.setState(st => {
+      const list = st.senaryolar.map((s, j) => j === i ? { ...s, [alan]: deger } : s);
+      return { senaryolar: list };
+    });
+  }
+  renderVals() {
+    const hesaplar = this.state.senaryolar.map(s => this.hesap(s));
+    const enIyi = hesaplar.reduce((m, h, i) => h.toplam > hesaplar[m].toplam ? i : m, 0);
+    const enIyiBirim = hesaplar.reduce((m, h, i) => h.birim > hesaplar[m].birim ? i : m, 0);
+    const enIyiMarj = hesaplar.reduce((m, h, i) => h.marj > hesaplar[m].marj ? i : m, 0);
+    const senaryolar = this.state.senaryolar.map((s, i) => {
+      const h = hesaplar[i];
+      const num = e => { const v = parseFloat(String(e.target.value).replace(/\./g, "").replace(",", ".")); return isNaN(v) ? 0 : v; };
+      return {
+        ad: s.ad,
+        fiyat: s.fiyat.toLocaleString("tr-TR"), kampanya: String(s.kampanya), adet: String(s.adet),
+        fiyatDegisti: e => this.guncelle(i, "fiyat", num(e)),
+        kampanyaDegisti: e => this.guncelle(i, "kampanya", num(e)),
+        adetDegisti: e => this.guncelle(i, "adet", num(e)),
+        kargoDegisti: () => this.guncelle(i, "saticiKargo", !s.saticiKargo),
+        kargoSaticiZemin: s.saticiKargo ? "#F5F5F4" : "transparent",
+        kargoSaticiRenk: s.saticiKargo ? "#1C1917" : "#A8A29E",
+        kargoAliciZemin: s.saticiKargo ? "transparent" : "#F5F5F4",
+        kargoAliciRenk: s.saticiKargo ? "#A8A29E" : "#1C1917",
+        enIyi: i === enIyi,
+        kenar: i === enIyi ? "#BBF7D0" : "#E7E5E4",
+        birimKar: this.tl(h.birim, true),
+        birimRenk: h.birim < 0 ? "#DC2626" : (i === enIyiBirim ? "#15803D" : "#1C1917"),
+        marj: (h.marj < 0 ? "−%" : "%") + Math.abs(h.marj).toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+        marjRenk: h.marj < 0 ? "#DC2626" : (i === enIyiMarj ? "#15803D" : "#1C1917"),
+        toplamKar: this.tl(Math.round(h.toplam)),
+        toplamRenk: h.toplam < 0 ? "#DC2626" : (i === enIyi ? "#15803D" : "#1C1917")
+      };
+    });
+    const c = this.sabit();
+    const m = (this.state.hedefMarj || 0) / 100;
+    const pay = 1 - c.komisyon - c.kdvOran - m;
+    const minFiyat = pay > 0 ? (c.maliyet + c.kargo + c.hizmet) / pay : 0;
+    return {
+      senaryolar,
+      hedefMarj: String(this.state.hedefMarj),
+      hedefDegisti: e => { const v = parseFloat(String(e.target.value).replace(",", ".")); this.setState({ hedefMarj: isNaN(v) ? 0 : v }); },
+      hedefFiyat: pay > 0 ? this.tl(minFiyat, true) : "—"
+    };
+  }
+}
+</script>
+</body>
+</html>

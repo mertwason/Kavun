@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAFAF9;color:#1C1917;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#57534E;text-decoration:none}
+a:hover{color:#1C1917}
+button{font-family:inherit}
+</style>
+</helmet>
+<div data-screen-label="Uyarılar" style="display:flex;min-height:100vh;position:relative;font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums">
+  <dc-import name="Sidebar" aktif="uyarilar" workspace="kahveji" uyari-sayisi="{{ acikSayi }}" hint-size="240px,900px" style="width:240px;flex-shrink:0;align-self:stretch"></dc-import>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:56px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E7E5E4;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:20;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <span style="font-size:12px;color:#A8A29E">Genel Bakış</span>
+        <span style="font-size:12px;color:#D6D3D1">/</span>
+        <span style="font-size:14px;font-weight:600">Uyarılar</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#78716C"><span style="width:6px;height:6px;border-radius:999px;background:#16A34A;display:inline-block"></span><span>Son senkron: 12 dk önce</span></div>
+        <button style="position:relative;width:32px;height:32px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F5F5F4">
+          <img src="https://api.iconify.design/lucide/bell.svg?color=%2357534E" width="16" height="16" alt="Uyarılar">
+          <sc-if value="{{ acikVar }}" hint-placeholder-val="{{ true }}">
+            <span style="position:absolute;top:1px;right:1px;min-width:15px;height:15px;border-radius:999px;background:#DC2626;color:#FFFFFF;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid #FFFFFF;box-sizing:content-box;padding:0 2px">{{ acikSayi }}</span>
+          </sc-if>
+        </button>
+        <div style="width:28px;height:28px;border-radius:999px;background:#E7E5E4;color:#57534E;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer">SA</div>
+      </div>
+    </div>
+    <div style="flex:1;box-sizing:border-box;width:100%;max-width:1360px;padding:24px">
+      <sc-if value="{{ acikVar }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <button style="height:28px;padding:0 12px;border-radius:999px;border:1px solid #D6D3D1;background:#F5F5F4;font-size:12.5px;font-weight:500;color:#1C1917;cursor:pointer">Tümü · 6</button>
+            <button style="height:28px;padding:0 12px;border-radius:999px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12.5px;color:#57534E;cursor:pointer" style-hover="background:#FAFAF9">Marj · 2</button>
+            <button style="height:28px;padding:0 12px;border-radius:999px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12.5px;color:#57534E;cursor:pointer" style-hover="background:#FAFAF9">Komisyon · 1</button>
+            <button style="height:28px;padding:0 12px;border-radius:999px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12.5px;color:#57534E;cursor:pointer" style-hover="background:#FAFAF9">Stok · 2</button>
+            <button style="height:28px;padding:0 12px;border-radius:999px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12.5px;color:#57534E;cursor:pointer" style-hover="background:#FAFAF9">Mutabakat · 1</button>
+            <div style="flex:1"></div>
+            <button onClick="{{ tumunuKapat }}" style="display:flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12.5px;font-weight:500;color:#44403C;cursor:pointer" style-hover="border-color:#D6D3D1;background:#FAFAF9">
+              <img src="https://api.iconify.design/lucide/check-check.svg?color=%2357534E" width="14" height="14" alt="">
+              <span>Tümünü kapat</span>
+            </button>
+          </div>
+          <div style="margin-top:20px">
+            <div style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#DC2626;margin-bottom:8px">Kritik · 2</div>
+            <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;box-shadow:inset 3px 0 0 #DC2626" style-hover="background:#FAFAF9">
+                <img src="https://api.iconify.design/lucide/trending-down.svg?color=%23DC2626" width="16" height="16" alt="" style="flex-shrink:0">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:500">KHV-023 negatif marja düştü: <span style="color:#DC2626;font-weight:600">−%3,2</span></div>
+                  <div style="font-size:12px;color:#78716C;margin-top:1px">Filtre Kağıdı 100'lü · komisyon artışı sonrası · bugün 14:02</div>
+                </div>
+                <a href="SKU Marjlari.dc.html" style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:500;color:#B45309;flex-shrink:0">İncele<img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23B45309" width="12" height="12" alt=""></a>
+                <button onClick="{{ kapat1 }}" style="display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;font-weight:500;color:#44403C;cursor:pointer;flex-shrink:0" style-hover="border-color:#D6D3D1;background:#FAFAF9"><img src="https://api.iconify.design/lucide/check.svg?color=%2357534E" width="12" height="12" alt="">Kapat</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid #F5F5F4;box-shadow:inset 3px 0 0 #DC2626" style-hover="background:#FAFAF9">
+                <img src="https://api.iconify.design/lucide/boxes.svg?color=%23DC2626" width="16" height="16" alt="" style="flex-shrink:0">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:500">KHV-007 stok kritik: <span style="color:#DC2626;font-weight:600">12 adet</span> · 5 günlük satış hızı</div>
+                  <div style="font-size:12px;color:#78716C;margin-top:1px">Kenya AA 250g · tahmini tükeniş 23 Ağu · dün 18:40</div>
+                </div>
+                <a href="Stok ve Maliyet.dc.html" style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:500;color:#B45309;flex-shrink:0">İncele<img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23B45309" width="12" height="12" alt=""></a>
+                <button onClick="{{ kapat1 }}" style="display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;font-weight:500;color:#44403C;cursor:pointer;flex-shrink:0" style-hover="border-color:#D6D3D1;background:#FAFAF9"><img src="https://api.iconify.design/lucide/check.svg?color=%2357534E" width="12" height="12" alt="">Kapat</button>
+              </div>
+            </div>
+            <div style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#B45309;margin:20px 0 8px">Dikkat · 2</div>
+            <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;box-shadow:inset 3px 0 0 #D97706" style-hover="background:#FAFAF9">
+                <img src="https://api.iconify.design/lucide/percent.svg?color=%23D97706" width="16" height="16" alt="" style="flex-shrink:0">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:500">Trendyol komisyonu değişti: Kahve <span style="font-weight:600">%21,5 → %23,0</span></div>
+                  <div style="font-size:12px;color:#78716C;margin-top:1px">11 SKU etkilendi · aylık kâr etkisi −₺4.820 · bugün 11:30</div>
+                </div>
+                <a href="Komisyon Tarifeleri.dc.html" style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:500;color:#B45309;flex-shrink:0">İncele<img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23B45309" width="12" height="12" alt=""></a>
+                <button onClick="{{ kapat1 }}" style="display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;font-weight:500;color:#44403C;cursor:pointer;flex-shrink:0" style-hover="border-color:#D6D3D1;background:#FAFAF9"><img src="https://api.iconify.design/lucide/check.svg?color=%2357534E" width="12" height="12" alt="">Kapat</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid #F5F5F4;box-shadow:inset 3px 0 0 #D97706" style-hover="background:#FAFAF9">
+                <img src="https://api.iconify.design/lucide/scale.svg?color=%23D97706" width="16" height="16" alt="" style="flex-shrink:0">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:500">Hakediş farkı: <span style="font-weight:600">₺214,60</span> açıklanamadı</div>
+                  <div style="font-size:12px;color:#78716C;margin-top:1px">2 kayıt · Trendyol 1–15 Ağu dönemi · dün 09:12</div>
+                </div>
+                <a href="Mutabakat.dc.html" style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:500;color:#B45309;flex-shrink:0">İncele<img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23B45309" width="12" height="12" alt=""></a>
+                <button onClick="{{ kapat1 }}" style="display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;font-weight:500;color:#44403C;cursor:pointer;flex-shrink:0" style-hover="border-color:#D6D3D1;background:#FAFAF9"><img src="https://api.iconify.design/lucide/check.svg?color=%2357534E" width="12" height="12" alt="">Kapat</button>
+              </div>
+            </div>
+            <div style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;margin:20px 0 8px">Bilgi · 2</div>
+            <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;box-shadow:inset 3px 0 0 #D6D3D1" style-hover="background:#FAFAF9">
+                <img src="https://api.iconify.design/lucide/rotate-ccw.svg?color=%2378716C" width="16" height="16" alt="" style="flex-shrink:0">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:500">İade oranı yükseliyor: Filtre Kağıdı <span style="font-weight:600">%4,1 → %5,8</span></div>
+                  <div style="font-size:12px;color:#78716C;margin-top:1px">son 14 gün · 18 Ağu 22:00</div>
+                </div>
+                <a href="SKU Marjlari.dc.html" style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:500;color:#B45309;flex-shrink:0">İncele<img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23B45309" width="12" height="12" alt=""></a>
+                <button onClick="{{ kapat1 }}" style="display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;font-weight:500;color:#44403C;cursor:pointer;flex-shrink:0" style-hover="border-color:#D6D3D1;background:#FAFAF9"><img src="https://api.iconify.design/lucide/check.svg?color=%2357534E" width="12" height="12" alt="">Kapat</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid #F5F5F4;box-shadow:inset 3px 0 0 #D6D3D1" style-hover="background:#FAFAF9">
+                <img src="https://api.iconify.design/lucide/refresh-cw.svg?color=%2378716C" width="16" height="16" alt="" style="flex-shrink:0">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:500">Hepsiburada senkronu tamamlandı — 312 sipariş işlendi</div>
+                  <div style="font-size:12px;color:#78716C;margin-top:1px">18 Ağu 06:00</div>
+                </div>
+                <button onClick="{{ kapat1 }}" style="display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;font-weight:500;color:#44403C;cursor:pointer;flex-shrink:0" style-hover="border-color:#D6D3D1;background:#FAFAF9"><img src="https://api.iconify.design/lucide/check.svg?color=%2357534E" width="12" height="12" alt="">Kapat</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ bosDurum }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:480px;margin:96px auto 0;text-align:center">
+          <div style="font-size:14px;font-weight:600">Açık uyarı yok</div>
+          <div style="font-size:13px;color:#78716C;margin-top:4px">Son tarama 14:00 · marj, stok ve mutabakat kuralları her senkronda çalışır.</div>
+          <button onClick="{{ geriGetir }}" style="margin-top:16px;height:32px;padding:0 12px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12.5px;font-weight:500;color:#44403C;cursor:pointer" style-hover="border-color:#D6D3D1;background:#FAFAF9">Kapatılanları göster</button>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;durum&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;açık uyarılar&quot;,&quot;boş&quot;],&quot;default&quot;:&quot;açık uyarılar&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Durum&quot;}}">
+class Component extends DCLogic {
+  state = { kapali: false };
+  renderVals() {
+    const acik = !this.state.kapali && (this.props.durum ?? "açık uyarılar") !== "boş";
+    return {
+      acikVar: acik, bosDurum: !acik,
+      acikSayi: acik ? 3 : 0,
+      tumunuKapat: () => this.setState({ kapali: true }),
+      kapat1: () => this.setState({ kapali: true }),
+      geriGetir: () => this.setState({ kapali: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

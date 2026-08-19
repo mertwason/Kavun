@@ -100,12 +100,12 @@ test("sipariş detayında şelale render olur", async ({ page }) => {
 
 test("kapalı modül Kahveji menüsünde yok, Alessi'de var", async ({ page }) => {
   await page.goto("/kahveji");
-  const kahvejiNav = await page.locator("header nav a").allInnerTexts();
+  const kahvejiNav = await page.locator("aside nav a").allInnerTexts();
   expect(kahvejiNav).not.toContain("İthalat dosyaları");
   expect(kahvejiNav).not.toContain("D2B satışlar");
 
   await page.goto("/alessi");
-  const alessiNav = await page.locator("header nav a").allInnerTexts();
+  const alessiNav = await page.locator("aside nav a").allInnerTexts();
   expect(alessiNav).toContain("İthalat dosyaları");
   expect(alessiNav).toContain("D2B satışlar");
 });
@@ -130,7 +130,7 @@ test("holding görünümü markaları yan yana verir", async ({ page }) => {
 test("aktif menü öğesi vurgulanır", async ({ page }) => {
   await page.goto("/alessi/inventory");
 
-  const active = page.locator('header nav a[aria-current="page"]');
+  const active = page.locator('aside nav a[aria-current="page"]');
   await expect(active).toHaveCount(1);
   await expect(active).toHaveText("Stok & maliyet");
 });

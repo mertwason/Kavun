@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAFAF9;color:#1C1917;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#57534E;text-decoration:none}
+a:hover{color:#1C1917}
+button{font-family:inherit}
+</style>
+</helmet>
+<div data-screen-label="Mutabakat" style="display:flex;min-height:100vh;position:relative;font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums">
+  <dc-import name="Sidebar" aktif="mutabakat" workspace="kahveji" uyari-sayisi="3" hint-size="240px,900px" style="width:240px;flex-shrink:0;align-self:stretch"></dc-import>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:56px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E7E5E4;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:20;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <span style="font-size:12px;color:#A8A29E">Satış</span>
+        <span style="font-size:12px;color:#D6D3D1">/</span>
+        <span style="font-size:14px;font-weight:600">Mutabakat</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#78716C"><span style="width:6px;height:6px;border-radius:999px;background:#16A34A;display:inline-block"></span><span>Son senkron: 12 dk önce</span></div>
+        <button style="position:relative;width:32px;height:32px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F5F5F4">
+          <img src="https://api.iconify.design/lucide/bell.svg?color=%2357534E" width="16" height="16" alt="Uyarılar">
+          <span style="position:absolute;top:1px;right:1px;min-width:15px;height:15px;border-radius:999px;background:#DC2626;color:#FFFFFF;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid #FFFFFF;box-sizing:content-box;padding:0 2px">3</span>
+        </button>
+        <div style="width:28px;height:28px;border-radius:999px;background:#E7E5E4;color:#57534E;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer">SA</div>
+      </div>
+    </div>
+    <div style="flex:1;box-sizing:border-box;width:100%;max-width:1360px;padding:24px">
+      <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+        <button style="display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:13px;font-weight:500;cursor:pointer" style-hover="border-color:#D6D3D1;background:#FAFAF9">
+          <img src="https://api.iconify.design/lucide/calendar.svg?color=%2378716C" width="14" height="14" alt="">
+          <span>Trendyol · 1–15 Ağu dönemi</span>
+          <img src="https://api.iconify.design/lucide/chevron-down.svg?color=%23A8A29E" width="12" height="12" alt="">
+        </button>
+        <div style="display:flex;align-items:center;gap:16px">
+          <svg width="64" height="64" viewBox="0 0 64 64" style="display:block">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#F5F5F4" stroke-width="7"></circle>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#16A34A" stroke-width="7" stroke-linecap="round" stroke-dasharray="162.2 163.4" transform="rotate(-90 32 32)"></circle>
+            <text x="32" y="36" text-anchor="middle" font-size="13" font-weight="600" fill="#1C1917" font-family="Geist, sans-serif">%99,2</text>
+          </svg>
+          <div>
+            <div style="display:flex;align-items:baseline;gap:3px"><span style="font-size:15px;font-weight:500;color:#A8A29E">₺</span><span style="font-size:26px;font-weight:600;letter-spacing:-0.02em;line-height:1.1">412.680</span></div>
+            <div style="font-size:12.5px;color:#78716C;margin-top:2px">hakediş tutarı · <span style="color:#15803D;font-weight:500">%99,2 eşleşti</span></div>
+          </div>
+        </div>
+        <div style="width:1px;height:44px;background:#E7E5E4"></div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap">
+          <div><div style="font-size:11px;color:#A8A29E">Açık fark</div><div style="font-size:16px;font-weight:600;color:#DC2626;margin-top:1px">₺3.310</div></div>
+          <div><div style="font-size:11px;color:#A8A29E">Kayıt</div><div style="font-size:16px;font-weight:600;margin-top:1px">1.284 / 1.291</div></div>
+          <div><div style="font-size:11px;color:#A8A29E">Çözülen bu dönem</div><div style="font-size:16px;font-weight:600;color:#15803D;margin-top:1px">4</div></div>
+        </div>
+        <div style="flex:1"></div>
+        <button style="display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:none;background:#B45309;color:#FFFFFF;font-size:13px;font-weight:500;cursor:pointer" style-hover="background:#92400E">
+          <img src="https://api.iconify.design/lucide/upload.svg?color=%23FFFFFF" width="14" height="14" alt="">
+          <span>Hakediş Raporu Yükle</span>
+        </button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;flex-wrap:wrap">
+        <div style="display:flex;border:1px solid #E7E5E4;border-radius:8px;background:#FFFFFF;padding:2px">
+          <button style="height:28px;padding:0 12px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;background:#F5F5F4;color:#1C1917">Açık Farklar · 7</button>
+          <button style="height:28px;padding:0 12px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;background:transparent;color:#78716C">Eşleşmeyen Kayıtlar · 3</button>
+          <button style="height:28px;padding:0 12px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;background:transparent;color:#78716C">Çözülenler</button>
+        </div>
+        <span style="font-size:12px;color:#A8A29E">Fark = beklenen − gerçekleşen · pozitif fark alacağın demektir</span>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;overflow:hidden;margin-top:12px">
+        <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:separate;border-spacing:0;min-width:860px">
+          <thead>
+            <tr>
+              <th style="background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px 9px 20px;border-bottom:1px solid #E7E5E4">Tür</th>
+              <th style="background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4">Sipariş No</th>
+              <th style="background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4">Beklenen</th>
+              <th style="background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4">Gerçekleşen</th>
+              <th style="background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4">Fark</th>
+              <th style="background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4">Durum</th>
+              <th style="background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 20px 9px 12px;border-bottom:1px solid #E7E5E4"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style-hover="background:#FAFAF9">
+              <td style="padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4">komisyon</span></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4"><a href="Siparis Detayi.dc.html" style="color:#57534E">#TY-8399102</a></td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">−₺301,00</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">−₺322,00</td>
+              <td style="font-size:13px;font-weight:600;color:#DC2626;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">−₺21,00</td>
+              <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA"><span style="width:5px;height:5px;border-radius:999px;background:#DC2626"></span>Açık</span></td>
+              <td style="padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4;text-align:right"><button style="height:26px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;font-weight:500;color:#44403C;cursor:pointer;display:inline-flex;align-items:center;gap:4px" style-hover="border-color:#D6D3D1;background:#FAFAF9">Açıkla<img src="https://api.iconify.design/lucide/chevron-down.svg?color=%23A8A29E" width="11" height="11" alt=""></button></td>
+            </tr>
+            <tr style-hover="background:#FAFAF9">
+              <td style="padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4">kargo</span></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4"><a href="Siparis Detayi.dc.html" style="color:#57534E">#TY-8402913</a></td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">−₺74,90</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">−₺78,20</td>
+              <td style="font-size:13px;font-weight:600;color:#DC2626;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">−₺3,30</td>
+              <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A"><span style="width:5px;height:5px;border-radius:999px;background:#D97706"></span>Açıklandı</span></td>
+              <td style="padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4;text-align:right"><span style="font-size:12px;color:#78716C">desi farkı · kabul</span></td>
+            </tr>
+            <tr style-hover="background:#FAFAF9">
+              <td style="padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA">ceza</span></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4"><a href="#" style="color:#57534E">#TY-8391240</a></td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">₺0,00</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">−₺150,00</td>
+              <td style="font-size:13px;font-weight:600;color:#DC2626;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">−₺150,00</td>
+              <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA"><span style="width:5px;height:5px;border-radius:999px;background:#DC2626"></span>Açık</span></td>
+              <td style="padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4;text-align:right"><button style="height:26px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;font-weight:500;color:#44403C;cursor:pointer;display:inline-flex;align-items:center;gap:4px" style-hover="border-color:#D6D3D1;background:#FAFAF9">Açıkla<img src="https://api.iconify.design/lucide/chevron-down.svg?color=%23A8A29E" width="11" height="11" alt=""></button></td>
+            </tr>
+            <tr style-hover="background:#FAFAF9">
+              <td style="padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4">iade</span></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4"><a href="#" style="color:#57534E">#TY-8388756</a></td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">+₺342,00</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">+₺264,10</td>
+              <td style="font-size:13px;font-weight:600;color:#DC2626;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">−₺77,90</td>
+              <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA"><span style="width:5px;height:5px;border-radius:999px;background:#DC2626"></span>Açık</span></td>
+              <td style="padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4;text-align:right"><button style="height:26px;padding:0 10px;border-radius:8px;border:1px solid #E7E5E4;background:#FFFFFF;font-size:12px;font-weight:500;color:#44403C;cursor:pointer;display:inline-flex;align-items:center;gap:4px" style-hover="border-color:#D6D3D1;background:#FAFAF9">Açıkla<img src="https://api.iconify.design/lucide/chevron-down.svg?color=%23A8A29E" width="11" height="11" alt=""></button></td>
+            </tr>
+            <tr style-hover="background:#FAFAF9">
+              <td style="padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4">komisyon</span></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4"><a href="#" style="color:#57534E">#TY-8397518</a></td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">−₺188,60</td>
+              <td style="font-size:13px;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">−₺176,40</td>
+              <td style="font-size:13px;font-weight:600;color:#15803D;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">+₺12,20</td>
+              <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0"><span style="width:5px;height:5px;border-radius:999px;background:#16A34A"></span>Çözüldü</span></td>
+              <td style="padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4;text-align:right"><span style="font-size:12px;color:#78716C">kampanya iadesi</span></td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid #E7E5E4">
+          <div style="font-size:12px;color:#78716C">5 / 7 fark gösteriliyor · toplam açık fark <span style="font-weight:600;color:#DC2626">−₺3.310</span></div>
+          <div style="font-size:12px;color:#A8A29E">Tekrarlayan komisyon farkları tarife önerisine dönüşür → Komisyon Tarifeleri</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}"></script>
+</body>
+</html>

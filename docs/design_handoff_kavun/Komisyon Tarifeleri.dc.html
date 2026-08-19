@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAFAF9;color:#1C1917;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#57534E;text-decoration:none}
+a:hover{color:#1C1917}
+button{font-family:inherit}
+</style>
+</helmet>
+<div data-screen-label="Komisyon Tarifeleri" style="display:flex;min-height:100vh;position:relative;font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums">
+  <dc-import name="Sidebar" aktif="komisyonlar" workspace="kahveji" uyari-sayisi="3" hint-size="240px,900px" style="width:240px;flex-shrink:0;align-self:stretch"></dc-import>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="height:56px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E7E5E4;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:20;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <span style="font-size:12px;color:#A8A29E">Ürün &amp; Fiyat</span>
+        <span style="font-size:12px;color:#D6D3D1">/</span>
+        <span style="font-size:14px;font-weight:600">Komisyon Tarifeleri</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#78716C"><span style="width:6px;height:6px;border-radius:999px;background:#16A34A;display:inline-block"></span><span>Son senkron: 12 dk önce</span></div>
+        <button style="position:relative;width:32px;height:32px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F5F5F4">
+          <img src="https://api.iconify.design/lucide/bell.svg?color=%2357534E" width="16" height="16" alt="Uyarılar">
+          <span style="position:absolute;top:1px;right:1px;min-width:15px;height:15px;border-radius:999px;background:#DC2626;color:#FFFFFF;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid #FFFFFF;box-sizing:content-box;padding:0 2px">3</span>
+        </button>
+        <div style="width:28px;height:28px;border-radius:999px;background:#E7E5E4;color:#57534E;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer">SA</div>
+      </div>
+    </div>
+    <div style="flex:1;box-sizing:border-box;width:100%;max-width:1360px;padding:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;border:1px solid #E7E5E4;border-radius:8px;background:#FFFFFF;padding:2px">
+          <button onClick="{{ sekmeOranlar }}" style="height:28px;padding:0 12px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;background:{{ s1Zemin }};color:{{ s1Renk }}">Güncel Oranlar</button>
+          <button onClick="{{ sekmeGecmis }}" style="height:28px;padding:0 12px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;background:{{ s2Zemin }};color:{{ s2Renk }}">Değişiklik Geçmişi</button>
+        </div>
+        <button style="display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:none;background:#B45309;color:#FFFFFF;font-size:13px;font-weight:500;cursor:pointer" style-hover="background:#92400E">
+          <img src="https://api.iconify.design/lucide/upload.svg?color=%23FFFFFF" width="14" height="14" alt="">
+          <span>Tarife Excel'i Yükle</span>
+        </button>
+      </div>
+      <sc-if value="{{ oranlarAktif }}" hint-placeholder-val="{{ true }}">
+        <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;overflow:hidden;margin-top:16px">
+          <table style="width:100%;border-collapse:separate;border-spacing:0">
+            <thead>
+              <tr>
+                <th style="background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px 9px 20px;border-bottom:1px solid #E7E5E4">Kategori</th>
+                <th style="background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4">Kanal</th>
+                <th style="background:#FAFAF9;text-align:right;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4;white-space:nowrap">Oran %</th>
+                <th style="background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 12px;border-bottom:1px solid #E7E5E4">Kaynak</th>
+                <th style="background:#FAFAF9;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#A8A29E;padding:9px 20px 9px 12px;border-bottom:1px solid #E7E5E4;white-space:nowrap">Yürürlük</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style-hover="background:#FAFAF9">
+                <td style="font-size:13px;font-weight:600;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4">Gıda &amp; İçecek</td>
+                <td style="font-size:12px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4">Trendyol</td>
+                <td style="font-size:13px;font-weight:500;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">—</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4">üst kategori</span></td>
+                <td style="font-size:12px;color:#78716C;padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4">—</td>
+              </tr>
+              <tr style-hover="background:#FAFAF9">
+                <td style="font-size:13px;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4"><span style="color:#D6D3D1;margin-right:8px">└</span>Kahve</td>
+                <td style="font-size:12px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4">Trendyol</td>
+                <td style="font-size:13px;font-weight:600;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">%23,0</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4">API</span></td>
+                <td style="font-size:12px;color:#78716C;padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4">12 Ağu 2026</td>
+              </tr>
+              <tr style-hover="background:#FAFAF9">
+                <td style="font-size:13px;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4"><span style="color:#D6D3D1;margin-right:8px">└</span>Kahve</td>
+                <td style="font-size:12px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4">Hepsiburada</td>
+                <td style="font-size:13px;font-weight:600;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">%19,0</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A">Excel</span></td>
+                <td style="font-size:12px;color:#78716C;padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4">1 Ağu 2026</td>
+              </tr>
+              <tr style-hover="background:#FAFAF9">
+                <td style="font-size:13px;font-weight:600;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4">Ev &amp; Mutfak</td>
+                <td style="font-size:12px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4">Trendyol</td>
+                <td style="font-size:13px;font-weight:500;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">—</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4">üst kategori</span></td>
+                <td style="font-size:12px;color:#78716C;padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4">—</td>
+              </tr>
+              <tr style="background:#FEF7F7" style-hover="background:#FDF0F0">
+                <td style="font-size:13px;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4"><span style="color:#D6D3D1;margin-right:8px">└</span>Züccaciye</td>
+                <td style="font-size:12px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4">Trendyol</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;justify-content:flex-end"><span data-tip="12 Ağu'da %21,5 → %23,0 — 3 SKU negatif marja düştü" onMouseEnter="{{ tipGoster }}" onMouseLeave="{{ tipGizle }}" style="width:6px;height:6px;border-radius:999px;background:#DC2626;display:inline-block;cursor:default"></span>%23,0</span></td>
+                <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4">Hakediş</span></td>
+                <td style="font-size:12px;color:#78716C;padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4">12 Ağu 2026</td>
+              </tr>
+              <tr style-hover="background:#FAFAF9">
+                <td style="font-size:13px;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4"><span style="color:#D6D3D1;margin-right:8px">└</span>Kahve Ekipmanları</td>
+                <td style="font-size:12px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4">Trendyol</td>
+                <td style="font-size:13px;font-weight:600;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">%16,0</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4">API</span></td>
+                <td style="font-size:12px;color:#78716C;padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4">1 Tem 2026</td>
+              </tr>
+              <tr style-hover="background:#FAFAF9">
+                <td style="font-size:13px;padding:10px 12px 10px 20px;border-bottom:1px solid #F5F5F4"><span style="color:#D6D3D1;margin-right:8px">└</span>Kahve Ekipmanları</td>
+                <td style="font-size:12px;color:#57534E;padding:10px 12px;border-bottom:1px solid #F5F5F4">Amazon TR</td>
+                <td style="font-size:13px;font-weight:600;padding:10px 12px;border-bottom:1px solid #F5F5F4;text-align:right">%15,5</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #F5F5F4"><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A">Excel</span></td>
+                <td style="font-size:12px;color:#78716C;padding:10px 20px 10px 12px;border-bottom:1px solid #F5F5F4">1 Ağu 2026</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid #E7E5E4">
+            <div style="font-size:12px;color:#78716C">7 kategori · 3 kanal</div>
+            <div style="font-size:12px;color:#A8A29E">Hakediş kaynaklı oranlar mutabakattan türetilir; API oranını ezer.</div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ gecmisAktif }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border:1px solid #E7E5E4;border-radius:10px;padding:20px 24px;margin-top:16px">
+          <div style="display:flex;gap:14px">
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <span style="width:10px;height:10px;border-radius:999px;background:#DC2626;margin-top:5px;flex-shrink:0"></span>
+              <div style="width:1px;flex:1;background:#E7E5E4;margin-top:4px"></div>
+            </div>
+            <div style="padding-bottom:24px;min-width:0;flex:1">
+              <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+                <span style="font-size:12px;color:#A8A29E;white-space:nowrap">12 Ağu 2026</span>
+                <span style="font-size:13.5px;font-weight:600">Züccaciye · Trendyol</span>
+                <span style="font-size:13px;display:inline-flex;align-items:center;gap:6px"><span style="color:#78716C">%21,5</span><img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23A8A29E" width="12" height="12" alt=""><span style="font-weight:600;color:#DC2626">%23,0</span></span>
+                <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4">Hakediş</span>
+              </div>
+              <div style="border:1px solid #E7E5E4;border-radius:8px;padding:12px 16px;margin-top:10px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;background:#FAFAF9">
+                <div><div style="font-size:11px;color:#A8A29E">Aylık kâr etkisi</div><div style="font-size:15px;font-weight:600;color:#DC2626;margin-top:1px">−₺4.820</div></div>
+                <div><div style="font-size:11px;color:#A8A29E">Etkilenen SKU</div><div style="font-size:15px;font-weight:600;margin-top:1px">11</div></div>
+                <div><div style="font-size:11px;color:#A8A29E">Negatif marja düşen</div><div style="font-size:15px;font-weight:600;color:#DC2626;margin-top:1px">3 SKU</div></div>
+                <div style="flex:1"></div>
+                <a href="SKU Marjlari.dc.html" style="font-size:12.5px;font-weight:500;color:#B45309;display:inline-flex;align-items:center;gap:4px">Listele<img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23B45309" width="12" height="12" alt=""></a>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:14px">
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <span style="width:10px;height:10px;border-radius:999px;background:#D97706;margin-top:5px;flex-shrink:0"></span>
+              <div style="width:1px;flex:1;background:#E7E5E4;margin-top:4px"></div>
+            </div>
+            <div style="padding-bottom:24px;min-width:0;flex:1">
+              <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+                <span style="font-size:12px;color:#A8A29E;white-space:nowrap">1 Ağu 2026</span>
+                <span style="font-size:13.5px;font-weight:600">Kahve · Hepsiburada</span>
+                <span style="font-size:13px;display:inline-flex;align-items:center;gap:6px"><span style="color:#78716C">%18,0</span><img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23A8A29E" width="12" height="12" alt=""><span style="font-weight:600;color:#B45309">%19,0</span></span>
+                <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A">Excel</span>
+              </div>
+              <div style="border:1px solid #E7E5E4;border-radius:8px;padding:12px 16px;margin-top:10px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;background:#FAFAF9">
+                <div><div style="font-size:11px;color:#A8A29E">Aylık kâr etkisi</div><div style="font-size:15px;font-weight:600;color:#DC2626;margin-top:1px">−₺1.140</div></div>
+                <div><div style="font-size:11px;color:#A8A29E">Etkilenen SKU</div><div style="font-size:15px;font-weight:600;margin-top:1px">6</div></div>
+                <div><div style="font-size:11px;color:#A8A29E">Negatif marja düşen</div><div style="font-size:15px;font-weight:600;margin-top:1px">0</div></div>
+                <div style="flex:1"></div>
+                <a href="SKU Marjlari.dc.html" style="font-size:12.5px;font-weight:500;color:#B45309;display:inline-flex;align-items:center;gap:4px">Listele<img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23B45309" width="12" height="12" alt=""></a>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:14px">
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <span style="width:10px;height:10px;border-radius:999px;background:#16A34A;margin-top:5px;flex-shrink:0"></span>
+            </div>
+            <div style="min-width:0;flex:1">
+              <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+                <span style="font-size:12px;color:#A8A29E;white-space:nowrap">1 Tem 2026</span>
+                <span style="font-size:13.5px;font-weight:600">Kahve Ekipmanları · Trendyol</span>
+                <span style="font-size:13px;display:inline-flex;align-items:center;gap:6px"><span style="color:#78716C">%17,5</span><img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23A8A29E" width="12" height="12" alt=""><span style="font-weight:600;color:#15803D">%16,0</span></span>
+                <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:500;background:#F5F5F4;color:#57534E;border:1px solid #E7E5E4">API</span>
+              </div>
+              <div style="border:1px solid #E7E5E4;border-radius:8px;padding:12px 16px;margin-top:10px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;background:#FAFAF9">
+                <div><div style="font-size:11px;color:#A8A29E">Aylık kâr etkisi</div><div style="font-size:15px;font-weight:600;color:#15803D;margin-top:1px">+₺960</div></div>
+                <div><div style="font-size:11px;color:#A8A29E">Etkilenen SKU</div><div style="font-size:15px;font-weight:600;margin-top:1px">4</div></div>
+                <div><div style="font-size:11px;color:#A8A29E">Negatif marja düşen</div><div style="font-size:15px;font-weight:600;margin-top:1px">0</div></div>
+                <div style="flex:1"></div>
+                <a href="SKU Marjlari.dc.html" style="font-size:12.5px;font-weight:500;color:#B45309;display:inline-flex;align-items:center;gap:4px">Listele<img src="https://api.iconify.design/lucide/arrow-right.svg?color=%23B45309" width="12" height="12" alt=""></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+  <sc-if value="{{ tipVar }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:{{ tipX }}px;top:{{ tipY }}px;transform:translate(-50%,-100%);background:#1C1917;color:#FAFAF9;font-size:12px;line-height:1.4;padding:6px 10px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);pointer-events:none;z-index:60;white-space:nowrap">{{ tipText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;sekme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;güncel oranlar&quot;,&quot;değişiklik geçmişi&quot;],&quot;default&quot;:&quot;güncel oranlar&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Durum&quot;}}">
+class Component extends DCLogic {
+  state = { sekme: null, tip: null };
+  renderVals() {
+    const sekme = this.state.sekme ?? (this.props.sekme === "değişiklik geçmişi" ? "gecmis" : "oranlar");
+    const oranlar = sekme === "oranlar";
+    const tip = this.state.tip;
+    return {
+      oranlarAktif: oranlar, gecmisAktif: !oranlar,
+      sekmeOranlar: () => this.setState({ sekme: "oranlar" }),
+      sekmeGecmis: () => this.setState({ sekme: "gecmis" }),
+      s1Zemin: oranlar ? "#F5F5F4" : "transparent", s1Renk: oranlar ? "#1C1917" : "#78716C",
+      s2Zemin: oranlar ? "transparent" : "#F5F5F4", s2Renk: oranlar ? "#78716C" : "#1C1917",
+      tipVar: !!tip, tipText: tip ? tip.t : "", tipX: tip ? tip.x : 0, tipY: tip ? tip.y : 0,
+      tipGoster: e => {
+        const r = e.currentTarget.getBoundingClientRect();
+        this.setState({ tip: { t: e.currentTarget.dataset.tip, x: r.left + r.width / 2 + window.scrollX, y: r.top + window.scrollY - 8 } });
+      },
+      tipGizle: () => this.setState({ tip: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 **TOPLAM: %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 **FAZ 2 (ek görevler): %69** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░
-Son güncelleme: 2026-08-19 13:30 · Aktif görev: — (sırada: KVN-EK-08, brief bekleniyor)
+Son güncelleme: 2026-08-19 14:00 · Aktif görev: KVN-EK-08
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -46,7 +46,7 @@ Toplam ağırlık: **110** · Biten ağırlık: 110 · **Faz 1 ve Faz 1.5 tamaml
 | KVN-EK-05 | Trendyol Faz 2 uçları + eksik beat programı                | 8       | ✅ Bitti     | spec §4, §9 — iade/hakediş/kargo senkronu; `workers/tasks.py` coverage ≥ %80 |
 | KVN-EK-06 | Uyarılar ekranı + acknowledge akışı                        | 4       | ✅ Bitti     | spec §10.6 — `acknowledged_at` yazan uç dahil |
 | KVN-EK-07 | Gerçek veri kalibrasyon haftası                            | 6       | ⏳ Sırada    | **Mert'in dosyalarına bağlı** — geldiğinde sıraya girer; kurgu fixture'lar + 3 `TODO(verify)` + `tracking_no` |
-| KVN-EK-08 | Tasarım sistemi rework (token seti + Tremor + TanStack)    | 10      | ⏳ Sırada    | **BLOKE:** brief'in "Kaynak Kütüphaneler" bölümü repoda yok (aşağıya bak) |
+| KVN-EK-08 | Tasarım sistemi rework — 13 ekranlık handoff'un uygulanması | 10      | 🔄 Yapılıyor | handoff geldi (`docs/design_handoff_kavun/`), blokaj kalktı |
 
 Faz 2 ağırlığı: 51 · Biten: 35
 
@@ -63,7 +63,11 @@ Faz 2 ağırlığı: 51 · Biten: 35
 
 ---
 
-> **KVN-EK-08 açıldı ama BAŞLANAMAZ (2026-08-19).** Görev tanımı: Tailwind v4 token seti
+> **KVN-EK-08 başladı (2026-08-19 14:00).** Tasarım handoff'u `docs/design_handoff_kavun/`
+> altına alındı: 13 ekranın high-fidelity `.dc.html` referansı + bağlayıcı token seti.
+> Aşağıdaki eski blokaj notu tarihsel kayıt olarak duruyor.
+>
+> **Önceki not (artık geçersiz):** Görev tanımı: Tailwind v4 token seti
 > (brief'teki renk/tipografi/spacing + workspace aksanları), Tremor Blocks dashboard
 > desenlerinin token setine bağlanması, 15 ekranın geçişi (Dashboard → SKU marj → sipariş
 > detayı/şelale → fatura yükleme sırasıyla), yoğun tabloların TanStack Table + shadcn
