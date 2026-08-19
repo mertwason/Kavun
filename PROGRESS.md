@@ -83,7 +83,6 @@ motor paketi toplam %99, genel %94. Ruff/format/para-float/`mypy app tools tests
   %81'e düşüyordu — önceki turda işlenmiş (`skipped`) kalemler eşleşmemiş sayılıyordu.
   Oran artık `(matched + skipped) / records`; regresyon testi eklendi. Tur idempotent:
   ikinci fark kaydı üretilmiyor.
-
 - **CI'da compose smoke işi iki turdur kırmızıydı** (KVN-EK-01 ve KVN-EK-02 commit'leri):
   `docker compose up`, frontend servisinde `node_modules`'ı adlandırılmış volume ile
   gölgeliyor ve bağlama noktasını host'ta **root** olarak yaratıyor; sonrasında çalışan
