@@ -22,8 +22,9 @@ import { formatDateTime, formatMoney, formatPercent, signClass } from "@/lib/for
 import tr from "@/locales/tr.json";
 
 const STATUS_LABELS: Record<string, string> = tr.reconciliation.statuses;
+const RECORD_TYPES: Record<string, string> = tr.reconciliation.recordTypes;
 
-const FIELD = "rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm";
+const FIELD = "control";
 
 export function ReconciliationRunner({
   brand,
@@ -51,8 +52,8 @@ export function ReconciliationRunner({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.reconciliation.period} *</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.reconciliation.period}</span>
           <input
             type="month"
             value={period}
@@ -64,7 +65,7 @@ export function ReconciliationRunner({
           type="button"
           onClick={() => send(false)}
           disabled={pending || !period}
-          className="rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-40"
+          className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
         >
           {pending ? tr.reconciliation.running : tr.reconciliation.preview}
         </button>
@@ -73,14 +74,14 @@ export function ReconciliationRunner({
             type="button"
             onClick={() => send(true)}
             disabled={pending}
-            className="rounded-card border border-ink px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-40"
+            className="h-[34px] rounded-control border border-ink bg-ink px-3 text-cell font-medium text-white hover:bg-ink-secondary disabled:opacity-40"
           >
             {tr.reconciliation.apply}
           </button>
         ) : null}
       </div>
 
-      {state.status === "error" ? <p className="text-sm text-negative">{state.message}</p> : null}
+      {state.status === "error" ? <p className="text-cell text-negative">{state.message}</p> : null}
 
       {result ? (
         <div className="flex flex-col gap-3 border-t border-hairline pt-3">
@@ -104,13 +105,13 @@ export function ReconciliationRunner({
             />
             <Stat label={tr.reconciliation.totalDiff} value={formatMoney(result.total_diff)} />
           </div>
-          <p className="text-xs text-ink-faint">
+          <p className="text-helper text-ink-body">
             {state.status === "applied"
               ? tr.reconciliation.appliedNote
               : tr.reconciliation.previewNote}
           </p>
           {result.unmatched_refs.length > 0 ? (
-            <p className="text-xs text-ink-muted">
+            <p className="text-helper text-ink-muted">
               {tr.reconciliation.unmatchedRefs}: {result.unmatched_refs.join(", ")}
             </p>
           ) : null}
@@ -120,6 +121,13 @@ export function ReconciliationRunner({
   );
 }
 
+/** Fark durumunun rozet rengi: açık kırmızı, açıklanan amber, çözülen yeşil. */
+const STATUS_STYLE: Record<string, string> = {
+  open: "border-negative-border bg-negative-tint text-negative",
+  explained: "border-estimated-border bg-estimated-tint text-estimated-text",
+  resolved: "border-positive-border bg-positive-tint text-positive-text",
+};
+
 export function DiffRow({ brand, diff }: { brand: BrandSlug; diff: ReconciliationDiff }) {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<ExplainState>({ status: "idle" });
@@ -127,30 +135,43 @@ export function DiffRow({ brand, diff }: { brand: BrandSlug; diff: Reconciliatio
 
   return (
     <>
-      <tr className="border-b border-hairline">
-        <td className="px-3 py-2 text-ink-muted">{formatDateTime(diff.created_at)}</td>
-        <td className="px-3 py-2 text-right tabular">{formatMoney(diff.expected)}</td>
-        <td className="px-3 py-2 text-right tabular">{formatMoney(diff.actual)}</td>
-        <td className={`px-3 py-2 text-right tabular ${signClass(-Number(diff.diff))}`}>
+      <tr className="border-b border-hairline hover:bg-canvas">
+        <td className="px-3 py-2.5 pl-5">
+          {diff.record_type ? RECORD_TYPES[diff.record_type] ?? diff.record_type : "—"}
+        </td>
+        <td
+          className="px-3 py-2.5 font-mono text-micro text-ink-secondary"
+          title={formatDateTime(diff.created_at)}
+        >
+          {diff.order_ref ?? "—"}
+        </td>
+        <td className="px-3 py-2.5 text-right">{formatMoney(diff.expected)}</td>
+        <td className="px-3 py-2.5 text-right">{formatMoney(diff.actual)}</td>
+        <td className={`px-3 py-2.5 text-right font-semibold ${signClass(-Number(diff.diff))}`}>
           {formatMoney(diff.diff)}
         </td>
-        <td className="px-3 py-2">{STATUS_LABELS[diff.status] ?? diff.status}</td>
-        <td className="px-3 py-2 text-xs text-ink-faint">{diff.note}</td>
-        <td className="px-3 py-2 text-right">
+        <td className="px-3 py-2.5">
+          <span className={`badge ${STATUS_STYLE[diff.status] ?? ""}`}>
+            {STATUS_LABELS[diff.status] ?? diff.status}
+          </span>
+        </td>
+        <td className="px-3 py-2.5 pr-5 text-helper text-ink-muted">
           {diff.status === "open" ? (
             <button
               type="button"
               onClick={() => setOpen((value) => !value)}
-              className="text-sm text-ink-muted underline underline-offset-4 hover:text-ink"
+              className="flex h-7 items-center rounded-control border border-hairline bg-surface px-2.5 text-helper font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas"
             >
               {tr.reconciliation.explain}
             </button>
-          ) : null}
+          ) : (
+            diff.note
+          )}
         </td>
       </tr>
       {open ? (
         <tr className="border-b border-hairline bg-canvas">
-          <td colSpan={7} className="px-3 py-3">
+          <td colSpan={7} className="px-5 py-3">
             <form
               className="flex flex-wrap items-end gap-3"
               onSubmit={(event) => {
@@ -198,9 +219,11 @@ export function DiffRow({ brand, diff }: { brand: BrandSlug; diff: Reconciliatio
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
-    <span className="flex flex-col">
-      <span className="text-xs text-ink-faint">{label}</span>
-      <span className={`tabular text-lg ${tone ?? ""}`}>{value}</span>
+    <span className="flex flex-col gap-0.5">
+      <span className="col-head">{label}</span>
+      <span data-run-stat className={`text-kpiSm ${tone ?? ""}`}>
+        {value}
+      </span>
     </span>
   );
 }

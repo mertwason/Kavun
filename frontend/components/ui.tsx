@@ -23,8 +23,8 @@ export function Card({
 export function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <h2 className="text-sm font-medium text-ink">{title}</h2>
-      {subtitle ? <p className="text-xs text-ink-faint">{subtitle}</p> : null}
+      <h2 className="text-body font-medium text-ink">{title}</h2>
+      {subtitle ? <p className="text-helper text-ink-body">{subtitle}</p> : null}
     </div>
   );
 }
@@ -36,14 +36,14 @@ export function SectionHeader({ title, subtitle }: { title: string; subtitle?: s
 export function EstimateBadge({ isFinal }: { isFinal: boolean }) {
   if (isFinal) {
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-ink-faint">
+      <span className="badge border-hairline bg-canvas text-ink-secondary">
         <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ink-faint" />
         {tr.estimate.final}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 text-xs text-estimated">
+    <span className="badge border-estimated-border bg-estimated-tint text-estimated-text">
       <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-estimated" />
       {tr.estimate.estimated}
     </span>
@@ -52,9 +52,9 @@ export function EstimateBadge({ isFinal }: { isFinal: boolean }) {
 
 export function EmptyState({ title, hint }: { title: string; hint?: string }) {
   return (
-    <div className="flex flex-col items-center gap-2 px-6 py-16 text-center">
-      <p className="text-sm text-ink-muted">{title}</p>
-      {hint ? <p className="text-xs text-ink-faint">{hint}</p> : null}
+    <div className="flex flex-col items-center gap-1.5 px-6 py-16 text-center">
+      <p className="text-cell font-medium text-ink-secondary">{title}</p>
+      {hint ? <p className="max-w-md text-helper text-ink-muted">{hint}</p> : null}
     </div>
   );
 }
@@ -75,9 +75,9 @@ export function DataTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
-        <thead className="sticky top-0 z-10 bg-surface">
-          <tr className="border-b border-hairline text-xs font-medium text-ink-faint">{head}</tr>
+      <table className="w-full border-collapse text-cell">
+        <thead>
+          <tr>{head}</tr>
         </thead>
         <tbody>{children}</tbody>
       </table>
@@ -90,11 +90,16 @@ export function Th({
   align = "left",
 }: {
   children: ReactNode;
+  /** Hizalama prop'tur, sınıfla EZİLMEZ: `text-left`/`text-right` aynı özgüllükte. */
   align?: "left" | "right";
 }) {
   return (
-    <th className={`px-3 py-2 font-medium ${align === "right" ? "text-right" : "text-left"}`}>
-      {children}
+    <th
+      className={`sticky top-0 z-[5] border-b border-hairline bg-canvas px-3 py-2.5 ${
+        align === "right" ? "text-right" : "text-left"
+      }`}
+    >
+      <span className="col-head">{children}</span>
     </th>
   );
 }
@@ -109,15 +114,13 @@ export function Td({
   className?: string;
 }) {
   return (
-    <td
-      className={`px-3 py-2 ${align === "right" ? "text-right tabular" : ""} ${className}`}
-    >
+    <td className={`px-3 py-2.5 ${align === "right" ? "text-right" : ""} ${className}`}>
       {children}
     </td>
   );
 }
 
-/** Negatif marj satırı hafif kırmızı zemin alır (tasarım brief'i, kalıp 3). */
+/** Negatif marj satırı hafif kırmızı zemin alır (handoff: `#FEF7F7`). */
 export function Tr({
   children,
   negative = false,
@@ -127,9 +130,9 @@ export function Tr({
   negative?: boolean;
   href?: string;
 }) {
-  const className = `border-b border-hairline transition-colors ${
-    negative ? "bg-negative/[0.04]" : ""
-  } hover:bg-canvas`;
+  const className = `border-b border-hairline ${
+    negative ? "bg-negative-row" : "hover:bg-canvas"
+  }`;
   if (!href) {
     return <tr className={className}>{children}</tr>;
   }
@@ -140,7 +143,7 @@ export function TextLink({ href, children }: { href: string; children: ReactNode
   return (
     <Link
       href={href}
-      className="text-ink-muted underline underline-offset-4 hover:text-ink"
+      className="text-cell text-ink-secondary underline decoration-ink-ghost underline-offset-4 hover:text-ink"
     >
       {children}
     </Link>

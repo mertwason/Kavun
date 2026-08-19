@@ -23,8 +23,8 @@ export default async function SettingsPage({ params }: { params: { brand: BrandS
 
   return (
     <>
-      <h1 className="text-lg font-medium">{tr.settings.title}</h1>
-      <p className="-mt-4 text-xs text-ink-faint">{tr.settings.subtitle}</p>
+      <h1 className="text-title font-medium">{tr.settings.title}</h1>
+      <p className="-mt-3 text-helper text-ink-body">{tr.settings.subtitle}</p>
 
       <Card className="flex flex-col gap-4 p-5">
         <SectionHeader title={tr.settings.storesTitle} subtitle={tr.settings.storesSubtitle} />

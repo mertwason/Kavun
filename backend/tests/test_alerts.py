@@ -133,7 +133,15 @@ def test_types_are_distinct_and_sorted(db_session: Session, store: Store) -> Non
     _alert(db_session, store, alert_type="negatif_stok")
     _alert(db_session, store, alert_type="negatif_stok")
 
-    assert service.types(db_session) == ["msrp_ihlali", "negatif_stok"]
+    assert service.types(db_session) == [("msrp_ihlali", 1), ("negatif_stok", 2)]
+
+
+def test_type_counts_only_count_open_alerts(db_session: Session, store: Store) -> None:
+    """Filtre şeridindeki sayı **açık** uyarıyı sayar; kapatılan tür listede 0 ile kalır."""
+    _alert(db_session, store, alert_type="msrp_ihlali", acknowledged=True)
+    _alert(db_session, store, alert_type="negatif_stok")
+
+    assert service.types(db_session) == [("msrp_ihlali", 0), ("negatif_stok", 1)]
 
 
 # --- acknowledge -------------------------------------------------------------
@@ -220,7 +228,7 @@ def test_api_summary_reports_counts(api: TestClient, db_session: Session, store:
     assert body["critical_open"] == 1
     assert body["acknowledged"] == 1
     assert body["total"] == 2
-    assert "negatif_stok" in body["types"]
+    assert {"type": "negatif_stok", "open": 1} in body["types"]
 
 
 def test_api_acknowledge_marks_alert(api: TestClient, db_session: Session, store: Store) -> None:

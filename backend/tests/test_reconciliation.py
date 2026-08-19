@@ -454,6 +454,82 @@ def test_period_summary_counts_by_status(
     assert summary.diff_count == 1
     assert summary.open_count == 1
     assert summary.total_diff == D("16.0000")
+    assert summary.open_diff == D("16.0000")
+
+
+def test_period_summary_reports_volume_and_match_rate(
+    db_session: Session, store: Store, line: OrderLine
+) -> None:
+    """Üst şerit "hakediş hacmi" ve "eşleşme oranı"nı kalemlerden okur (spec §7.4)."""
+    _record(
+        db_session,
+        store,
+        ref=line.external_line_id,
+        record_type=SettlementRecordType.COMMISSION,
+        amount=D("-216.00"),
+    )
+    _record(
+        db_session,
+        store,
+        ref="TY-YOK-1",
+        record_type=SettlementRecordType.COMMISSION,
+        amount=D("-84.00"),
+    )
+    reconciliation.run(db_session, store=store, period=PERIOD)
+
+    summary = reconciliation.period_summary(db_session, period=PERIOD)
+
+    # İki kalem, biri siparişe bağlandı: hacim mutlak tutarların toplamı.
+    assert summary.record_count == 2
+    assert summary.matched_count == 1
+    assert summary.settlement_total == D("300.0000")
+    assert summary.match_rate_pct == D("50.00")
+
+
+def test_diff_context_carries_the_record_type_and_order_ref(
+    db_session: Session, store: Store, line: OrderLine
+) -> None:
+    """Fark satırı hangi kalemin ve hangi siparişin farkı olduğunu taşır (ekran künyesi)."""
+    _record(
+        db_session,
+        store,
+        ref=line.external_line_id,
+        record_type=SettlementRecordType.COMMISSION,
+        amount=D("-216.00"),
+    )
+    reconciliation.run(db_session, store=store, period=PERIOD)
+
+    contexts = reconciliation.diff_contexts(db_session, period=PERIOD)
+
+    assert len(contexts) == 1
+    assert contexts[0].record_type is SettlementRecordType.COMMISSION
+    order = db_session.get(Order, line.order_id)
+    assert order is not None
+    assert contexts[0].order_ref == order.external_order_id
+
+
+def test_diff_context_survives_a_missing_settlement_link(db_session: Session, store: Store) -> None:
+    """Kalem bağlantısı olmayan fark listeden düşmez; yalnızca künyesi boş kalır."""
+    db_session.add(
+        ReconciliationDiff(
+            tenant_id=store.tenant_id,
+            brand_id=store.brand_id,
+            store_id=store.id,
+            period=PERIOD,
+            settlement_record_id=None,
+            expected=D("10.0000"),
+            actual=D("12.0000"),
+            diff=D("-2.0000"),
+            status=DiffStatus.OPEN,
+        )
+    )
+    db_session.flush()
+
+    contexts = reconciliation.diff_contexts(db_session, period=PERIOD)
+
+    assert len(contexts) == 1
+    assert contexts[0].record_type is None
+    assert contexts[0].order_ref is None
 
 
 # --- API ---------------------------------------------------------------------

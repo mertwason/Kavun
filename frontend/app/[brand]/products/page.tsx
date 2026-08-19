@@ -13,7 +13,7 @@ import {
 } from "@/components/ui";
 import { fetchPriceRows, fetchViolations } from "@/lib/api";
 import type { BrandSlug } from "@/lib/brands";
-import { formatMoney, formatPercent, signClass, toNumber } from "@/lib/format";
+import { formatCount, formatDesi, formatMoney, formatPercent, signClass, toNumber } from "@/lib/format";
 import tr from "@/locales/tr.json";
 
 export const dynamic = "force-dynamic";
@@ -29,22 +29,22 @@ export default async function ProductsPage({ params }: { params: { brand: BrandS
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-lg font-medium">{tr.nav.products}</h1>
-        <a
-          href={`/${params.brand}/products/download`}
-          className="rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas"
-        >
-          {tr.pricelist.export}
-        </a>
-      </div>
+      <h1 className="sr-only">{tr.nav.products}</h1>
 
       <Card className="flex flex-col gap-4 p-5">
-        <SectionHeader title={tr.pricelist.importTitle} subtitle={tr.pricelist.importSubtitle} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <SectionHeader title={tr.pricelist.importTitle} subtitle={tr.pricelist.importSubtitle} />
+          <a
+            href={`/${params.brand}/products/download`}
+            className="flex h-[34px] items-center rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas"
+          >
+            {tr.pricelist.export}
+          </a>
+        </div>
         <PriceImport brand={params.brand} />
       </Card>
 
-      <Card>
+      <Card className="overflow-hidden">
         {!result.ok ? (
           <ErrorState status={result.status} />
         ) : result.data.length === 0 ? (
@@ -71,11 +71,11 @@ export default async function ProductsPage({ params }: { params: { brand: BrandS
                 key={`${row.product_id}-${row.channel}`}
                 negative={row.price !== null && toNumber(row.profit) < 0}
               >
-                <Td className="font-mono text-xs text-ink-muted">{row.sku}</Td>
-                <Td>{row.name}</Td>
-                <Td className="text-ink-muted">{row.channel}</Td>
+                <Td className="font-mono text-micro text-ink-muted">{row.sku}</Td>
+                <Td className="max-w-[260px] truncate">{row.name}</Td>
+                <Td className="text-ink-secondary">{row.channel}</Td>
                 <Td align="right">{formatPercent(row.vat_rate)}</Td>
-                <Td align="right">{row.desi === null ? "—" : String(row.desi)}</Td>
+                <Td align="right">{row.desi === null ? "—" : formatDesi(row.desi)}</Td>
                 <Td align="right">
                   {row.unit_cost === null ? "—" : formatMoney(row.unit_cost)}
                 </Td>
@@ -95,6 +95,11 @@ export default async function ProductsPage({ params }: { params: { brand: BrandS
             ))}
           </DataTable>
         )}
+        {result.ok && result.data.length > 0 ? (
+          <div className="border-t border-hairline bg-canvas px-5 py-2.5 text-helper text-ink-body">
+            {tr.pricelist.showingRows.replace("{count}", formatCount(result.data.length))}
+          </div>
+        ) : null}
       </Card>
 
       {violations.ok ? (
@@ -122,9 +127,9 @@ export default async function ProductsPage({ params }: { params: { brand: BrandS
             >
               {disciplineRows.map((row) => (
                 <Tr key={`${row.product_id}-${row.channel}`}>
-                  <Td className="font-mono text-xs text-ink-muted">{row.sku}</Td>
+                  <Td className="font-mono text-micro text-ink-muted">{row.sku}</Td>
                   <Td>{row.name}</Td>
-                  <Td className="text-ink-muted">{row.channel}</Td>
+                  <Td className="text-ink-secondary">{row.channel}</Td>
                   <Td align="right">{formatMoney(row.price)}</Td>
                   <Td align="right">{row.msrp === null ? "—" : formatMoney(row.msrp)}</Td>
                   <Td align="right" className="text-negative">
@@ -136,7 +141,7 @@ export default async function ProductsPage({ params }: { params: { brand: BrandS
                   <Td align="right" className="text-ink-muted">
                     {row.floor_pct === null ? "—" : formatPercent(row.floor_pct)}
                   </Td>
-                  <Td className="text-xs text-ink-muted">
+                  <Td className="text-helper text-ink-muted">
                     {row.kinds
                       .map((kind) =>
                         kind === "msrp" ? tr.discipline.kindMsrp : tr.discipline.kindFloor,

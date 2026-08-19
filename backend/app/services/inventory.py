@@ -25,6 +25,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core import textfmt
 from app.core.logging import get_logger
 from app.engine.inventory import StockState, apply_inbound, apply_outbound
 from app.models.catalog import Product
@@ -281,7 +282,8 @@ def _negative_stock_alert(
             entity_ref=f"product:{product.sku}",
             message=(
                 f"Stok kaydı eksik: {product.sku} ({product.name}) "
-                f"stoğu {on_hand} adede düştü. Açılış devri ya da alış faturası eksik olabilir."
+                f"stoğu {textfmt.number(on_hand)} adede düştü. "
+                "Açılış devri ya da alış faturası eksik olabilir."
             ),
             created_at=moved_at,
         )

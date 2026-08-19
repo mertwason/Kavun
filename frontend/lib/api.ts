@@ -36,6 +36,7 @@ export type TariffImpactInput = components["schemas"]["TariffImpactIn"];
 export type TariffUpload = components["schemas"]["TariffUploadOut"];
 export type InvoiceSummary = components["schemas"]["InvoiceSummaryOut"];
 export type InvoiceDetail = components["schemas"]["InvoiceDetailOut"];
+export type InvoiceLine = components["schemas"]["InvoiceLineOut"];
 export type InvoiceUploadResult = components["schemas"]["UploadResultOut"];
 export type SupplierOption = components["schemas"]["SupplierOut"];
 export type StockRow = components["schemas"]["StockRowOut"];

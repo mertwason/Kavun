@@ -215,7 +215,7 @@ test("mutabakat turu: önizleme yazmaz, uygulama fark üretir, açıklamasız ka
   // Önizleme: kalem sayısı gelmeli ama hiçbir fark kaydı yazılmamalı (spec §7.4).
   await page.getByRole("button", { name: "Önizle" }).click();
   await expect(page.getByText("Bu bir önizlemedir")).toBeVisible();
-  const records = await page.locator("span.tabular.text-lg").first().innerText();
+  const records = await page.locator("[data-run-stat]").first().innerText();
   expect(Number(records)).toBeGreaterThan(0);
 
   // Uygulama: farklar kaydedilir ve tabloda "Açıkla" akışıyla listelenir.
@@ -233,6 +233,9 @@ test("mutabakat turu: önizleme yazmaz, uygulama fark üretir, açıklamasız ka
   await note.fill("Smoke testi — platform kesinti farkı incelendi");
   await form.getByRole("button", { name: "Açıkla" }).click();
   await page.waitForLoadState("networkidle");
+
+  // Açıklanan fark "Açık farklar" sekmesinden düşer, "Çözülenler"de durur.
+  await page.getByRole("link", { name: /^Çözülenler/ }).click();
   await expect(page.locator("table")).toContainText("Açıklandı");
 });
 
@@ -240,7 +243,7 @@ test("mutabakat ekranı veri yokken boş durumu gösterir", async ({ page }) => 
   // Alessi'de hakediş kaydı yok: ekran hata değil, boş durum vermeli.
   await page.goto("/alessi/reconciliation");
 
-  await expect(page.locator("main")).toContainText("Bu dönemde fark yok.");
+  await expect(page.locator("main")).toContainText("Henüz mutabakat turu koşulmadı.");
 });
 
 test("ayarlarda kargo tarifesi dolu ve geçersiz bant reddedilir", async ({ page }) => {
@@ -294,32 +297,46 @@ test("tahmin yenileme kesinleşmiş maliyete dokunmaz", async ({ page }) => {
 test("uyarı listesi doludur ve seviye filtresi çalışır", async ({ page }) => {
   await page.goto("/kahveji/alerts");
 
-  const all = await page.locator("table tbody tr").count();
+  const rows = page.locator("[data-alert-row]");
+  const all = await rows.count();
   expect(all).toBeGreaterThan(0);
 
-  await page.getByRole("link", { name: "Kritik", exact: true }).click();
+  // Liste aciliyete göre gruplanır. Kaç grup kaldığı sabit DEĞİLDİR: "gördüm" testi her
+  // turda bir uyarı kapatıyor, demo veri de tur arasında yenilenmiyor olabilir.
+  const groups = page.locator("[data-alert-group]");
+  expect(await groups.count()).toBeGreaterThan(0);
+
+  // Seviye SABİT seçilmez: "gördüm" testi uyarı kapattığı için hangi seviyenin ekranda
+  // kaldığı turlar arasında değişir. En üstteki grubun seviyesi filtrelenir.
+  const severity = await groups.first().getAttribute("data-alert-group");
+  const label = { critical: "Kritik", warning: "Dikkat", info: "Bilgi" }[severity ?? ""];
+  await page.getByRole("link", { name: new RegExp(`^${label}`) }).click();
   await page.waitForLoadState("networkidle");
 
-  // Filtrelenmiş liste daralmalı ve yalnızca kritik satır kalmalı.
-  const filtered = await page.locator("table tbody tr").count();
+  // Filtrelenmiş liste daralmalı ve yalnızca o seviye kalmalı.
+  const filtered = await rows.count();
   expect(filtered).toBeLessThanOrEqual(all);
-  await expect(page.locator("table tbody")).not.toContainText("Bilgi");
+  await expect(groups).toHaveCount(1);
+  await expect(page.locator(`[data-alert-group="${severity}"]`)).toBeVisible();
 });
 
 test("uyarı kapatılır ama silinmez", async ({ page }) => {
   await page.goto("/kahveji/alerts");
 
-  const before = await page.locator("table tbody tr").count();
-  await page.getByRole("button", { name: "Gördüm" }).first().click();
+  const rows = page.locator("[data-alert-row]");
+  const before = await rows.count();
+  // En az acil uyarı kapatılır: kritik grubu tüketirsek seviye filtresi testi
+  // demo veriyi ikinci turda bulamazdı.
+  await page.getByRole("button", { name: "Kapat" }).last().click();
   await page.waitForTimeout(500);
   await page.reload();
 
   // Açık listeden düşer...
-  await expect(page.locator("table tbody tr")).toHaveCount(before - 1);
+  await expect(rows).toHaveCount(before - 1);
 
   // ...ama "Kapatılmış" filtresinde durur (spec §10.6: silme yok).
   await page.goto("/kahveji/alerts?status=acknowledged");
-  expect(await page.locator("table tbody tr").count()).toBeGreaterThan(0);
+  expect(await rows.count()).toBeGreaterThan(0);
   await expect(page.locator("main")).toContainText("Kapatıldı");
 });
 
@@ -329,4 +346,29 @@ test("uyarı filtreleri URL'de taşınır", async ({ page }) => {
   // Paylaşılan adres doğrudan filtreli açılmalı.
   const active = page.locator('main a[aria-current="true"]');
   await expect(active.filter({ hasText: "Kritik" })).toHaveCount(1);
+});
+
+test("fatura onay ekranı eşleşmemiş satırda onayı kapatır, öneriyi gösterir", async ({ page }) => {
+  await page.goto("/kahveji/invoices");
+  await page.getByRole("link", { name: "EGE20260012" }).click();
+
+  // Fuzzy öneri otomatik kabul edilmez: rozet + onay butonu ile kullanıcıya sorulur.
+  await expect(page.getByText("öneri:")).toBeVisible();
+  await expect(page.locator("main")).toContainText("KHV-GTM-250");
+
+  // Hiç benzemeyen satır için öneri yok, yalnızca SKU seçici kalır.
+  await expect(page.getByRole("combobox").last()).toBeVisible();
+
+  // Eşleşmemiş satır varken stoka işleme kapalıdır (sunucu da reddeder).
+  await expect(page.getByRole("button", { name: "Onayla ve stoka işle" })).toBeDisabled();
+  await expect(page.locator("main")).toContainText("2 satır henüz bir SKU'ya bağlanmadı");
+});
+
+test("fatura toplamı tutmuyorsa onay kapalı ve fark yazılı", async ({ page }) => {
+  await page.goto("/kahveji/invoices");
+  await page.getByRole("link", { name: "EGE20260078" }).click();
+
+  // Okunamayan satır yüzünden satır toplamı fatura toplamını tutmuyor.
+  await expect(page.locator("main")).toContainText("fark var");
+  await expect(page.getByRole("button", { name: "Onayla ve stoka işle" })).toBeDisabled();
 });

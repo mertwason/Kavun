@@ -172,9 +172,22 @@ def counts(session: Session) -> AlertCounts:
     )
 
 
-def types(session: Session) -> list[str]:
-    """Markada geçen uyarı türleri — ekranın filtre listesi."""
-    return list(session.scalars(select(Alert.type).distinct().order_by(Alert.type)))
+def types(session: Session) -> list[tuple[str, int]]:
+    """Markada geçen uyarı türleri ve **açık** sayıları — ekranın filtre şeridi.
+
+    Sayı türün yanında durur ("Marj · 2"); kapatılmış uyarı sayıya girmez, çünkü şerit
+    "şu an ilgilenilecek ne var" sorusunu yanıtlar. Hepsi kapatılmış bir tür listede
+    kalır (0 ile), yoksa filtre kullanıcının altından kayar.
+    """
+    rows = session.execute(
+        select(
+            Alert.type,
+            func.count().filter(Alert.acknowledged_at.is_(None)),
+        )
+        .group_by(Alert.type)
+        .order_by(Alert.type)
+    ).all()
+    return [(alert_type, int(open_count)) for alert_type, open_count in rows]
 
 
 def acknowledge(session: Session, alert_id: uuid.UUID, *, at: datetime | None = None) -> Alert:

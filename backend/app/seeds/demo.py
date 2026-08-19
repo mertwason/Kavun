@@ -576,7 +576,67 @@ def _seed_purchasing(
                     )
                 )
             summary.bump("purchase_invoice_lines")
+
+        # İncelemedeki faturada eşleştirme ekranının İKİ zor durumu da bulunsun:
+        # fuzzy öneri gelen satır ve hiçbir ürüne benzemeyen ambalaj satırı. Onay
+        # ekranı demo veriyle yalnızca "hepsi eşleşti" hâlinde gezilemez olmasın.
+        if status == InvoiceStatus.REVIEW:
+            for raw_text, qty, unit in (
+                ("GUATEMALA ANTIGUA 250G CEK.", Decimal("40"), Decimal("174.44")),
+                ("KRAFT KUTU AMBALAJ 24LU", Decimal("10"), Decimal("62.00")),
+            ):
+                total += unit * qty
+                session.add(
+                    PurchaseInvoiceLine(
+                        invoice_id=invoice.id,
+                        raw_text=raw_text,
+                        product_id=None,
+                        qty=qty,
+                        unit_price_original=unit,
+                        unit_price_try=unit,
+                        vat_rate=Decimal("20"),
+                        match_status=MatchStatus.UNMATCHED,
+                    )
+                )
+                summary.bump("purchase_invoice_lines")
+
         invoice.total = _rounded(total)
+
+    # Ayrıştırılmış ama toplamı tutmayan fatura: PDF'te bir satır okunamamış
+    # (gerçek hayatta sık) — doğrulama barının kırmızı hâli demo veriyle görünür.
+    torn = PurchaseInvoice(
+        tenant_id=tenant.id,
+        brand_id=kahveji.id,
+        supplier_id=yurtici.id,
+        invoice_no="EGE20260078",
+        invoice_date=today - timedelta(days=3),
+        currency="TRY",
+        status=InvoiceStatus.PARSED,
+    )
+    session.add(torn)
+    session.flush()
+    summary.bump("purchase_invoices")
+
+    torn_total = Decimal("0")
+    for product, definition in kahveji_products[:3]:
+        qty = Decimal("20")
+        unit = _rounded(definition.unit_cost * Decimal("0.98"))
+        torn_total += unit * qty
+        session.add(
+            PurchaseInvoiceLine(
+                invoice_id=torn.id,
+                raw_text=definition.name.upper(),
+                product_id=product.id,
+                qty=qty,
+                unit_price_original=unit,
+                unit_price_try=unit,
+                vat_rate=definition.vat_rate,
+                match_status=MatchStatus.AUTO,
+            )
+        )
+        summary.bump("purchase_invoice_lines")
+    # Beyan edilen toplam okunamayan satırı da içeriyor: 620 TL fark.
+    torn.total = _rounded(torn_total + Decimal("620.00"))
 
     # İthalat dosyası (Alessi): EUR mal bedeli + TL navlun + müşavirlik (spec §12C.7).
     import_file = ImportFile(
@@ -876,7 +936,7 @@ def _seed_alerts_and_workspace(
     # Tür adları literal DEĞİL, servislerin gerçekten yazdığı sabitlerden gelir: sabit
     # yeniden adlandırılırsa demo veri de kendiliğinden takip eder (KVN-EK-06).
     alerts = (
-        (kahveji, AlertSeverity.CRITICAL, MARGIN_FLOOR_ALERT, "KHV-SMPL-50 negatif marjda: -%8,4"),
+        (kahveji, AlertSeverity.CRITICAL, MARGIN_FLOOR_ALERT, "KHV-SMPL-50 negatif marjda: −%8,4"),
         (
             kahveji,
             AlertSeverity.WARNING,
@@ -889,7 +949,7 @@ def _seed_alerts_and_workspace(
             UNMATCHED_CARGO_ALERT,
             "KRG-2026-08-001 faturasında 2 satır gönderiyle eşleşmedi",
         ),
-        (kahveji, AlertSeverity.INFO, NEGATIVE_STOCK_ALERT, "KHV-BLD-ESP stoğu -3 adede düştü"),
+        (kahveji, AlertSeverity.INFO, NEGATIVE_STOCK_ALERT, "KHV-BLD-ESP stoğu −3 adede düştü"),
         (
             alessi,
             AlertSeverity.CRITICAL,

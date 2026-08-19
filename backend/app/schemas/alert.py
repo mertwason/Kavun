@@ -24,6 +24,13 @@ class AlertOut(BaseModel):
     acknowledged_at: datetime | None
 
 
+class AlertTypeCountOut(BaseModel):
+    """Bir uyarı türü ve açık uyarı sayısı — ekranın filtre şeridi ("Marj · 2")."""
+
+    type: str
+    open: int
+
+
 class AlertCountsOut(BaseModel):
     """Uyarı özeti: seviye bazlı açık sayımlar + markada geçen türler."""
 
@@ -33,4 +40,4 @@ class AlertCountsOut(BaseModel):
     warning_open: int
     info_open: int
     total: int
-    types: list[str]
+    types: list[AlertTypeCountOut]

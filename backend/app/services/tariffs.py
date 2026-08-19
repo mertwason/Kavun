@@ -27,6 +27,7 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core import textfmt
 from app.core.logging import get_logger
 from app.engine.pricing import PriceInputs, price_for_margin
 from app.engine.profit import DEFAULT_SERVICE_VAT_PERCENT, LineInput, compute_line_profit
@@ -221,8 +222,9 @@ def alert_message(
     negative = impact.negative_skus
     message = (
         f"{category} kategorisinde komisyon "
-        f"%{old_rate * HUNDRED:.1f} → %{new_rate * HUNDRED:.1f}. "
-        f"Mevcut satış hızıyla aylık kâr etkisi: {impact.monthly_profit_impact:,.0f} TL."
+        f"{textfmt.percent(old_rate * HUNDRED)} → {textfmt.percent(new_rate * HUNDRED)}. "
+        f"Mevcut satış hızıyla aylık kâr etkisi: "
+        f"{textfmt.money(impact.monthly_profit_impact)}."
     )
     if negative:
         message += f" Negatif marja düşen SKU: {len(negative)} ({', '.join(negative[:5])})"

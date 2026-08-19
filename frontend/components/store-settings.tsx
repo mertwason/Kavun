@@ -22,7 +22,10 @@ import type { BrandSlug } from "@/lib/brands";
 import { formatDateTime, toInputNumber } from "@/lib/format";
 import tr from "@/locales/tr.json";
 
-const FIELD = "rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm";
+const FIELD = "control";
+
+const CREDENTIAL_LABELS: Record<string, string> = tr.settings.credentialFields;
+const CHANNEL_LABELS: Record<string, string> = tr.settings.channels;
 
 /** Kanal başına zorunlu credential alanları — backend'in beklediğiyle aynı (spec §4). */
 const CREDENTIAL_FIELDS: Record<string, string[]> = {
@@ -32,6 +35,16 @@ const CREDENTIAL_FIELDS: Record<string, string[]> = {
   shopify: ["shop_domain", "access_token"],
   manual: [],
 };
+
+/**
+ * Satıcı kimliğinin ekranda maskelenmiş hâli (`48*****2`).
+ *
+ * Sır değil ama omuz üstünden okunacak bir tanımlayıcı: handoff da maskeli gösteriyor.
+ */
+function maskId(value: string): string {
+  if (value.length <= 3) return value;
+  return `${value.slice(0, 2)}${"*".repeat(Math.max(1, value.length - 3))}${value.slice(-1)}`;
+}
 
 /** Girilen değer ekranda gizlenmeli mi? Anahtar/parola alanları maskelenir. */
 function isSecret(field: string): boolean {
@@ -55,12 +68,30 @@ function StoreCard({ brand, store }: { brand: BrandSlug; store: Store }) {
 
   return (
     <div className="flex flex-col gap-3 rounded-card border border-hairline p-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="flex items-baseline gap-3">
-          <span className="text-sm font-medium">{store.name}</span>
-          <span className="text-xs uppercase tracking-wide text-ink-faint">{store.channel}</span>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          {/* Kanal harf rozeti — gerçek logo entegrasyonu ürün ekibinin kararı (handoff). */}
+          <span
+            aria-hidden
+            className="inline-flex h-7 w-7 items-center justify-center rounded-control bg-divider text-cell font-semibold text-ink-secondary"
+          >
+            {store.channel.slice(0, 1).toLocaleUpperCase("tr-TR")}
+          </span>
+          <span className="flex flex-col">
+            <span className="text-cell font-medium">{store.name}</span>
+            <span className="text-helper text-ink-muted">
+              {CHANNEL_LABELS[store.channel] ?? store.channel}
+              {store.external_seller_id ? ` · ${maskId(store.external_seller_id)}` : ""}
+            </span>
+          </span>
         </div>
-        <span className={`text-xs ${configured ? "text-positive" : "text-ink-faint"}`}>
+        <span
+          className={`badge ${
+            configured
+              ? "border-positive-border bg-positive-tint text-positive-text"
+              : "border-hairline bg-canvas text-ink-muted"
+          }`}
+        >
           {configured ? tr.settings.credentialsConfigured : tr.settings.credentialsMissing}
           {store.credentials.rotated_at ? ` · ${formatDateTime(store.credentials.rotated_at)}` : ""}
         </span>
@@ -90,7 +121,7 @@ function StoreCard({ brand, store }: { brand: BrandSlug; store: Store }) {
             className={`${FIELD} w-28 tabular`}
           />
         </Labelled>
-        <span className="text-xs text-ink-faint">
+        <span className="text-helper text-ink-muted">
           {tr.settings.lastSync}:{" "}
           {store.last_synced_at ? formatDateTime(store.last_synced_at) : tr.settings.never}
         </span>
@@ -105,7 +136,7 @@ function StoreCard({ brand, store }: { brand: BrandSlug; store: Store }) {
           resetOnSuccess
         >
           {fields.map((field) => (
-            <Labelled key={field} label={field}>
+            <Labelled key={field} label={CREDENTIAL_LABELS[field] ?? field}>
               <input
                 name={`cred_${field}`}
                 type={isSecret(field) ? "password" : "text"}
@@ -115,7 +146,7 @@ function StoreCard({ brand, store }: { brand: BrandSlug; store: Store }) {
               />
             </Labelled>
           ))}
-          <span className="text-xs text-ink-faint">{tr.settings.credentialsNote}</span>
+          <span className="text-helper text-ink-muted">{tr.settings.credentialsNote}</span>
         </ActionForm>
       ) : null}
 
@@ -157,7 +188,7 @@ function AddStoreForm({ brand }: { brand: BrandSlug }) {
         <select name="channel" defaultValue="trendyol" className={`${FIELD} w-36`}>
           {Object.keys(CREDENTIAL_FIELDS).map((code) => (
             <option key={code} value={code}>
-              {code}
+              {CHANNEL_LABELS[code] ?? code}
             </option>
           ))}
         </select>
@@ -174,8 +205,8 @@ function AddStoreForm({ brand }: { brand: BrandSlug }) {
 
 function Labelled({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="flex flex-col gap-1 text-xs">
-      <span className="text-ink-faint">{label}</span>
+    <label className="flex flex-col gap-1">
+      <span className="col-head">{label}</span>
       {children}
     </label>
   );
@@ -225,16 +256,16 @@ function ActionForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-40"
+          className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
         >
           {submit}
         </button>
       </form>
       {state.status === "error" ? (
-        <p className="mt-2 text-sm text-negative">{state.message}</p>
+        <p className="mt-2 text-cell text-negative">{state.message}</p>
       ) : null}
       {state.status === "saved" ? (
-        <p className="mt-2 text-xs text-positive">{state.message ?? tr.settings.saved}</p>
+        <p className="mt-2 text-helper text-positive-text">{state.message ?? tr.settings.saved}</p>
       ) : null}
     </div>
   );

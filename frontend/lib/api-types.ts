@@ -463,6 +463,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/sku-margins/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SKU marj listesi (xlsx)
+         * @description Ekrandaki listenin aynısını xlsx olarak indirir.
+         *
+         *     **Salt okunur rapordur:** geri yüklenemez, çünkü kâr motorun çıktısıdır. Fiyat listesi
+         *     export'unun aksine şablon sürümü taşımaz (spec §12A.1 round-trip'i oraya özgüdür).
+         */
+        get: operations["export_sku_margins__brand_slug__sku_margins_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/orders": {
         parameters: {
             query?: never;
@@ -1626,7 +1649,7 @@ export interface components {
             /** Total */
             total: number;
             /** Types */
-            types: string[];
+            types: components["schemas"]["AlertTypeCountOut"][];
         };
         /**
          * AlertOut
@@ -1659,6 +1682,16 @@ export interface components {
          * @enum {string}
          */
         AlertSeverity: "info" | "warning" | "critical";
+        /**
+         * AlertTypeCountOut
+         * @description Bir uyarı türü ve açık uyarı sayısı — ekranın filtre şeridi ("Marj · 2").
+         */
+        AlertTypeCountOut: {
+            /** Type */
+            type: string;
+            /** Open */
+            open: number;
+        };
         /**
          * AnalysisOut
          * @description Kâr analizi — motorun çıktısı.
@@ -2241,6 +2274,9 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            record_type?: components["schemas"]["SettlementRecordType"] | null;
+            /** Order Ref */
+            order_ref?: string | null;
         };
         /**
          * DiffStatus
@@ -2909,6 +2945,16 @@ export interface components {
             resolved_count: number;
             /** Total Diff */
             total_diff: string;
+            /** Open Diff */
+            open_diff: string;
+            /** Record Count */
+            record_count: number;
+            /** Matched Count */
+            matched_count: number;
+            /** Settlement Total */
+            settlement_total: string;
+            /** Match Rate Pct */
+            match_rate_pct: string;
         };
         /**
          * PriceRowOut
@@ -3153,6 +3199,12 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        /**
+         * SettlementRecordType
+         * @description `settlement_records.record_type` (spec §5.3).
+         * @enum {string}
+         */
+        SettlementRecordType: "sale" | "commission" | "cargo" | "service_fee" | "penalty" | "ad_spend" | "refund" | "other";
         /**
          * ShippingPayer
          * @description `pricing_scenarios.kargo_kim_oder` (spec §12A.4).
@@ -4607,6 +4659,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SkuMarginOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_sku_margins__brand_slug__sku_margins_export_get: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+                category?: string | null;
+                only_negative?: boolean;
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

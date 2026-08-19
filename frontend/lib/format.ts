@@ -103,13 +103,31 @@ export function formatPoint(value: string | number | null | undefined): string {
   return `${sign}${percent.format(Math.abs(parsed))} pt`;
 }
 
+/** Adet: negatifte tire değil gerçek eksi işareti (handoff, Tipografi). */
 export function formatCount(value: number): string {
-  return integer.format(value);
+  return value < 0 ? `${MINUS}${integer.format(Math.abs(value))}` : integer.format(value);
 }
 
 /** Desi/ölçü değeri: Türkçe ondalık ayırıcı, gereksiz sondaki sıfırlar atılır (2,5 · 10). */
 export function formatDesi(value: string | number | null | undefined): string {
   return new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(toNumber(value));
+}
+
+/**
+ * Eşleştirme güveni: 0–1 aralığındaki skor tam sayı yüzdeye çevrilir (%87).
+ * Ondalık hassasiyet burada anlam taşımaz — skor zaten sezgisel bir orandır.
+ */
+export function formatConfidence(value: string | number | null | undefined): string {
+  return `%${Math.round(toNumber(value) * 100)}`;
+}
+
+/**
+ * Miktar: tam sayıysa ondalıksız, kesirliyse Türkçe ondalık ayırıcıyla (50 · 2,5).
+ * Ham `NUMERIC` dizesini ("50.0000") doğrudan basmak Türkçe'de binlik ayırıcı gibi
+ * okunur — miktar her zaman buradan geçer.
+ */
+export function formatQuantity(value: string | number | null | undefined): string {
+  return new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 3 }).format(toNumber(value));
 }
 
 /** Sayısal alanın form girdisi hâli: nokta ondalık, sondaki sıfırlar atılmış (8.99). */

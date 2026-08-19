@@ -26,6 +26,11 @@
     @apply text-column uppercase text-ink-muted;
   }
 
+  /* Form kontrolü kalıbı: 34px yükseklik, 8px radius, hairline kenar (handoff). */
+  .control {
+    @apply h-[34px] rounded-control border border-hairline bg-surface px-2.5 text-cell;
+  }
+
   /* Rozet kalıbı: 20px yükseklik, 11px/500, pill, tint zemin + 1px kenar. */
   .badge {
     @apply inline-flex h-5 items-center gap-1 rounded-pill border px-2 text-micro font-medium;

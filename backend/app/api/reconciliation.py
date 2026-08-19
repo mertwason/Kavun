@@ -43,8 +43,13 @@ def list_diffs(
     diff_status: DiffStatus | None = None,
 ) -> list[DiffOut]:
     """Dönem ve duruma göre fark listesi (spec §7.4)."""
-    rows = reconciliation.diffs(workspace.session, period=period, status=diff_status)
-    return [DiffOut.model_validate(row) for row in rows]
+    rows = reconciliation.diff_contexts(workspace.session, period=period, status=diff_status)
+    return [
+        DiffOut.model_validate(row.diff).model_copy(
+            update={"record_type": row.record_type, "order_ref": row.order_ref}
+        )
+        for row in rows
+    ]
 
 
 @router.get("/summary", response_model=PeriodSummaryOut, summary="Dönem özeti")

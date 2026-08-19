@@ -22,6 +22,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core import textfmt
 from app.core.context import current_context
 from app.core.logging import get_logger
 from app.models.catalog import Product
@@ -125,13 +126,17 @@ def violations(session: Session, *, today: date | None = None) -> list[Violation
 
 def _message(violation: Violation) -> str:
     parts: list[str] = []
-    if "msrp" in violation.kinds and violation.msrp is not None:
+    if "msrp" in violation.kinds and violation.msrp is not None and violation.msrp_gap_pct:
         parts.append(
-            f"{violation.channel} fiyatı {violation.price} TL, MSRP {violation.msrp} TL — "
-            f"%{violation.msrp_gap_pct} altında"
+            f"{violation.channel} fiyatı {textfmt.money(violation.price)}, "
+            f"MSRP {textfmt.money(violation.msrp)} — "
+            f"{textfmt.percent(violation.msrp_gap_pct)} altında"
         )
     if "margin_floor" in violation.kinds and violation.floor_pct is not None:
-        parts.append(f"marj %{violation.margin_pct} < taban %{violation.floor_pct}")
+        parts.append(
+            f"marj {textfmt.percent(violation.margin_pct)} < "
+            f"taban {textfmt.percent(violation.floor_pct)}"
+        )
     return f"{violation.sku}: " + "; ".join(parts)
 
 

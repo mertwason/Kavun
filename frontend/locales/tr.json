@@ -234,7 +234,13 @@
       "guncelleme": "Güncelleme",
       "hata": "Hata",
       "degisiklik_yok": "Değişiklik yok"
-    }
+    },
+    "showingRows": "{count} fiyat satırı",
+    "fileRead": "{file} · {count} satır okundu",
+    "moreRows": "+ {count} satır daha",
+    "applyNote": "Hatalı {errors} satır atlanır; {applied} satır uygulanır.",
+    "applyNoteClean": "{applied} satır uygulanır.",
+    "cancel": "İptal"
   },
   "drafts": {
     "formTitle": "Yeni ürün değerlendir",
@@ -359,6 +365,27 @@
     "backToList": "Faturalara dön",
     "reviewTitle": "Satır eşleştirme",
     "reviewSubtitle": "Her satır bir SKU'ya bağlanmadan fatura onaylanamaz.",
+    "dropTitle": "PDF'i buraya sürükle ya da tıkla",
+    "dropHint": "Satırlar otomatik ayrıştırılır; sonuç doğrudan stoka yazılmaz.",
+    "dropSupport": "Desteklenen: e-fatura PDF, e-arşiv PDF · maks. 20 MB",
+    "removeFile": "Dosyayı kaldır",
+    "onlyPdf": "Yalnızca PDF yüklenebilir.",
+    "tooLarge": "Dosya 20 MB sınırını aşıyor.",
+    "identity": "Fatura künyesi",
+    "currency": "Para birimi",
+    "declaredTotal": "Fatura toplamı",
+    "linesTotal": "Satır toplamı",
+    "lineCount": "Satır sayısı",
+    "unmatchedShort": "eşleşmedi",
+    "parsedLines": "Ayrıştırılan satırlar",
+    "pieces": "adet",
+    "automatic": "otomatik",
+    "suggestion": "öneri:",
+    "approve": "Onayla",
+    "change": "Değiştir…",
+    "totalsMatch": "Satır toplamı fatura toplamıyla uyuşuyor · {total}",
+    "totalsMismatch": "Satır toplamı {lines}, fatura toplamı {declared} — {difference} fark var.",
+    "unmatchedBlocks": "{count} satır henüz bir SKU'ya bağlanmadı — onay için hepsi eşleşmeli.",
     "rawText": "Fatura satırı",
     "unitPrice": "Birim fiyat (TL)",
     "matchedSku": "Eşleşen SKU",
@@ -424,7 +451,14 @@
       "return_out": "İade hurdası",
       "adjustment": "Düzeltme",
       "damage": "Hasar/fire"
-    }
+    },
+    "method": "ortalama maliyet yöntemi",
+    "skuCount": "{count} SKU",
+    "showingSkus": "{shown} / {total} SKU gösteriliyor",
+    "rowHint": "Satıra tıkla → maliyet zaman çizelgesi",
+    "timelineTitle": "Maliyet zaman çizelgesi",
+    "allProducts": "Tüm ürünler",
+    "movementCount": "{count} hareket"
   },
   "imports": {
     "title": "İthalat dosyaları",
@@ -615,7 +649,7 @@
     "preview": "Önizle",
     "apply": "Uygula",
     "running": "Çalışıyor…",
-    "records": "Kalem",
+    "records": "Kayıt",
     "matched": "Eşleşen",
     "unmatched": "Eşleşmeyen",
     "withinTolerance": "Tutan",
@@ -644,7 +678,29 @@
       "open": "Açık",
       "explained": "Açıklandı",
       "resolved": "Çözüldü"
-    }
+    },
+    "recordTypes": {
+      "sale": "satış",
+      "commission": "komisyon",
+      "cargo": "kargo",
+      "service_fee": "hizmet bedeli",
+      "penalty": "ceza",
+      "ad_spend": "reklam",
+      "refund": "iade",
+      "other": "diğer"
+    },
+    "orderRef": "Sipariş no",
+    "type": "Tür",
+    "volume": "Hakediş tutarı",
+    "openDiff": "Açık fark",
+    "resolvedThisPeriod": "Çözülen bu dönem",
+    "diffHint": "Fark = beklenen − gerçekleşen · pozitif fark alacağın demektir",
+    "showingDiffs": "{shown} / {total} fark gösteriliyor",
+    "tabOpen": "Açık farklar",
+    "tabClosed": "Çözülenler",
+    "tabAll": "Tümü",
+    "noPeriod": "Henüz mutabakat turu koşulmadı.",
+    "noPeriodHint": "Dönem seçip \"Önizle\" ile başlayın; önizleme hiçbir kayıt yazmaz."
   },
   "settings": {
     "title": "Ayarlar",
@@ -692,7 +748,26 @@
     "noBands": "Tarife bandı tanımlı değil.",
     "noBandsHint": "Bant eklenene kadar kargo tahmini varsayılan formülden hesaplanır.",
     "noStores": "Bu markada mağaza yok.",
-    "noStoresHint": "Mağaza ekleyip bağlantı bilgilerini girin; senkron ondan sonra çalışır."
+    "noStoresHint": "Mağaza ekleyip bağlantı bilgilerini girin; senkron ondan sonra çalışır.",
+    "credentialFields": {
+      "api_key": "API anahtarı",
+      "api_secret": "API gizli anahtarı",
+      "seller_id": "Satıcı ID",
+      "username": "Kullanıcı adı",
+      "password": "Parola",
+      "merchant_id": "Mağaza kodu",
+      "app_key": "Uygulama anahtarı",
+      "app_secret": "Uygulama gizli anahtarı",
+      "shop_domain": "Mağaza alan adı",
+      "access_token": "Erişim anahtarı"
+    },
+    "channels": {
+      "trendyol": "Trendyol",
+      "hepsiburada": "Hepsiburada",
+      "n11": "n11",
+      "shopify": "Shopify",
+      "manual": "Elle giriş"
+    }
   },
   "alerts": {
     "title": "Uyarılar",
@@ -709,8 +784,11 @@
     "status": "Durum",
     "message": "Uyarı",
     "date": "Tarih",
-    "acknowledge": "Gördüm",
+    "acknowledge": "Kapat",
+    "inspect": "İncele",
     "acknowledgedAt": "Kapatıldı",
+    "openGroup": "{label} · {count}",
+    "scanNote": "Marj, stok, komisyon ve mutabakat kuralları her senkronda çalışır.",
     "acknowledgeHint": "Kapatılan uyarı silinmez; \"Kapatılmış\" filtresinde durur.",
     "severities": {
       "critical": "Kritik",

@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import Workspace, get_workspace, require_role
 from app.models.enums import AlertSeverity, UserRole
-from app.schemas.alert import AlertCountsOut, AlertOut
+from app.schemas.alert import AlertCountsOut, AlertOut, AlertTypeCountOut
 from app.services import alerts as service
 
 router = APIRouter(prefix="/{brand_slug}/alerts", tags=["alerts"])
@@ -49,7 +49,10 @@ def alert_summary(workspace: Workspace = Depends(get_workspace)) -> AlertCountsO
         warning_open=counts.warning_open,
         info_open=counts.info_open,
         total=counts.total,
-        types=service.types(workspace.session),
+        types=[
+            AlertTypeCountOut(type=alert_type, open=open_count)
+            for alert_type, open_count in service.types(workspace.session)
+        ],
     )
 
 

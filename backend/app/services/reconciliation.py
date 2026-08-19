@@ -31,9 +31,10 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core import textfmt
 from app.core.logging import get_logger
 from app.models.enums import AlertSeverity, CostState, DiffStatus, SettlementRecordType
 from app.models.identity import Store
@@ -313,7 +314,8 @@ def _write_alert(session: Session, *, store: Store, summary: RunSummary) -> None
             entity_ref=f"period:{summary.period}",
             message=(
                 f"{summary.period} hakedişinde {summary.diffs} fark bulundu "
-                f"(toplam {summary.total_diff} TL); eşleşme %{summary.match_rate_pct}."
+                f"(toplam {textfmt.money(summary.total_diff)}); "
+                f"eşleşme {textfmt.percent(summary.match_rate_pct)}."
             ),
             created_at=datetime.now(UTC),
         )
@@ -330,6 +332,80 @@ def diffs(
     if status is not None:
         statement = statement.where(ReconciliationDiff.status == status)
     return list(session.scalars(statement).all())
+
+
+@dataclass(frozen=True)
+class DiffContext:
+    """Fark satırı + hangi kaleme ve hangi siparişe ait olduğu.
+
+    Ekranda "komisyon · #TY-8399102" yazmadan bir fark satırı işe yaramıyor: kullanıcı
+    farkı açıklamak için önce **neyin** farkı olduğunu bilmek zorunda. Bu bilgi farkın
+    kendisinde değil, bağlı olduğu hakediş kaleminde duruyor.
+    """
+
+    diff: ReconciliationDiff
+    record_type: SettlementRecordType | None
+    order_ref: str | None
+
+
+def diff_contexts(
+    session: Session, *, period: str | None = None, status: DiffStatus | None = None
+) -> list[DiffContext]:
+    """`diffs()` + kalem türü ve sipariş referansı (spec §7.4 ekranı).
+
+    Bağlam **ayrı sorgularla** toplanır, `outerjoin` ile değil: marka guard'ı her
+    marka-kapsamlı tabloya `brand_id = …` koşulu ekliyor ve bu koşul dış birleşimin
+    ürettiği NULL satırları eleyerek dış birleşimi sessizce iç birleşime çeviriyor —
+    bağlantısı kopmuş fark listeden düşerdi. Fark listesi asla kısalmamalı.
+    """
+    from app.models.transactions import SettlementRecord
+
+    rows = diffs(session, period=period, status=status)
+
+    record_ids = {row.settlement_record_id for row in rows if row.settlement_record_id}
+    records = (
+        {
+            record.id: record
+            for record in session.scalars(
+                select(SettlementRecord).where(SettlementRecord.id.in_(record_ids))
+            )
+        }
+        if record_ids
+        else {}
+    )
+
+    line_ids = {record.order_line_id for record in records.values() if record.order_line_id}
+    lines = (
+        {
+            line.id: line
+            for line in session.scalars(select(OrderLine).where(OrderLine.id.in_(line_ids)))
+        }
+        if line_ids
+        else {}
+    )
+
+    order_ids = {line.order_id for line in lines.values()}
+    orders = (
+        {
+            order.id: order.external_order_id
+            for order in session.scalars(select(Order).where(Order.id.in_(order_ids)))
+        }
+        if order_ids
+        else {}
+    )
+
+    contexts: list[DiffContext] = []
+    for row in rows:
+        record = records.get(row.settlement_record_id) if row.settlement_record_id else None
+        line = lines.get(record.order_line_id) if record and record.order_line_id else None
+        contexts.append(
+            DiffContext(
+                diff=row,
+                record_type=record.record_type if record else None,
+                order_ref=orders.get(line.order_id) if line else None,
+            )
+        )
+    return contexts
 
 
 def explain(
@@ -365,11 +441,38 @@ class PeriodSummary:
     explained_count: int
     resolved_count: int
     total_diff: Decimal
+    open_diff: Decimal
+    """Yalnızca AÇIK farkların toplamı — ekranın "ilgilenilecek tutar" rakamı."""
+
+    record_count: int
+    matched_count: int
+    settlement_total: Decimal
+    """Dönemin hakediş hacmi (kalem tutarlarının mutlak toplamı)."""
+
+    @property
+    def match_rate_pct(self) -> Decimal:
+        """Eşleşen kalem oranı — kalem yoksa 0 (bölme değil, bilgi yokluğu)."""
+        if not self.record_count:
+            return ZERO
+        return (Decimal(self.matched_count) / Decimal(self.record_count) * Decimal("100")).quantize(
+            Decimal("0.01")
+        )
 
 
 def period_summary(session: Session, *, period: str) -> PeriodSummary:
-    """Dönemin fark özeti."""
+    """Dönemin fark özeti + hakediş hacmi ve eşleşme oranı (spec §7.4)."""
+    from app.models.transactions import SettlementRecord
+
     rows = diffs(session, period=period)
+    in_period = func.to_char(SettlementRecord.transaction_date, "YYYY-MM") == period
+    records, matched, volume = session.execute(
+        select(
+            func.count(),
+            func.count().filter(SettlementRecord.matched.is_(True)),
+            func.coalesce(func.sum(func.abs(SettlementRecord.amount)), 0),
+        ).where(in_period)
+    ).one()
+
     return PeriodSummary(
         period=period,
         diff_count=len(rows),
@@ -377,6 +480,12 @@ def period_summary(session: Session, *, period: str) -> PeriodSummary:
         explained_count=sum(1 for row in rows if row.status is DiffStatus.EXPLAINED),
         resolved_count=sum(1 for row in rows if row.status is DiffStatus.RESOLVED),
         total_diff=sum((abs(row.diff) for row in rows), ZERO).quantize(Decimal("0.0001")),
+        open_diff=sum(
+            (abs(row.diff) for row in rows if row.status is DiffStatus.OPEN), ZERO
+        ).quantize(Decimal("0.0001")),
+        record_count=int(records),
+        matched_count=int(matched),
+        settlement_total=Decimal(volume).quantize(Decimal("0.0001")),
     )
 
 

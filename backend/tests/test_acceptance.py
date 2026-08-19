@@ -142,20 +142,27 @@ def test_invoice_confirmation_moves_stock_and_cost(api: TestClient, db_session: 
         invoice = db_session.scalar(
             select(PurchaseInvoice).where(PurchaseInvoice.status == InvoiceStatus.REVIEW)
         )
-    assert invoice is not None, "demo veride incelemede bir fatura olmalı"
+        assert invoice is not None, "demo veride incelemede bir fatura olmalı"
+        # Kimlik kapsam İÇİNDE okunur: API çağrısı commit ettiğinde ORM nesnesi expire
+        # olur ve sonraki `invoice.id` erişimi kapsam dışında lazy-load denerdi.
+        invoice_id = invoice.id
 
-    detail = api.get(f"/kahveji/invoices/{invoice.id}", headers=headers).json()
+    detail = api.get(f"/kahveji/invoices/{invoice_id}", headers=headers).json()
+    # Hiçbir ürüne benzemeyen satır (ambalaj gibi) öneri almaz; kullanıcı onu elle seçer.
+    fallback = next(line["product_id"] for line in detail["lines"] if line["product_id"])
     for line in detail["lines"]:
         if line["product_id"] is None:
-            suggestion = line["suggestions"][0]
-            api.post(
-                f"/kahveji/invoices/{invoice.id}/lines/{line['id']}/match",
-                json={"product_id": suggestion["product_id"]},
+            suggestions = line["suggestions"]
+            product_id = suggestions[0]["product_id"] if suggestions else fallback
+            response = api.post(
+                f"/kahveji/invoices/{invoice_id}/lines/{line['id']}/match",
+                json={"product_id": product_id},
                 headers=headers,
             )
+            assert response.status_code == 200, response.text
 
     before = {row["sku"]: Decimal(str(row["on_hand"])) for row in _stock(api, headers)}
-    response = api.post(f"/kahveji/invoices/{invoice.id}/confirm", headers=headers)
+    response = api.post(f"/kahveji/invoices/{invoice_id}/confirm", headers=headers)
     assert response.status_code == 200, response.text
 
     after = {row["sku"]: Decimal(str(row["on_hand"])) for row in _stock(api, headers)}

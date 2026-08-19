@@ -8,7 +8,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.enums import DiffStatus
+from app.models.enums import DiffStatus, SettlementRecordType
 
 
 class RunOut(BaseModel):
@@ -41,6 +41,11 @@ class DiffOut(BaseModel):
     status: DiffStatus
     note: str | None
     created_at: datetime
+    record_type: SettlementRecordType | None = None
+    """Farkın hangi kalemden geldiği (komisyon/kargo/iade…) — ekranın "Tür" kolonu."""
+
+    order_ref: str | None = None
+    """Kalemin bağlandığı siparişin platform referansı; eşleşmemişse boş."""
 
 
 class PeriodSummaryOut(BaseModel):
@@ -54,6 +59,11 @@ class PeriodSummaryOut(BaseModel):
     explained_count: int
     resolved_count: int
     total_diff: Decimal
+    open_diff: Decimal
+    record_count: int
+    matched_count: int
+    settlement_total: Decimal
+    match_rate_pct: Decimal
 
 
 class ExplainIn(BaseModel):
