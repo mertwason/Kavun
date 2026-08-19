@@ -97,6 +97,24 @@ def _engine_margin(price: Decimal, inputs: PriceInputs) -> Decimal:
     return result.margin_pct
 
 
+# Motorun çözünürlüğü: her parasal bileşen 4 haneye yuvarlanır (DB hassasiyeti,
+# `NUMERIC(14,4)`). Kâra giren ~7 bileşenin her biri ±0,00005 kayabildiği için kâr en
+# fazla ~0,0005 TL sapar. Bu MUTLAK sapma, marja çevrilirken fiyata bölünür: 1.000 TL'lik
+# üründe 0,00005 puan, 1,25 TL'lik üründe 0,04 puan eder. Bu yüzden hedef marj toleransı
+# fiyatla ÖLÇEKLENİR — sabit ±0,01 puan, küçük fiyatlarda motorun ulaşabileceğinden daha
+# ince bir hassasiyet ister ve çözücüyü haksız yere suçlar.
+ENGINE_MONEY_EPSILON = D("0.0005")
+
+
+def _margin_tolerance(price: Decimal) -> Decimal:
+    """Verilen fiyatta motorun ulaşabileceği en iyi marj hassasiyeti (puan)."""
+    if price <= ZERO_PRICE:
+        return D("0.01")
+    return max(D("0.01"), (ENGINE_MONEY_EPSILON / price) * D("100"))
+
+
+ZERO_PRICE = D("0")
+
 BASE_INPUTS = PriceInputs(
     unit_cost_net=D("50"),
     vat_percent=D("20"),
@@ -112,7 +130,7 @@ def test_solved_price_hits_the_target_margin(target: Decimal) -> None:
     price = price_for_margin(target, BASE_INPUTS)
 
     assert price is not None
-    assert abs(_engine_margin(price, BASE_INPUTS) - target) <= D("0.01")
+    assert abs(_engine_margin(price, BASE_INPUTS) - target) <= _margin_tolerance(price)
 
 
 def test_solver_handles_campaign_discount() -> None:
@@ -130,7 +148,7 @@ def test_solver_handles_campaign_discount() -> None:
     price = price_for_margin(D("15"), inputs)
 
     assert price is not None
-    assert abs(_engine_margin(price, inputs) - D("15")) <= D("0.01")
+    assert abs(_engine_margin(price, inputs) - D("15")) <= _margin_tolerance(price)
 
 
 def test_break_even_price_matches_engine_zero_profit() -> None:
@@ -189,7 +207,7 @@ def test_property_solver_round_trip(
     price = price_for_margin(target, inputs)
     if price is None:
         return
-    assert abs(_engine_margin(price, inputs) - target) <= D("0.01")
+    assert abs(_engine_margin(price, inputs) - target) <= _margin_tolerance(price)
 
 
 # --- senaryo hesabı (spec §12A.4) -------------------------------------------

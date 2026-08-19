@@ -7,6 +7,7 @@ Canlı API'ye çıkılmaz; olaylar `raw_events`'e yazılıp normalize edilir (KV
 from __future__ import annotations
 
 import json
+import uuid
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -439,3 +440,121 @@ def test_reconciliation_task_defaults_to_current_period(
     result = worker_tasks.reconciliation_run_task()
 
     assert result["period"] == datetime.now(UTC).strftime("%Y-%m")
+
+
+# --- kalan worker görevleri (coverage hedefi: `workers/tasks.py` ≥ %80) ------
+
+
+@pytest.fixture
+def patched_session(
+    db_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> Iterator[pytest.MonkeyPatch]:
+    """Worker görevleri kendi oturumunu açar; testte mevcut oturuma bağlanır."""
+
+    class _Session:
+        def __enter__(self) -> Session:
+            return db_session
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+    monkeypatch.setattr("app.workers.tasks.SessionLocal", _Session)
+    yield monkeypatch
+
+
+def test_sync_store_task_reports_unknown_store(patched_session: pytest.MonkeyPatch) -> None:
+    """Olmayan mağaza sessizce başarı sayılmaz."""
+    from app.workers import tasks as worker_tasks
+
+    result = worker_tasks.sync_store_task(str(uuid.uuid4()))
+
+    assert result["error"] == "store_not_found"
+
+
+def test_sync_store_task_chains_normalize(
+    db_session: Session, store: Store, patched_session: pytest.MonkeyPatch
+) -> None:
+    """Başarılı sync normalize zincirini tetikler (spec §9)."""
+    from app.workers import tasks as worker_tasks
+
+    chained: list[str] = []
+    patched_session.setattr(
+        worker_tasks.normalize_pending_task, "delay", lambda store_id: chained.append(store_id)
+    )
+
+    async def _fake_sync(session: Session, target: Store, **kwargs: object) -> Any:
+        from app.services.sync import SyncSummary
+
+        return SyncSummary(store_id=target.id, channel="trendyol")
+
+    patched_session.setattr("app.workers.tasks.sync_store", _fake_sync)
+
+    worker_tasks.sync_store_task(str(store.id))
+
+    assert chained == [str(store.id)]
+
+
+def test_normalize_pending_task_runs(
+    db_session: Session, store: Store, patched_session: pytest.MonkeyPatch
+) -> None:
+    """Normalize görevi özet döndürür."""
+    from app.workers import tasks as worker_tasks
+
+    result = worker_tasks.normalize_pending_task(str(store.id))
+
+    assert "processed_events" in result
+
+
+def test_recompute_pending_profits_task_runs(
+    db_session: Session, store: Store, patched_session: pytest.MonkeyPatch
+) -> None:
+    """Kâr hesabı görevi özet döndürür."""
+    from app.workers import tasks as worker_tasks
+
+    result = worker_tasks.recompute_pending_profits_task()
+
+    assert "orders" in result
+
+
+def test_partition_task_creates_future_partitions(
+    db_session: Session, patched_session: pytest.MonkeyPatch
+) -> None:
+    """Gelecek ayların partition'ları açılır (KVN-02 riski)."""
+    from app.workers import tasks as worker_tasks
+
+    result = worker_tasks.ensure_raw_event_partitions_task(months_ahead=1)
+
+    assert len(result["partitions"]) == 2
+
+
+def test_detect_commission_changes_task_runs(
+    db_session: Session, store: Store, patched_session: pytest.MonkeyPatch
+) -> None:
+    """Tarife diff görevi sayaç döndürür."""
+    from app.workers import tasks as worker_tasks
+
+    result = worker_tasks.detect_commission_changes()
+
+    assert set(result) == {"detected", "alerts"}
+
+
+def test_check_price_discipline_task_runs(
+    db_session: Session, store: Store, patched_session: pytest.MonkeyPatch
+) -> None:
+    """Fiyat disiplini taraması bayrağı kapalı markayı atlar, hata vermez."""
+    from app.workers import tasks as worker_tasks
+
+    result = worker_tasks.check_price_discipline()
+
+    assert "alerts" in result
+
+
+def test_record_stock_movements_task_runs(
+    db_session: Session, store: Store, patched_session: pytest.MonkeyPatch
+) -> None:
+    """Stok hareketi görevi satış/iade sayaçlarını döndürür."""
+    from app.workers import tasks as worker_tasks
+
+    result = worker_tasks.record_stock_movements()
+
+    assert set(result) == {"sale_out", "return_in"}

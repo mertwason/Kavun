@@ -1,8 +1,8 @@
 # KAVUN İlerleme
 
 **TOPLAM: %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-**FAZ 2 (ek görevler): %45** ▓▓▓▓▓▓▓▓▓░░░░░░░░░░░
-Son güncelleme: 2026-08-19 10:20 · Aktif görev: KVN-EK-05
+**FAZ 2 (ek görevler): %61** ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░
+Son güncelleme: 2026-08-19 12:20 · Aktif görev: — (sırada: KVN-EK-06)
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -43,12 +43,12 @@ Toplam ağırlık: **110** · Biten ağırlık: 110 · **Faz 1 ve Faz 1.5 tamaml
 | KVN-EK-02 | Kargo faturası eşleştirme + `estimated → actual` + revizyon | 6       | ✅ Bitti     | spec §5.3, §6.2 |
 | KVN-EK-03 | Hakediş mutabakatı: eşleştirme + fark motoru + ekran       | 8       | ✅ Bitti     | spec §7 — "katil özellik" |
 | KVN-EK-04 | Ayarlar ekranı: mağaza + credential + hizmet bedeli + kargo tarifesi | 5 | ✅ Bitti     | spec §10.7 — kargo tarife TABLOSU da bu görevde yazıldı (yoktu) |
-| KVN-EK-05 | Trendyol Faz 2 uçları + eksik beat programı                | 8       | 🔄 Yapılıyor | spec §4, §9 — iade/hakediş/kargo senkronu; `workers/tasks.py` coverage ≥ %80 |
+| KVN-EK-05 | Trendyol Faz 2 uçları + eksik beat programı                | 8       | ✅ Bitti     | spec §4, §9 — iade/hakediş/kargo senkronu; `workers/tasks.py` coverage ≥ %80 |
 | KVN-EK-06 | Uyarılar ekranı + acknowledge akışı                        | 4       | ⏳ Sırada    | spec §10.6 — `acknowledged_at` yazan uç dahil |
 | KVN-EK-07 | Gerçek veri kalibrasyon haftası                            | 6       | ⏳ Sırada    | **Mert'in dosyalarına bağlı** — geldiğinde sıraya girer; kurgu fixture'lar + 3 `TODO(verify)` + `tracking_no` |
 | KVN-EK-08 | Tasarım sistemi rework (token seti + Tremor + TanStack)    | 10      | ⏳ Sırada    | **BLOKE:** brief'in "Kaynak Kütüphaneler" bölümü repoda yok (aşağıya bak) |
 
-Faz 2 ağırlığı: 51 · Biten: 23
+Faz 2 ağırlığı: 51 · Biten: 31
 
 > **Sıra (2026-08-19, Mert onayı):** EK-04 → EK-05 → EK-06 → **EK-08**. EK-07 dosyalar
 > geldiğinde araya girer. Bu dört görev, KVN-EK-03 sonrası çıkarılan durum raporunun karşılığıdır:
@@ -84,6 +84,45 @@ Faz 2 ağırlığı: 51 · Biten: 23
 > birlikte kullanımı ayrıca doğrulanmalı.
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-EK-05 bitti (Trendyol Faz 2 uçları + zamanlama)
+
+**Ne bitti:** İade, hakediş ve kargo faturası uçları yazıldı; sync onları `raw_events`'e,
+normalize da `returns` / `settlement_records` / `cargo_invoices`'a aktarıyor. Beat programı
+spec §9'a tamamlandı. Alan adları ve kısıtlar developers.trendyol.com'dan **2026-08-19'da
+doğrulandı** — tahmin edilen alan yok. Testler: connector +15, veri borusu +30.
+
+**Kararlar / notlar:**
+- **Kargo faturası iki adımlı bir zincir.** Fatura numarasını listeleyen servis yok:
+  `otherfinancials?transactionType=DeductionInvoices` → `transactionType`'ı "Kargo
+  Faturası" olan kayıtların `id`'si seri numarası → `cargo-invoice/{seri}/items`.
+- **Hakediş servisi tek tip alıyor**, aralık 15 günü aşamıyor, `size` yalnızca 500/1000.
+  Bu yüzden her tip için ayrı istek atılıyor.
+- **Tutar `credit − debt`.** Servis borç/alacak sütunlarını ayrı veriyor; kesinti negatif,
+  ödeme pozitif olacak şekilde tek tutara indirgeniyor.
+- **Bilinmeyen `transactionType` atılmıyor**, `other` yazılıyor — atılan kalem mutabakatta
+  farkı gizler.
+- **Reddedilen iade talebi iade sayılmıyor**; kısmen kabul edilen satır kabul edilen ve
+  edilmeyen adetlere bölünüyor. Satır bulunamazsa iade yazılmıyor ama `iade_satir_yok`
+  sayacına düşüyor. `restocked` serviste yok, **False** varsayılıyor: yeniden satılabilirliği
+  kanıtsız varsaymak kârı yüksek gösterirdi.
+- **`cargoTrackingNumber` doğrulandı ve artık doldruluyor** — KVN-EK-02'den beri açık duran
+  risk kapandı; kargo eşleştirmesi artık sipariş numarasına düşmüyor.
+- **`alert_scan` ne tarayacak?** Spec §9 işi sayıyor ama içeriğini yazmıyor. Uyarı üreten
+  akışların hepsi uyarıyı olay anında yazıyor; tekrar taramak ekranı gürültüye boğardı.
+  Bu yüzden hiçbir akışın yazmadığı tek duruma bakılıyor: **senkronun sessizce durması**
+  (bayat `last_synced_at`). Açık uyarı varken tekrarı yazılmıyor.
+- **Hypothesis eski bir test kusurunu yakaladı (EK-05 ile ilgisiz).** Hedef marj çözücüsünün
+  property testi sabit ±0,01 puan tolerans istiyordu. Teşhis: çözücünün formülü DOĞRU —
+  kesin aritmetikte hedefi tam tutturuyor. Sapma motorun her parasal bileşeni 4 haneye
+  (DB hassasiyeti) yuvarlamasından geliyor; ~0,0005 TL'lik mutlak sapma 1,24 TL'lik üründe
+  0,012 puan marj hatası demek. Tolerans artık fiyatla ölçekleniyor ve neden ölçeklendiği
+  testte yazılı. Motor ve çözücü değişmedi.
+
+**Ne kaldı / risk:** Uçlar yazıldı ama **hiç gerçek veriyle çalışmadılar** — fixture'lar
+dokümandaki şemadan üretildi, canlı trafikten kaydedilmedi. Gerçek doğrulama KVN-EK-07'de.
+Sırada KVN-EK-06 (Uyarılar ekranı) var; EK-05'in ürettiği bayat-senkron uyarısı orada
+görünür hale gelecek.
 
 ### 2026-08-19 — KVN-EK-04 bitti (Ayarlar + kargo tarife tablosu)
 
