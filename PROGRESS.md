@@ -84,6 +84,14 @@ motor paketi toplam %99, genel %94. Ruff/format/para-float/`mypy app tools tests
   Oran artık `(matched + skipped) / records`; regresyon testi eklendi. Tur idempotent:
   ikinci fark kaydı üretilmiyor.
 
+- **CI'da compose smoke işi iki turdur kırmızıydı** (KVN-EK-01 ve KVN-EK-02 commit'leri):
+  `docker compose up`, frontend servisinde `node_modules`'ı adlandırılmış volume ile
+  gölgeliyor ve bağlama noktasını host'ta **root** olarak yaratıyor; sonrasında çalışan
+  host tarafındaki `npm ci` EACCES ile ölüyordu. Testlerin kendisi değil, kurulum sırası
+  bozuktu. Playwright kurulumu artık ortam kaldırılmadan önce yapılıyor. Ders (KVN-19 ve
+  KVN-20'de de yaşandı): **push sonrası CI sonucu fiilen kontrol edilmeden görev bitmiş
+  sayılmamalı** — yerel yeşil, CI yeşil demek değil.
+
 **Ne kaldı / risk:** Kalan iş gerçek veriye bağlı ve dışarıdan girdi bekliyor: (1) Trendyol
 mağaza anahtarlarıyla ilk canlı sync, (2) gerçek bir aylık hakediş dökümünün mutabakattan
 geçirilmesi — Faz 2'nin nihai kabul kriteri (§11), (3) `shipments.tracking_no` alan adı
