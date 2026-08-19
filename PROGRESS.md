@@ -92,6 +92,13 @@ Ruff/format/para-float/`mypy app tools tests` temiz, tarayıcıda doğrulandı.
 - **`system_scope` sızıntısı önlendi:** normalize marka bağlamı olmadan koşuyor;
   `bands_for_brand()` markayı AÇIKÇA filtreliyor. Kahveji'nin tarifesiyle Alessi'nin
   kargosunu hesaplamak sessiz bir hata olurdu — negatif testi yazıldı.
+- **Yöntem hatası (kendi hatam, not düşülüyor):** arka plan test koşularını
+  `pytest ... | tail` ile çalıştırdım; boru hattının çıkış kodu **`tail`'in** kodudur,
+  pytest'in değil. Bu yüzden kırık bir paketi "yeşil" sandım ve öyle rapor ettim. Gerçekte
+  `test_schema_matches_models` kırıktı: migration'a modelde karşılığı olmayan bir
+  `updated_at` sütunu yazmışım (`TimestampMixin` yalnızca `created_at` tanımlıyor).
+  Sütun migration'dan kaldırıldı, test veritabanı sıfırlanıp yeniden kuruldu, `alembic
+  check` temiz. Bundan sonra test çıkış kodu boruya sokulmadan okunacak.
 - **Demo veri artık ekrandaki tarifeden üretiliyor:** Ayarlar'da görünen bantlar,
   siparişlerdeki gönderi maliyetlerinin gerçek kaynağı. "Ekranda tarife var ama veri
   başka yerden geliyor" tutarsızlığı bilinçli olarak bırakılmadı.
