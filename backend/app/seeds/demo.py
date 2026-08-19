@@ -102,8 +102,12 @@ from app.seeds.base import (
     get_or_create_tenant,
 )
 from app.seeds.catalog_data import ALESSI_PRODUCTS, KAHVEJI_PRODUCTS, DemoProduct
+from app.services.alerts import STALE_SYNC_ALERT
+from app.services.cargo import UNMATCHED_ALERT as UNMATCHED_CARGO_ALERT
+from app.services.discipline import MARGIN_FLOOR_ALERT, MSRP_ALERT
 from app.services.imports import add_cost_item, confirm_file, record_payment
-from app.services.inventory import damage, record_returns, record_sales
+from app.services.inventory import NEGATIVE_STOCK_ALERT, damage, record_returns, record_sales
+from app.services.tariffs import ALERT_TYPE as COMMISSION_CHANGE_ALERT
 
 IMPORT_FX_BEYANNAME = Decimal("37.500000")
 """Beyanname kuru — maliyet bu kurla sabitlenir (spec §12C.8)."""
@@ -869,36 +873,36 @@ def _seed_alerts_and_workspace(
     summary: DemoSummary,
 ) -> None:
     """Uyarılar, taslak ürünler, senaryolar ve B2B müşterileri."""
-    # Tür adları servislerin GERÇEKTEN yazdığı sabitlerle aynı olmalı: demo ekranda
-    # görünen filtre listesi gerçek kurulumda da aynı olsun (KVN-EK-06).
+    # Tür adları literal DEĞİL, servislerin gerçekten yazdığı sabitlerden gelir: sabit
+    # yeniden adlandırılırsa demo veri de kendiliğinden takip eder (KVN-EK-06).
     alerts = (
-        (kahveji, AlertSeverity.CRITICAL, "marj_tabani", "KHV-SMPL-50 negatif marjda: -%8,4"),
+        (kahveji, AlertSeverity.CRITICAL, MARGIN_FLOOR_ALERT, "KHV-SMPL-50 negatif marjda: -%8,4"),
         (
             kahveji,
             AlertSeverity.WARNING,
-            "komisyon_degisikligi",
+            COMMISSION_CHANGE_ALERT,
             "Ekipman/Sarf komisyonu %21,0 → %22,0",
         ),
         (
             kahveji,
             AlertSeverity.WARNING,
-            "kargo_faturasi_eslesmedi",
+            UNMATCHED_CARGO_ALERT,
             "KRG-2026-08-001 faturasında 2 satır gönderiyle eşleşmedi",
         ),
-        (kahveji, AlertSeverity.INFO, "negatif_stok", "KHV-BLD-ESP stoğu -3 adede düştü"),
+        (kahveji, AlertSeverity.INFO, NEGATIVE_STOCK_ALERT, "KHV-BLD-ESP stoğu -3 adede düştü"),
         (
             alessi,
             AlertSeverity.CRITICAL,
-            "msrp_ihlali",
+            MSRP_ALERT,
             "ALS-OUTL-1 liste fiyatı MSRP disiplinini bozuyor",
         ),
         (
             alessi,
             AlertSeverity.WARNING,
-            "stale_sync",
+            STALE_SYNC_ALERT,
             "Alessi D2B mağazası 14 saattir senkronlanmadı",
         ),
-        (alessi, AlertSeverity.INFO, "negatif_stok", "ALS-KTL-01 stok 6 adete düştü"),
+        (alessi, AlertSeverity.INFO, NEGATIVE_STOCK_ALERT, "ALS-KTL-01 stok 6 adete düştü"),
     )
     for index, (brand, severity, alert_type, message) in enumerate(alerts):
         session.add(

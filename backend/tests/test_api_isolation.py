@@ -123,8 +123,9 @@ def test_alerts_are_brand_scoped(api: TestClient) -> None:
         "/kahveji/alerts", headers=_login(api, "demo@mokkalabs.com", "kahveji")
     ).json()
 
-    assert {alert["type"] for alert in alessi} & {"msrp_violation", "fx_exposure"}
-    assert {alert["type"] for alert in kahveji} & {"negative_margin"}
+    # Tür adları servislerin gerçekten yazdığı sabitler (KVN-EK-06'da demo seed hizalandı).
+    assert {alert["type"] for alert in alessi} & {"msrp_ihlali", "stale_sync"}
+    assert {alert["type"] for alert in kahveji} & {"marj_tabani", "komisyon_degisikligi"}
     assert not {alert["id"] for alert in alessi} & {alert["id"] for alert in kahveji}
 
 
