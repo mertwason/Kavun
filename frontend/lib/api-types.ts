@@ -259,6 +259,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dönem KPI'ları ve grafikler
+         * @description Ciro, net kâr, marj%, iade% + günlük seri + mağaza kırılımı (spec §10.1).
+         */
+        get: operations["get_dashboard__brand_slug__dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/sku-margins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SKU marj listesi
+         * @description En düşük kârdan başlayarak SKU marjları (spec §10.2).
+         */
+        get: operations["get_sku_margins__brand_slug__sku_margins_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sipariş listesi + kâr
+         * @description Dönemdeki siparişler; detay ekranının giriş kapısı.
+         */
+        get: operations["get_orders__brand_slug__orders_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/orders/{order_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sipariş detayı — satır bazlı şelale dökümü
+         * @description Başka markanın siparişi de 404 döner — varlığı sızdırılmaz (spec §3A.6).
+         */
+        get: operations["get_order_detail__brand_slug__orders__order_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/products": {
         parameters: {
             query?: never;
@@ -386,6 +466,12 @@ export interface components {
          */
         ChannelCode: "trendyol" | "hepsiburada" | "n11" | "shopify" | "manual";
         /**
+         * CommissionSource
+         * @description Komisyon çözümleme hiyerarşisi (spec §12B.1) — sıra önem taşır.
+         * @enum {string}
+         */
+        CommissionSource: "settlement_actual" | "api_product" | "api_category" | "manual_tariff_upload" | "manual";
+        /**
          * CredentialStatus
          * @description Credential durumu — içerik ASLA dönmez.
          */
@@ -409,6 +495,33 @@ export interface components {
             values: {
                 [key: string]: string;
             };
+        };
+        /**
+         * DailyPointOut
+         * @description Günlük kâr grafiğinin bir noktası.
+         */
+        DailyPointOut: {
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /** Revenue Gross */
+            revenue_gross: string;
+            /** Profit */
+            profit: string;
+        };
+        /**
+         * DashboardOut
+         * @description Dashboard yanıtı (spec §10.1).
+         */
+        DashboardOut: {
+            period: components["schemas"]["PeriodOut"];
+            kpis: components["schemas"]["KpisOut"];
+            /** Daily */
+            daily: components["schemas"]["DailyPointOut"][];
+            /** Stores */
+            stores: components["schemas"]["StoreBreakdownOut"][];
         };
         /**
          * DevLoginRequest
@@ -455,6 +568,32 @@ export interface components {
             import_vat_paid: string | null;
         };
         /**
+         * KpisOut
+         * @description Dashboard üst şeridi.
+         */
+        KpisOut: {
+            /** Revenue Gross */
+            revenue_gross: string;
+            /** Revenue Net Vat */
+            revenue_net_vat: string;
+            /** Profit */
+            profit: string;
+            /** Margin Pct */
+            margin_pct: string;
+            /** Return Rate Pct */
+            return_rate_pct: string;
+            /** Order Count */
+            order_count: number;
+            /** Line Count */
+            line_count: number;
+            /** Final Profit */
+            final_profit: string;
+            /** Estimated Profit */
+            estimated_profit: string;
+            /** Final Line Count */
+            final_line_count: number;
+        };
+        /**
          * MeResponse
          * @description Oturum bilgisi — frontend workspace switcher'ı bunu kullanır.
          */
@@ -482,6 +621,120 @@ export interface components {
             };
         };
         /**
+         * OrderDetailOut
+         * @description Sipariş detayı (spec §10.3).
+         */
+        OrderDetailOut: {
+            /**
+             * Order Id
+             * Format: uuid
+             */
+            order_id: string;
+            /** External Order Id */
+            external_order_id: string;
+            /**
+             * Order Date
+             * Format: date-time
+             */
+            order_date: string;
+            status: components["schemas"]["OrderStatus"];
+            /** Store Name */
+            store_name: string;
+            /** Gross Total */
+            gross_total: string;
+            /** Profit */
+            profit: string;
+            /** Margin Pct */
+            margin_pct: string;
+            /** Is Final */
+            is_final: boolean;
+            /** Lines */
+            lines: components["schemas"]["OrderLineDetailOut"][];
+            /** Waterfall */
+            waterfall: components["schemas"]["WaterfallStep"][];
+        };
+        /**
+         * OrderLineDetailOut
+         * @description Sipariş satırı + şelale dökümü.
+         */
+        OrderLineDetailOut: {
+            /**
+             * Order Line Id
+             * Format: uuid
+             */
+            order_line_id: string;
+            /** Sku */
+            sku: string | null;
+            /** Name */
+            name: string | null;
+            /** Qty */
+            qty: number;
+            /** Line Gross */
+            line_gross: string;
+            /** Vat Rate */
+            vat_rate: string;
+            /** Profit */
+            profit: string;
+            /** Margin Pct */
+            margin_pct: string;
+            /** Is Final */
+            is_final: boolean;
+            commission_source: components["schemas"]["CommissionSource"] | null;
+            /** Waterfall */
+            waterfall: components["schemas"]["WaterfallStep"][];
+        };
+        /**
+         * OrderRowOut
+         * @description Sipariş listesi satırı.
+         */
+        OrderRowOut: {
+            /**
+             * Order Id
+             * Format: uuid
+             */
+            order_id: string;
+            /** External Order Id */
+            external_order_id: string;
+            /**
+             * Order Date
+             * Format: date-time
+             */
+            order_date: string;
+            status: components["schemas"]["OrderStatus"];
+            /** Store Name */
+            store_name: string;
+            /** Gross Total */
+            gross_total: string;
+            /** Profit */
+            profit: string;
+            /** Margin Pct */
+            margin_pct: string;
+            /** Is Final */
+            is_final: boolean;
+        };
+        /**
+         * OrderStatus
+         * @description Normalize sipariş statüsü (spec §4).
+         * @enum {string}
+         */
+        OrderStatus: "created" | "picking" | "shipped" | "delivered" | "cancelled" | "returned";
+        /**
+         * PeriodOut
+         * @description Rapor dönemi (`start` dahil, `end` hariç).
+         */
+        PeriodOut: {
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+        };
+        /**
          * ProductSummary
          * @description Marka kapsamlı ürün özeti.
          */
@@ -503,6 +756,35 @@ export interface components {
             msrp: string | null;
         };
         /**
+         * SkuMarginOut
+         * @description SKU marj listesi satırı (spec §10.2).
+         */
+        SkuMarginOut: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Sku */
+            sku: string;
+            /** Name */
+            name: string;
+            /** Category */
+            category: string | null;
+            /** Qty Sold */
+            qty_sold: number;
+            /** Revenue Gross */
+            revenue_gross: string;
+            /** Cost Cogs */
+            cost_cogs: string;
+            /** Profit */
+            profit: string;
+            /** Margin Pct */
+            margin_pct: string;
+            /** Is Final */
+            is_final: boolean;
+        };
+        /**
          * SsoExchangeRequest
          * @description ops.mokka SSO token'ı ile Kavun token'ı değişimi.
          */
@@ -514,6 +796,25 @@ export interface components {
              * @description Açılışta seçilecek workspace
              */
             brand?: string | null;
+        };
+        /**
+         * StoreBreakdownOut
+         * @description Mağaza/kanal kırılımı.
+         */
+        StoreBreakdownOut: {
+            /**
+             * Store Id
+             * Format: uuid
+             */
+            store_id: string;
+            /** Store Name */
+            store_name: string;
+            /** Revenue Gross */
+            revenue_gross: string;
+            /** Profit */
+            profit: string;
+            /** Margin Pct */
+            margin_pct: string;
         };
         /**
          * StoreCreate
@@ -621,6 +922,16 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * WaterfallStep
+         * @description Şelale grafiğinin bir adımı (tasarım brief'i, kalıp 4).
+         */
+        WaterfallStep: {
+            /** Key */
+            key: string;
+            /** Amount */
+            amount: string;
         };
     };
     responses: never;
@@ -1113,6 +1424,157 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CredentialStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_dashboard__brand_slug__dashboard_get: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_sku_margins__brand_slug__sku_margins_get: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+                category?: string | null;
+                only_negative?: boolean;
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SkuMarginOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_orders__brand_slug__orders_get: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+                only_negative?: boolean;
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderRowOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_order_detail__brand_slug__orders__order_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                order_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDetailOut"];
                 };
             };
             /** @description Validation Error */

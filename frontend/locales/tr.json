@@ -21,6 +21,119 @@
   "workspace": {
     "alessi": "Alessi",
     "kahveji": "Kahveji",
-    "holding": "Holding"
+    "holding": "Holding",
+    "switch": "Workspace değiştir",
+    "current": "Aktif workspace"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "skuMargins": "SKU marjları",
+    "orders": "Siparişler"
+  },
+  "period": {
+    "label": "Dönem",
+    "last7": "Son 7 gün",
+    "last30": "Son 30 gün",
+    "last90": "Son 90 gün",
+    "last365": "Son 12 ay"
+  },
+  "kpi": {
+    "revenue": "Ciro",
+    "revenueHint": "KDV dahil, iadeler düşülmüş",
+    "profit": "Net kâr",
+    "profitHint": "Tüm kesintiler ve KDV netleştirmesi sonrası",
+    "margin": "Marj",
+    "marginHint": "Net kâr / ciro",
+    "returnRate": "İade oranı",
+    "returnRateHint": "İade tutarının toplam talebe oranı",
+    "orders": "sipariş",
+    "lines": "satır"
+  },
+  "estimate": {
+    "estimated": "Tahmini",
+    "final": "Kesinleşti",
+    "mixedTitle": "Tahmini vs kesinleşmiş",
+    "estimatedProfit": "Tahmini kâr",
+    "finalProfit": "Kesinleşmiş kâr",
+    "explain": "Kargo ve komisyon kesinleşene kadar kâr tahminidir."
+  },
+  "chart": {
+    "dailyTitle": "Günlük kâr",
+    "dailySubtitle": "Dönem boyunca günlük net kâr",
+    "storesTitle": "Mağaza kırılımı",
+    "waterfallTitle": "Kâr dökümü",
+    "waterfallSubtitle": "Satış fiyatından net kâra"
+  },
+  "waterfall": {
+    "satis": "Satış",
+    "kampanya_destegi": "Kampanya desteği",
+    "komisyon": "Komisyon",
+    "kargo": "Kargo",
+    "hizmet_bedeli": "Hizmet bedeli",
+    "iade": "İade",
+    "ceza": "Ceza / tazmin",
+    "reklam": "Reklam payı",
+    "kdv": "Net KDV",
+    "maliyet": "Ürün maliyeti",
+    "kar": "Net kâr"
+  },
+  "table": {
+    "sku": "SKU",
+    "product": "Ürün",
+    "category": "Kategori",
+    "qty": "Adet",
+    "revenue": "Ciro",
+    "cost": "Maliyet",
+    "profit": "Kâr",
+    "margin": "Marj",
+    "order": "Sipariş",
+    "date": "Tarih",
+    "store": "Mağaza",
+    "status": "Durum",
+    "total": "Tutar",
+    "vat": "KDV",
+    "line": "Satır",
+    "state": "Durum",
+    "onlyNegative": "Yalnızca negatif marj",
+    "allRows": "Tümü",
+    "detail": "Detay"
+  },
+  "status": {
+    "created": "Oluşturuldu",
+    "picking": "Hazırlanıyor",
+    "shipped": "Kargoda",
+    "delivered": "Teslim edildi",
+    "cancelled": "İptal",
+    "returned": "İade"
+  },
+  "commissionSource": {
+    "settlement_actual": "Hakediş (kesin)",
+    "api_product": "Kanal — ürün",
+    "api_category": "Kanal — kategori",
+    "manual_tariff_upload": "Tarife yüklemesi",
+    "manual": "Elle girildi",
+    "unknown": "Komisyon oranı yok"
+  },
+  "empty": {
+    "dashboard": "Bu dönemde hesaplanmış kâr kaydı yok.",
+    "dashboardHint": "Sipariş çektikten sonra kâr motoru çalışınca burası dolar: make recompute",
+    "sku": "Bu dönemde satışı olan SKU yok.",
+    "skuHint": "Dönemi genişletmeyi ya da demo veriyi yüklemeyi deneyin: make seed-demo",
+    "orders": "Bu dönemde sipariş yok.",
+    "ordersHint": "Dönemi genişletmeyi ya da demo veriyi yüklemeyi deneyin: make seed-demo",
+    "orderLines": "Bu siparişin satırı bulunamadı."
+  },
+  "error": {
+    "unreachable": "API'ye ulaşılamıyor.",
+    "unreachableHint": "Ortam ayakta mı? make dev",
+    "notFound": "Kayıt bulunamadı.",
+    "unauthorized": "Oturum açılamadı."
+  },
+  "detail": {
+    "backToOrders": "Siparişlere dön",
+    "orderTitle": "Sipariş",
+    "lineTitle": "Satır dökümü",
+    "commission": "Komisyon kaynağı",
+    "netProfit": "Net kâr"
   }
 }

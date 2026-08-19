@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %45** ▓▓▓▓▓▓▓▓▓░░░░░░░░░░░
-Son güncelleme: 2026-08-19 03:10 · Aktif görev: KVN-09
+**TOPLAM: %52** ▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░
+Son güncelleme: 2026-08-19 03:35 · Aktif görev: KVN-10
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -14,8 +14,8 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-06 | raw_events + normalize pipeline + replay komutu             | 6       | ✅ Bitti    |
 | KVN-07 | Kâr motoru — çekirdek hesap (KDV netleştirme dahil)         | 8       | ✅ Bitti    |
 | KVN-08 | Kâr motoru — edge-case test paketi (8 senaryo)              | 6       | ✅ Bitti    |
-| KVN-09 | Dashboard + SKU marj listesi + sipariş detayı (waterfall)   | 7       | 🔄 Yapılıyor|
-| KVN-10 | Excel round-trip — fiyat listesi export/import + diff       | 6       | ⏳ Sırada   |
+| KVN-09 | Dashboard + SKU marj listesi + sipariş detayı (waterfall)   | 7       | ✅ Bitti    |
+| KVN-10 | Excel round-trip — fiyat listesi export/import + diff       | 6       | 🔄 Yapılıyor|
 | KVN-11 | Taslak ürün akışı                                           | 3       | ⏳ Sırada   |
 | KVN-12 | Senaryo motoru + karşılaştırma + hedef marj çözücü          | 6       | ⏳ Sırada   |
 | KVN-13 | Komisyon çözümleme hiyerarşisi + snapshot/diff + etki       | 6       | ⏳ Sırada   |
@@ -27,11 +27,64 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 45
+Toplam ağırlık: 100 · Biten ağırlık: 52 · **Faz 1 (KVN-01…09) tamamlandı**
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-09 bitti · **Faz 1 tamamlandı**
+
+**Ne bitti:** Dashboard, SKU marj listesi ve sipariş detayı (waterfall) — hem API hem
+ekranlar. Testler: 238 yeşil, genel coverage %96. Preview'da demo veriyle gezilebilir.
+
+**Ekranlar (spec §10.1-3):**
+- `/{marka}` — ciro / net kâr / marj% / iade% kartları, tahmini-kesin ayrımı, günlük kâr
+  grafiği, mağaza kırılımı
+- `/{marka}/sku` — SKU marj listesi, en düşük kâr üstte, negatif satır kırmızı zeminli,
+  "yalnızca negatif marj" filtresi
+- `/{marka}/orders` + `/{marka}/orders/{id}` — sipariş listesi ve **şelale kâr dökümü**
+- Marka rozeti + workspace switcher her ekranda (tasarım brief'i kalıp 1)
+
+**API (spec §10):** `GET /{brand}/dashboard`, `/sku-margins`, `/orders`, `/orders/{id}`.
+Şelale adımları `{key, amount}` olarak döner; Türkçe etiketler `frontend/locales/tr.json`
+içinde — backend yanıtında UI metni taşınmıyor (CLAUDE.md §4).
+
+**Karar 1 — okuma katmanı hesap YAPMAZ.** `services/analytics.py` yalnızca motorun
+`line_profit`'e yazdığını toplar. Aynı sayının iki yerde (motorda ve SQL'de) hesaplanması
+hakediş mutabakatını imkânsız kılardı. Testler ekrandaki toplamın motorun toplamıyla
+birebir aynı olduğunu doğruluyor.
+
+**Karar 2 — şema:** `line_profit`'e `revenue_gross` eklendi (migration `7678779e38d0`).
+Dashboard'daki "ciro" müşterinin ödediği KDV dahil tutardır; motor bunu zaten hesaplıyordu
+ama yazmıyorduk, dolayısıyla SQL'de yeniden türetmek gerekiyordu — Karar 1'e aykırı.
+Yine spec §5.4'e additive bir ek.
+
+**Karar 3 — grafik kütüphanesi yok.** Günlük kâr ve şelale düz SVG ile çiziliyor. Brief
+"Recharts ile uygulanabilir sadelikte tut" diyor; bu sadelikte kütüphane taşımanın karşılığı
+yok, ayrıca sunucu bileşeni olarak kalıyorlar (sıfır istemci JS).
+
+**Karar 4 — dönem URL'de.** `?days=7|30|90|365`; ekran paylaşılabilir, geri tuşu çalışır,
+istemci state'i gerekmez. API tarafında dönem 400 günle sınırlı (kazara tüm veriyi tarayan
+sorgu atılmasın), ters/geçersiz aralık 422.
+
+**GÜVENLİK — canlı testte yakalanan gerçek izolasyon açığı:** `Session.get()` birincil
+anahtar aramasını identity map'ten karşılayabiliyor; o yol hiç sorgu üretmediği için
+brand-scope guard'ına da uğramıyor ve **başka markanın siparişi sızıyordu**. Negatif test
+(`/alessi/orders/{kahveji_siparişi}` → 404) bunu yakaladı. Marka verisi artık her zaman
+`select()` ile okunuyor; kural `app/core/scoping.py` docstring'ine "Bilinen sınır 2" olarak
+yazıldı. Kod tabanındaki diğer `session.get()` çağrıları denetlendi: hepsi `system_scope`
+altında ve tenant tablolarında — sızıntı yok.
+
+**Ayrıca canlı testte yakalandı:** şelale adımları servis katmanında tuple olarak
+dönüyordu, şema ise nesne bekliyordu → sipariş detayı 500 veriyordu. Testler henüz
+yazılmamıştı; `Step` dataclass'ı eklendi.
+
+**Bilinen risk:** Faz 1'de hiçbir satır `is_final` olmuyor (kargo faturası ve hakediş
+Faz 2'de bağlanacak), yani dashboard'da "Kesinleşmiş kâr" hep 0 görünüyor — bu doğru ama
+Mert'e ilk bakışta eksik gelebilir. Ekranlar masaüstü öncelikli; tablet/mobil düzen
+gözden geçirilmedi (brief mobili ikincil sayıyor). Sıralama/filtreleme şimdilik sabit
+(marj listesi en düşük kârdan), sütun bazlı sıralama KVN-19'da.
 
 ### 2026-08-19 — KVN-08 bitti
 

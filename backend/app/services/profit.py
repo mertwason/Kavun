@@ -44,6 +44,7 @@ ZERO = Decimal("0")
 
 # `line_profit` üzerinde revizyon takibi yapılan alanlar (spec §6.2).
 TRACKED_FIELDS = (
+    "revenue_gross",
     "revenue_net_vat",
     "cost_cogs",
     "cost_commission",
@@ -204,6 +205,7 @@ def _persist(
     existing = session.scalar(select(LineProfit).where(LineProfit.order_line_id == line.id))
 
     values = {
+        "revenue_gross": breakdown.revenue_gross,
         "revenue_net_vat": breakdown.revenue_net_vat,
         "cost_cogs": breakdown.cost_cogs,
         "cost_commission": breakdown.cost_commission,

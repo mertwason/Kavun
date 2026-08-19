@@ -1,4 +1,10 @@
+/** Giriş sayfası: workspace seçimi + sistem durumu (spec §3A.1). */
+
+import Link from "next/link";
+
+import { Card } from "@/components/ui";
 import { fetchHealth } from "@/lib/api";
+import { BRANDS } from "@/lib/brands";
 import tr from "@/locales/tr.json";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +20,27 @@ export default async function HomePage() {
         <p className="text-ink-muted">{tr.app.tagline}</p>
       </header>
 
-      <section className="card p-5">
+      <section className="grid gap-4 sm:grid-cols-2">
+        {Object.values(BRANDS).map((brand) => (
+          <Link
+            key={brand.slug}
+            href={`/${brand.slug}`}
+            className="card flex items-center gap-3 p-5 transition-colors hover:bg-canvas"
+          >
+            <span
+              aria-hidden
+              className="h-8 w-1.5 rounded-full"
+              style={{ backgroundColor: brand.accent }}
+            />
+            <span className="flex flex-col">
+              <span className="font-medium">{brand.name}</span>
+              <span className="text-xs text-ink-faint">{tr.nav.dashboard}</span>
+            </span>
+          </Link>
+        ))}
+      </section>
+
+      <Card className="p-5">
         <h2 className="text-sm font-medium text-ink-muted">{tr.system.apiStatusTitle}</h2>
         <div className="mt-3 flex items-center gap-3">
           <span
@@ -36,22 +62,7 @@ export default async function HomePage() {
         >
           {tr.system.apiDocs}
         </a>
-      </section>
-
-      <section className="card p-5">
-        <h2 className="text-sm font-medium text-ink-muted">{tr.roadmap.title}</h2>
-        <p className="mt-1 text-sm text-ink-faint">{tr.roadmap.subtitle}</p>
-        <ul className="mt-4 flex flex-col gap-2 text-sm">
-          <li className="flex items-start gap-3 border-t border-hairline pt-3">
-            <span className="text-positive">✓</span>
-            <span>{tr.roadmap.done}</span>
-          </li>
-          <li className="flex items-start gap-3 border-t border-hairline pt-3 text-ink-muted">
-            <span className="text-ink-faint">→</span>
-            <span>{tr.roadmap.next}</span>
-          </li>
-        </ul>
-      </section>
+      </Card>
     </main>
   );
 }

@@ -33,6 +33,9 @@ class LineProfit(Base):
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     brand_id: Mapped[uuid.UUID] = brand_fk()
     order_line_id: Mapped[uuid.UUID] = uuid_fk("order_lines.id")
+    # Spec §5.4'e ek (KVN-09): dashboard "ciro"su müşterinin ödediği KDV dahil tutardır;
+    # motor bunu zaten hesaplıyordu, yazılmayınca SQL'de yeniden türetmek gerekiyordu.
+    revenue_gross: Mapped[Decimal] = mapped_column(Money, nullable=False, server_default="0")
     revenue_net_vat: Mapped[Decimal] = mapped_column(Money, nullable=False)
     cost_cogs: Mapped[Decimal] = mapped_column(Money, nullable=False)
     cost_commission: Mapped[Decimal] = mapped_column(Money, nullable=False)

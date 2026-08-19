@@ -141,6 +141,23 @@ bazlı), 2 alış faturası, 1 ithalat dosyası (EUR + kur farkı), uyarılar, t
 fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ; `make seed-demo` sonrası
 `python -m app.cli recompute --pending` ile motor tarafından hesaplanır.
 
+## Ekranlar
+
+| Yol | Ekran |
+|---|---|
+| `/` | Workspace seçimi + sistem durumu |
+| `/{marka}` | Dashboard — ciro, net kâr, marj%, iade% + günlük kâr grafiği + mağaza kırılımı |
+| `/{marka}/sku` | SKU marj listesi — negatif marj kırmızı, "yalnızca negatif" filtresi |
+| `/{marka}/orders` | Sipariş listesi |
+| `/{marka}/orders/{id}` | Sipariş detayı — **waterfall kâr dökümü** (ürünün imza ekranı) |
+
+Dönem seçimi URL'de taşınır (`?days=7|30|90|365`), böylece ekran paylaşılabilir ve geri
+tuşu çalışır. Kâr rakamlarının yanındaki amber "Tahmini" rozeti kargo/komisyon
+kesinleşene kadar durur; kesinleşince nötr "Kesinleşti" olur (tasarım brief'i, kalıp 2).
+
+Grafikler ek bağımlılık olmadan düz SVG ile çizilir — brief "Recharts ile uygulanabilir
+sadelikte tut" diyor, bu sadelikte kütüphane taşımaya gerek yok.
+
 ## Proje yapısı
 
 ```
@@ -162,7 +179,11 @@ kavun/
 │   ├── alembic/             # migration'lar
 │   ├── tools/               # lint kuralları (para/float yasağı)
 │   └── tests/
-├── frontend/                # Next.js 14 (App Router) + Tailwind
+├── frontend/
+│   ├── app/[brand]/         # marka workspace ekranları (KVN-09)
+│   ├── components/          # kart, tablo, şelale, grafik
+│   ├── lib/                 # API istemcisi (üretilen tipler) + biçimlendirme
+│   └── locales/tr.json      # tüm Türkçe metinler
 ├── docs/                    # spec + tasarım brief
 └── docker-compose.yml
 ```
@@ -183,6 +204,11 @@ POST /{brand}/stores/{id}/credentials       # credential kaydet (Fernet ile şif
 POST /{brand}/stores/{id}/credentials/rotate# anahtar rotasyonu
 DEL  /{brand}/stores/{id}/credentials       # credential sil
 POST /{brand}/stores/{id}/sync              # senkronu elle tetikle (Celery job)
+
+GET  /{brand}/dashboard     # dönem KPI'ları + günlük kâr serisi + mağaza kırılımı
+GET  /{brand}/sku-margins   # SKU marj listesi (en düşük kâr üstte)
+GET  /{brand}/orders        # dönemdeki siparişler + kârları
+GET  /{brand}/orders/{id}   # sipariş detayı — satır bazlı şelale dökümü
 
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
@@ -248,5 +274,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-09 — dashboard,
-SKU marj listesi ve sipariş detayı** (waterfall, spec §10).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Faz 1 tamamlandı; sıradaki iş
+Faz 1.5'in ilki: **KVN-10 — Excel round-trip** (fiyat listesi export/import + diff, spec §12A).

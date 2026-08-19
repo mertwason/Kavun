@@ -17,9 +17,14 @@ Bypass yalnızca iki yolla mümkündür ve ikisi de açıkça istenir:
 - `holding_scope()` — markalar arası konsolide rapor (spec §3A.3), audit'e yazılır
 - `system_scope()` — seed / replay / sync gibi arka plan işleri
 
-Bilinen sınır: guard yalnızca `brand_id` sütunu OLAN tablolara bakar. `sku_costs` gibi
+Bilinen sınır 1: guard yalnızca `brand_id` sütunu OLAN tablolara bakar. `sku_costs` gibi
 ürüne/siparişe dolaylı bağlı tablolar ürün üzerinden sorgulanmalıdır; onların
 izolasyonu API katmanının join'lerine bağlıdır.
+
+Bilinen sınır 2 (KVN-09'da canlı testte yakalandı): **`Session.get()` kullanılmaz.**
+Birincil anahtar araması identity map'ten dönebilir; o yol hiçbir sorgu üretmediği için
+guard'a da uğramaz ve başka markanın kaydı sızar. Marka verisi her zaman `select()` ile
+okunur — negatif testi `tests/test_analytics.py` içindedir.
 """
 
 from __future__ import annotations
