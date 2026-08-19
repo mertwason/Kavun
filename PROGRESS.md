@@ -1,8 +1,8 @@
 # KAVUN İlerleme
 
 **TOPLAM: %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-**FAZ 2 (ek görevler): %56** ▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░
-Son güncelleme: 2026-08-19 09:40 · Aktif görev: — (sırada: KVN-EK-05)
+**FAZ 2 (ek görevler): %45** ▓▓▓▓▓▓▓▓▓░░░░░░░░░░░
+Son güncelleme: 2026-08-19 10:10 · Aktif görev: — (sırada: KVN-EK-05)
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -46,11 +46,12 @@ Toplam ağırlık: **110** · Biten ağırlık: 110 · **Faz 1 ve Faz 1.5 tamaml
 | KVN-EK-05 | Trendyol Faz 2 uçları + eksik beat programı                | 8       | ⏳ Sırada    | spec §4, §9 — iade/hakediş/kargo senkronu; `workers/tasks.py` coverage ≥ %80 |
 | KVN-EK-06 | Uyarılar ekranı + acknowledge akışı                        | 4       | ⏳ Sırada    | spec §10.6 — `acknowledged_at` yazan uç dahil |
 | KVN-EK-07 | Gerçek veri kalibrasyon haftası                            | 6       | ⏳ Sırada    | **Mert'in dosyalarına bağlı** — geldiğinde sıraya girer; kurgu fixture'lar + 3 `TODO(verify)` + `tracking_no` |
+| KVN-EK-08 | Tasarım sistemi rework (token seti + Tremor + TanStack)    | 10      | ⏳ Sırada    | **BLOKE:** brief'in "Kaynak Kütüphaneler" bölümü repoda yok (aşağıya bak) |
 
-Faz 2 ağırlığı: 41 · Biten: 23
+Faz 2 ağırlığı: 51 · Biten: 23
 
-> **Sıra (2026-08-19, Mert onayı):** EK-04 → EK-05 → EK-06. EK-07 dosyalar geldiğinde
-> araya girer. Bu dört görev, KVN-EK-03 sonrası çıkarılan durum raporunun karşılığıdır:
+> **Sıra (2026-08-19, Mert onayı):** EK-04 → EK-05 → EK-06 → **EK-08**. EK-07 dosyalar
+> geldiğinde araya girer. Bu dört görev, KVN-EK-03 sonrası çıkarılan durum raporunun karşılığıdır:
 > ürün bugün "manuel/Excel beslemeli" çalışıyor, veri borusu ve ayar/uyarı ekranları eksik.
 
 > **Düzeltme (2026-08-19):** CLAUDE.md §0'daki kanonik listenin başlığı "toplam ağırlık 100"
@@ -61,6 +62,26 @@ Faz 2 ağırlığı: 41 · Biten: 23
 > gerçek oran %96 değil %87'ydi.) CLAUDE.md'nin başlık satırı Mert onaylarsa düzeltilmeli.
 
 ---
+
+> **KVN-EK-08 açıldı ama BAŞLANAMAZ (2026-08-19).** Görev tanımı: Tailwind v4 token seti
+> (brief'teki renk/tipografi/spacing + workspace aksanları), Tremor Blocks dashboard
+> desenlerinin token setine bağlanması, 15 ekranın geçişi (Dashboard → SKU marj → sipariş
+> detayı/şelale → fatura yükleme sırasıyla), yoğun tabloların TanStack Table + shadcn
+> DataTable desenine taşınması (sticky header, `tabular-nums`, sağa hizalı rakamlar), her
+> ekranın demo veriyle gezilebilir kalması ve brief'teki "Yapılmayacaklar" listesinin lint
+> niyetine geçerli sayılması.
+>
+> **Engel:** `docs/KAVUN_Design_Brief.md` bu repoda **güncellenmemiş** — dosyada
+> "Kaynak Kütüphaneler" bölümü yok, içerik KVN-01'deki (884c1ae) haliyle duruyor ve
+> `origin`'de de aynı. Görevin 1. ve 5. maddeleri doğrudan o bölümün içeriğine dayanıyor
+> (token değerleri, "Yapılmayacaklar" listesi). Brief push edilmeden token seti
+> uydurulmuş olur; CLAUDE.md §4 "tahmin etme" kuralı bunu yasaklıyor.
+>
+> **Ek riskler (başlamadan netleşmeli):** (a) proje Tailwind **3.4.13** kullanıyor, v4
+> geçişi Next 14.2 + PostCSS zinciriyle birlikte ayrı bir iş; (b) Tremor Blocks'un ticari
+> lisans gerektiren bir ürün olup olmadığı ve hangi bloklara erişim olduğu doğrulanmalı;
+> (c) Tremor'un mevcut sürümü Tailwind v3 tema yapılandırmasına dayanıyorsa v4 ile
+> birlikte kullanımı ayrıca doğrulanmalı.
 
 ## Oturum özetleri
 
