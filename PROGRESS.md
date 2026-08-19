@@ -2,7 +2,7 @@
 
 **TOPLAM: %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 **FAZ 2 (ek görevler): %69** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░
-Son güncelleme: 2026-08-19 15:10 · Aktif görev: KVN-EK-08 (Dashboard bitti, sırada SKU marjları)
+Son güncelleme: 2026-08-19 16:00 · Aktif görev: KVN-EK-08 (Dashboard + SKU bitti, sırada sipariş detayı)
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
