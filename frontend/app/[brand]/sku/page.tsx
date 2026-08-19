@@ -22,7 +22,8 @@ export default async function SkuMarginsPage({
   searchParams: { days?: string };
 }) {
   const days = resolveDays(searchParams.days ?? String(DEFAULT_DAYS));
-  const result = await fetchSkuMargins(params.brand, periodRange(days));
+  const period = periodRange(days);
+  const result = await fetchSkuMargins(params.brand, period);
 
   return (
     <>
@@ -41,7 +42,7 @@ export default async function SkuMarginsPage({
           <EmptyState title={tr.empty.sku} hint={tr.empty.skuHint} />
         </Card>
       ) : (
-        <SkuTable rows={result.data} />
+        <SkuTable rows={result.data} brand={params.brand} period={period} />
       )}
     </>
   );

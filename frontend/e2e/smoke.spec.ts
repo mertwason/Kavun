@@ -94,6 +94,22 @@ test("SKU listesi doludur; arama ve negatif marj filtresi canlı çalışır", a
   await expect(page.locator("main")).toContainText("Sonuç yok");
 });
 
+test("SKU marj listesi Excel'e aktarılır ve filtre dosyaya taşınır", async ({ page }) => {
+  await page.goto("/kahveji/sku");
+
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("link", { name: /Excel'e Aktar/i }).click(),
+  ]);
+  expect(download.suggestedFilename()).toContain("kahveji-sku-marjlari");
+  expect(download.suggestedFilename()).toMatch(/\.xlsx$/);
+
+  // Ekrandaki filtre dosyaya da taşınmalı: aynı listeyi indirdiğinden emin olunsun.
+  await page.getByRole("button", { name: "Sadece negatif marj" }).click();
+  const href = await page.getByRole("link", { name: /Excel'e Aktar/i }).getAttribute("href");
+  expect(href).toContain("only_negative=true");
+});
+
 test("sipariş detayında şelale render olur", async ({ page }) => {
   await page.goto("/kahveji/orders");
   await page.locator("table tbody tr a").first().click();

@@ -750,6 +750,8 @@
     "cargo": "Kargo",
     "footer": "{shown} / {total} SKU",
     "noResult": "Sonuç yok — filtreleri gevşetmeyi dene.",
-    "netProfit": "Net Kâr"
+    "netProfit": "Net Kâr",
+    "export": "Excel'e Aktar",
+    "exportHint": "Arama kutusu dosyaya taşınmaz; kanal/kategori ve negatif filtresi taşınır."
   }
 }

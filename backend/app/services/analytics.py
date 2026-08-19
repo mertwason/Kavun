@@ -13,6 +13,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+from io import BytesIO
 from typing import Any
 
 from sqlalchemy import Select, case, func, select
@@ -568,3 +569,81 @@ def order_detail(session: Session, order_id: uuid.UUID) -> OrderDetail | None:
         lines=lines,
         waterfall=[Step(key, quantize_money(value)) for key, value in totals.items()],
     )
+
+
+# --- SKU marj listesi Excel export'u (KVN-EK-08) -----------------------------
+
+SKU_SHEET_NAME = "SKU Marjları"
+
+SKU_EXPORT_COLUMNS: tuple[tuple[str, int], ...] = (
+    ("SKU", 18),
+    ("Ürün Adı", 38),
+    ("Kategori", 20),
+    ("Kanal", 14),
+    ("Adet", 8),
+    ("Ciro", 14),
+    ("Birim Maliyet", 14),
+    ("Komisyon", 14),
+    ("Kargo", 14),
+    ("Net Kâr", 14),
+    ("Marj %", 10),
+    ("Durum", 12),
+)
+"""Ekrandaki kolonların birebir aynısı — dosya ile ekran ayrışmasın."""
+
+
+def export_sku_margins(rows: list[SkuMargin], *, period: Period, brand_name: str) -> bytes:
+    """SKU marj listesini xlsx olarak üretir.
+
+    **Salt okunur bir rapordur, şablon DEĞİLDİR:** fiyat listesi export'u geri yüklenebilir
+    (round-trip), bu dosya yüklenemez — kâr motorun çıktısıdır, dışarıdan yazılamaz. Bu
+    yüzden sürüm hücresi ve gizli meta satırı yok.
+
+    Tutarlar `Decimal` olarak yazılır; biçimlendirme hücre formatındadır — metne çevirip
+    yuvarlamak sayıyı Excel'de hesaplanamaz hale getirirdi.
+    """
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Font
+    from openpyxl.utils import get_column_letter
+
+    workbook = Workbook()
+    sheet = workbook.active
+    assert sheet is not None
+    sheet.title = SKU_SHEET_NAME
+
+    sheet["A1"] = f"{brand_name} · {period.start.isoformat()} – {period.end.isoformat()}"
+    sheet["A1"].font = Font(bold=True)
+
+    header_row = 3
+    for index, (name, width) in enumerate(SKU_EXPORT_COLUMNS, start=1):
+        cell = sheet.cell(row=header_row, column=index, value=name)
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal="center")
+        sheet.column_dimensions[get_column_letter(index)].width = width
+    sheet.freeze_panes = f"A{header_row + 1}"
+
+    for offset, row in enumerate(rows, start=header_row + 1):
+        text_values: tuple[tuple[int, str], ...] = (
+            (1, row.sku),
+            (2, row.name),
+            (3, row.category or ""),
+            (4, row.channel),
+            (12, "kesin" if row.is_final else "tahmini"),
+        )
+        number_values: tuple[tuple[int, Decimal], ...] = (
+            (6, row.revenue_gross),
+            (7, row.unit_cost),
+            (8, row.cost_commission),
+            (9, row.cost_cargo),
+            (10, row.profit),
+            (11, row.margin_pct),
+        )
+        for column, text in text_values:
+            sheet.cell(row=offset, column=column, value=text)
+        sheet.cell(row=offset, column=5, value=row.qty_sold)
+        for column, number in number_values:
+            sheet.cell(row=offset, column=column, value=number).number_format = "#,##0.00"
+
+    buffer = BytesIO()
+    workbook.save(buffer)
+    return buffer.getvalue()

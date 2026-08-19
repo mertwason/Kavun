@@ -11,22 +11,32 @@
  * kırmızı. Kargo hücresinde kesinleşmemiş maliyet amber noktayla işaretlenir.
  */
 
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Download, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { EstimateDot } from "@/components/estimate-dot";
 import type { SkuMargin } from "@/lib/api";
+import { BRANDS, type BrandSlug } from "@/lib/brands";
 import { formatCount, formatMoney, formatPercent, toNumber } from "@/lib/format";
 import tr from "@/locales/tr.json";
 
 const CONTROL =
   "flex h-[34px] items-center gap-1.5 rounded-control border border-hairline bg-surface px-2.5 text-cell text-ink-secondary hover:border-ink-ghost hover:bg-canvas";
 
-export function SkuTable({ rows }: { rows: SkuMargin[] }) {
+export function SkuTable({
+  rows,
+  brand,
+  period,
+}: {
+  rows: SkuMargin[];
+  brand: string;
+  period: { from: string; to: string };
+}) {
   const [query, setQuery] = useState("");
   const [channel, setChannel] = useState("");
   const [category, setCategory] = useState("");
   const [onlyNegative, setOnlyNegative] = useState(false);
+  const accent = BRANDS[brand as BrandSlug]?.accent ?? "#B45309";
 
   const channels = useMemo(() => unique(rows.map((row) => row.channel)), [rows]);
   const categories = useMemo(
@@ -105,6 +115,21 @@ export function SkuTable({ rows }: { rows: SkuMargin[] }) {
           </span>
           {tr.sku.onlyNegative}
         </button>
+
+        <div className="flex-1" />
+
+        {/* İndirilen dosya ekrandaki listeyle aynı olsun: kategori ve negatif filtresi
+            sorguya taşınır. Arama sunucuda karşılığı olmadığı için taşınmaz — bunu
+            butonun ipucunda açıkça yazıyoruz. */}
+        <a
+          href={exportHref(brand, period, { category, onlyNegative })}
+          title={query ? tr.sku.exportHint : undefined}
+          className="flex h-[34px] items-center gap-1.5 rounded-control px-3 text-cell font-medium text-white"
+          style={{ backgroundColor: accent }}
+        >
+          <Download className="h-3.5 w-3.5" aria-hidden />
+          {tr.sku.export}
+        </a>
       </div>
 
       <div className="overflow-hidden rounded-card border border-hairline bg-surface">
@@ -276,6 +301,18 @@ function Select({
       <ChevronDown className="pointer-events-none absolute right-2 h-3 w-3 text-ink-muted" aria-hidden />
     </span>
   );
+}
+
+/** Export bağlantısı — ekrandaki sunucu-tarafı filtreleriyle. */
+function exportHref(
+  brand: string,
+  period: { from: string; to: string },
+  filters: { category: string; onlyNegative: boolean },
+): string {
+  const query = new URLSearchParams({ from: period.from, to: period.to });
+  if (filters.category) query.set("category", filters.category);
+  if (filters.onlyNegative) query.set("only_negative", "true");
+  return `/${brand}/sku/download?${query}`;
 }
 
 function unique(values: string[]): string[] {

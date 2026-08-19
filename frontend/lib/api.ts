@@ -162,6 +162,32 @@ export function fetchPriceRows(brand: string) {
   return get<PriceRow[]>(brand, "/price-list");
 }
 
+/** SKU marj listesini xlsx olarak indirir; ekrandaki filtreler sorguya taşınır. */
+export function downloadSkuMargins(brand: string, query: string) {
+  return downloadXlsx(brand, `/sku-margins/export${query ? `?${query}` : ""}`);
+}
+
+/** Marka kapsamlı xlsx indirme — token sunucuda kalır, dosya sunucudan geçer. */
+async function downloadXlsx(
+  brand: string,
+  path: string,
+): Promise<{ ok: true; body: ArrayBuffer; filename: string } | { ok: false; status: number }> {
+  const token = await issueToken(brand);
+  if (!token) return { ok: false, status: 401 };
+  const response = await fetch(`${API_URL}/${brand}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!response.ok) return { ok: false, status: response.status };
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const match = disposition.match(/filename="([^"]+)"/);
+  return {
+    ok: true,
+    body: await response.arrayBuffer(),
+    filename: match?.[1] ?? "kavun.xlsx",
+  };
+}
+
 /** Fiyat listesi dosyasını indirir (tarayıcı token taşıyamadığı için sunucudan geçer). */
 export async function downloadPriceList(
   brand: string,

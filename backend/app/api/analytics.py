@@ -9,7 +9,7 @@ from __future__ import annotations
 import uuid
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
 from app.api.deps import Workspace, get_workspace
 from app.schemas.analytics import (
@@ -19,6 +19,8 @@ from app.schemas.analytics import (
     SkuMarginOut,
 )
 from app.services import analytics
+
+XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 router = APIRouter(prefix="/{brand_slug}", tags=["analytics"])
 
@@ -68,6 +70,37 @@ def get_sku_margins(
         category=category,
         only_negative=only_negative,
         limit=limit,
+    )
+
+
+@router.get("/sku-margins/export", summary="SKU marj listesi (xlsx)")
+def export_sku_margins(
+    workspace: Workspace = Depends(get_workspace),
+    start: date | None = Query(default=None, alias="from"),
+    end: date | None = Query(default=None, alias="to"),
+    category: str | None = None,
+    only_negative: bool = False,
+    limit: int = Query(default=1000, le=5000),
+) -> Response:
+    """Ekrandaki listenin aynısını xlsx olarak indirir.
+
+    **Salt okunur rapordur:** geri yüklenemez, çünkü kâr motorun çıktısıdır. Fiyat listesi
+    export'unun aksine şablon sürümü taşımaz (spec §12A.1 round-trip'i oraya özgüdür).
+    """
+    period = _period(start, end)
+    rows = analytics.sku_margins(
+        workspace.session,
+        period,
+        category=category,
+        only_negative=only_negative,
+        limit=limit,
+    )
+    payload = analytics.export_sku_margins(rows, period=period, brand_name=workspace.brand.name)
+    filename = f"{workspace.brand.slug}-sku-marjlari-{period.end.isoformat()}.xlsx"
+    return Response(
+        content=payload,
+        media_type=XLSX_MEDIA_TYPE,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 

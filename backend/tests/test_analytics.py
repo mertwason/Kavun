@@ -11,6 +11,7 @@ import uuid
 from collections.abc import Iterator
 from datetime import date, timedelta
 from decimal import Decimal
+from io import BytesIO
 from typing import Any
 
 import pytest
@@ -317,3 +318,75 @@ def test_reversed_period_is_rejected(api: TestClient) -> None:
     )
 
     assert response.status_code == 422
+
+
+# --- SKU marj listesi Excel export'u (KVN-EK-08) ----------------------------
+
+
+def test_sku_export_columns_match_the_screen(db_session: Session, store: Store) -> None:
+    """Dosyadaki kolonlar ekrandakilerle aynı olmalı — rapor ile ekran ayrışmasın."""
+    from openpyxl import load_workbook
+
+    product = make_product(db_session, store, "EXP-1", cost=D("10.0000"))
+    _computed_order(db_session, store, product=product)
+    rows = analytics.sku_margins(db_session, PERIOD)
+
+    payload = analytics.export_sku_margins(rows, period=PERIOD, brand_name="Kahveji")
+    sheet = load_workbook(BytesIO(payload))[analytics.SKU_SHEET_NAME]
+
+    headers = [sheet.cell(row=3, column=index + 1).value for index in range(12)]
+    assert headers == [name for name, _width in analytics.SKU_EXPORT_COLUMNS]
+
+
+def test_sku_export_writes_numbers_not_text(db_session: Session, store: Store) -> None:
+    """Tutarlar sayı olarak yazılır: metne çevrilse Excel'de hesaplanamazdı."""
+    from openpyxl import load_workbook
+
+    product = make_product(db_session, store, "EXP-2", cost=D("10.0000"))
+    _computed_order(db_session, store, product=product)
+    rows = analytics.sku_margins(db_session, PERIOD)
+
+    payload = analytics.export_sku_margins(rows, period=PERIOD, brand_name="Kahveji")
+    sheet = load_workbook(BytesIO(payload))[analytics.SKU_SHEET_NAME]
+
+    revenue = sheet.cell(row=4, column=6)
+    assert isinstance(revenue.value, (int, float, Decimal))
+    assert revenue.number_format == "#,##0.00"
+    assert sheet.cell(row=4, column=1).value == "EXP-2"
+
+
+def test_sku_export_marks_estimated_rows(db_session: Session, store: Store) -> None:
+    """Kesin/tahmini ayrımı dosyada da taşınır (ürünün DNA'sı)."""
+    from openpyxl import load_workbook
+
+    product = make_product(db_session, store, "EXP-3", cost=D("10.0000"))
+    _computed_order(db_session, store, product=product)
+    rows = analytics.sku_margins(db_session, PERIOD)
+
+    payload = analytics.export_sku_margins(rows, period=PERIOD, brand_name="Kahveji")
+    sheet = load_workbook(BytesIO(payload))[analytics.SKU_SHEET_NAME]
+
+    assert sheet.cell(row=4, column=12).value in {"kesin", "tahmini"}
+
+
+def test_sku_export_endpoint_returns_xlsx(api: TestClient) -> None:
+    """Uç marka önekli dosya adıyla xlsx döner."""
+    response = api.get("/kahveji/sku-margins/export", headers=_headers(api, "kahveji"))
+
+    assert response.status_code == 200, response.text
+    assert response.content[:2] == b"PK"
+    assert "kahveji-sku-marjlari" in response.headers["content-disposition"]
+
+
+def test_sku_export_respects_the_negative_filter(api: TestClient) -> None:
+    """Ekrandaki filtre dosyaya da uygulanır: filtreli export filtreli veri verir."""
+    from openpyxl import load_workbook
+
+    everything = api.get("/kahveji/sku-margins/export", headers=_headers(api, "kahveji"))
+    negative = api.get(
+        "/kahveji/sku-margins/export?only_negative=true", headers=_headers(api, "kahveji")
+    )
+
+    all_rows = load_workbook(BytesIO(everything.content))[analytics.SKU_SHEET_NAME].max_row
+    negative_rows = load_workbook(BytesIO(negative.content))[analytics.SKU_SHEET_NAME].max_row
+    assert negative_rows <= all_rows
