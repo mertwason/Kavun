@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %58** ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░
-Son güncelleme: 2026-08-19 04:05 · Aktif görev: KVN-11
+**TOPLAM: %61** ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░
+Son güncelleme: 2026-08-19 04:25 · Aktif görev: KVN-12
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -16,8 +16,8 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-08 | Kâr motoru — edge-case test paketi (8 senaryo)              | 6       | ✅ Bitti    |
 | KVN-09 | Dashboard + SKU marj listesi + sipariş detayı (waterfall)   | 7       | ✅ Bitti    |
 | KVN-10 | Excel round-trip — fiyat listesi export/import + diff       | 6       | ✅ Bitti    |
-| KVN-11 | Taslak ürün akışı                                           | 3       | 🔄 Yapılıyor|
-| KVN-12 | Senaryo motoru + karşılaştırma + hedef marj çözücü          | 6       | ⏳ Sırada   |
+| KVN-11 | Taslak ürün akışı                                           | 3       | ✅ Bitti    |
+| KVN-12 | Senaryo motoru + karşılaştırma + hedef marj çözücü          | 6       | 🔄 Yapılıyor|
 | KVN-13 | Komisyon çözümleme hiyerarşisi + snapshot/diff + etki       | 6       | ⏳ Sırada   |
 | KVN-14 | Tarife Excel yükleme (esnek parser)                         | 4       | ⏳ Sırada   |
 | KVN-15 | PDF fatura ayrıştırma + öğrenen SKU eşleştirme + onay       | 7       | ⏳ Sırada   |
@@ -27,11 +27,52 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 58 · **Faz 1 (KVN-01…09) tamamlandı**
+Toplam ağırlık: 100 · Biten ağırlık: 61 · **Faz 1 (KVN-01…09) tamamlandı**
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-11 bitti
+
+**Ne bitti:** Taslak ürün akışı (spec §12A.3) + "Yeni Ürün Değerlendir" ekranı.
+Testler: 284 yeşil, genel coverage %96. Akış gerçek tarayıcıda uçtan uca denendi.
+
+**Kabul kriteri (§12A.6) kanıtlandı:** taslak → promote → sipariş kârı zinciri kırılmıyor;
+taslağın analizindeki kâr ile aynı fiyatla satılan siparişin motor kârı birebir aynı çıkıyor
+(testi var).
+
+**Ne kuruldu:**
+- `services/drafts.py` — analiz (motorun kendisi), kaydet, promote, discard
+- `POST /{brand}/drafts/analyze` (kaydetmeden kâr kartı), `GET/POST /{brand}/drafts`,
+  `/{id}/promote`, `/{id}/discard`
+- `/{marka}/drafts` ekranı: form + anlık kâr kartı (şelale dahil) + taslak listesi
+- Excel yüklemesinde `?as_draft=true`: SKU'suz satırlar taslak olur (spec §12A.3)
+- `product_drafts.kategori` kolonu (migration `21876d415bc0`)
+
+**Karar 1 — kategori kolonu eklendi.** Komisyon tahmini kategori tarifesinden çözülüyor;
+`product_drafts`'ta kategori alanı olmadığı için oran hiç bulunamıyordu. Promote sırasında
+ürüne de taşınıyor, böylece dönüştürülen ürün ilk günden doğru tarifeye bağlanıyor.
+
+**Karar 2 — promote muhafazakâr.** SKU önerisi boşsa ya da SKU zaten kullanılıyorsa akış
+reddediliyor (422): sessizce SKU uydurmak ya da mevcut ürünü ezmek veri kaybı olurdu.
+Aynı taslak iki kez dönüştürülemiyor.
+
+**Karar 3 — uydurma tarife yok.** Kargo tahmini girilmezse sıfır sayılıp
+`kargo_tarifesi_yok` uyarısı veriliyor; desi bazlı kargo tarifesi KVN-14'te gelecek.
+Kullanıcı kâr kartında uyarıyı görüyor, sessiz iyimserlik yok.
+
+**Canlı tarayıcı testi (Playwright):** form dolduruldu → kâr kartı (şelale ile) geldi →
+taslak kaydedildi → listede göründü → "Ürüne dönüştür" → durum "Ürüne dönüştü" oldu ve
+ürün, fiyat listesi ekranında belirdi.
+
+**Ufak iyileştirme:** `app/icon.svg` eklendi — tarayıcı sekmesindeki 404 favicon isteği
+gitti (proje sahibi sekmeyi açık tutacak).
+
+**Bilinen risk:** Taslak formunda kanal seçimi sabit iki seçenek (`trendyol`, `manual`);
+marka kanalları büyürse listenin API'den gelmesi gerekir. Kâr kartı her "Hesapla"da sunucuya
+gidiyor — alan değiştikçe otomatik hesaplama (debounce) yapılmıyor, bilinçli: her rakam
+motordan gelsin diye.
 
 ### 2026-08-19 — KVN-10 bitti
 

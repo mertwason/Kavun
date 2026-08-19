@@ -30,8 +30,9 @@ from sqlalchemy.orm import Session
 from app.core.logging import get_logger
 from app.engine.profit import LineInput, compute_line_profit
 from app.models.catalog import Product, SkuCost, SkuLogistics, SkuPrice
-from app.models.enums import CostSource
+from app.models.enums import CostSource, DraftStatus
 from app.models.identity import Channel, Store
+from app.models.workspace import ProductDraft
 from app.services.commission import resolve_commission
 
 log = get_logger("services.pricelist")
@@ -81,7 +82,7 @@ class RowResult:
     row_no: int
     sku: str
     channel: str
-    action: str  # yeni | guncelleme | degisiklik_yok | hata
+    action: str  # yeni | guncelleme | degisiklik_yok | taslak | hata
     message: str = ""
     changes: dict[str, str] = field(default_factory=dict)
 
@@ -94,6 +95,7 @@ class ImportSummary:
     yeni: int = 0
     guncelleme: int = 0
     degisiklik_yok: int = 0
+    taslak: int = 0
     hata: int = 0
     rows: list[RowResult] = field(default_factory=list)
 
@@ -104,6 +106,7 @@ class ImportSummary:
             "yeni": self.yeni,
             "guncelleme": self.guncelleme,
             "degisiklik_yok": self.degisiklik_yok,
+            "taslak": self.taslak,
             "hata": self.hata,
         }
 
@@ -343,11 +346,18 @@ def parse_price_list(payload: bytes) -> list[ParsedRow]:
     return rows
 
 
-def _validate(row: ParsedRow, stores: dict[str, Store]) -> tuple[dict[str, Any], str]:
-    """Satırı doğrular; `(temiz değerler, hata mesajı)` döner."""
+def _validate(
+    row: ParsedRow, stores: dict[str, Store], *, as_draft: bool = False
+) -> tuple[dict[str, Any], str]:
+    """Satırı doğrular; `(temiz değerler, hata mesajı)` döner.
+
+    `as_draft=True` iken SKU'suz satırlar hata sayılmaz, taslak adayı olur (spec §12A.3).
+    """
     sku = _text(row.values.get("SKU"))
-    if not sku:
+    if not sku and not as_draft:
         return {}, "SKU boş"
+    if not sku and not _text(row.values.get("Ürün Adı")):
+        return {}, "SKU ve Ürün Adı birlikte boş olamaz"
 
     channel = _text(row.values.get("Kanal")).lower()
     if channel not in stores:
@@ -374,6 +384,7 @@ def _validate(row: ParsedRow, stores: dict[str, Store]) -> tuple[dict[str, Any],
     return {
         "sku": sku,
         "name": _text(row.values.get("Ürün Adı")) or sku,
+        "is_draft": not sku,
         "channel": channel,
         "vat": vat,
         "desi": desi,
@@ -509,8 +520,15 @@ def import_price_list(
     today: date,
     user: str | None = None,
     dry_run: bool = True,
+    as_draft: bool = False,
+    tenant_id: uuid.UUID | None = None,
+    brand_id: uuid.UUID | None = None,
 ) -> ImportSummary:
-    """Fiyat listesini işler. `dry_run=True` iken HİÇBİR yazma yapılmaz (spec §12A.2)."""
+    """Fiyat listesini işler. `dry_run=True` iken HİÇBİR yazma yapılmaz (spec §12A.2).
+
+    `as_draft=True`: SKU'su boş satırlar ürün yerine **taslak** olarak alınır
+    (spec §12A.3) — ürün ağacına yarım kayıt düşmez.
+    """
     rows = parse_price_list(payload)
     stores = _stores_by_channel(session)
     summary = ImportSummary(dry_run=dry_run)
@@ -530,7 +548,7 @@ def import_price_list(
     # Önce doğrulama, sonra SKU bazında çelişki kontrolü, en son uygulama.
     validated: list[tuple[ParsedRow, dict[str, Any]]] = []
     for row in rows:
-        clean, error = _validate(row, stores)
+        clean, error = _validate(row, stores, as_draft=as_draft)
         if error:
             fail(row, error)
             continue
@@ -541,7 +559,9 @@ def import_price_list(
         by_sku.setdefault(clean["sku"], []).append((row, clean))
 
     conflicted: set[int] = set()
-    for sku_rows in by_sku.values():
+    for sku, sku_rows in by_sku.items():
+        if not sku:  # taslak adayları (SKU'suz) birbiriyle karşılaştırılmaz
+            continue
         conflict = _conflicting_field(sku_rows) if len(sku_rows) > 1 else None
         if conflict:
             for row, _ in sku_rows:
@@ -550,6 +570,20 @@ def import_price_list(
 
     for row, clean in validated:
         if row.row_no in conflicted:
+            continue
+        if clean.get("is_draft"):
+            summary.taslak += 1
+            summary.rows.append(
+                RowResult(
+                    row_no=row.row_no,
+                    sku="",
+                    channel=clean["channel"],
+                    action="taslak",
+                    changes={"taslak": clean["name"]},
+                )
+            )
+            if not dry_run and tenant_id is not None and brand_id is not None:
+                _write_draft(session, clean, tenant_id=tenant_id, brand_id=brand_id)
             continue
         action, changes = _apply(
             session,
@@ -572,6 +606,30 @@ def import_price_list(
 
     log.info("pricelist.imported", rows=len(rows), **summary.as_dict())
     return summary
+
+
+def _write_draft(
+    session: Session,
+    clean: dict[str, Any],
+    *,
+    tenant_id: uuid.UUID,
+    brand_id: uuid.UUID,
+) -> None:
+    """SKU'suz satırı taslak ürün olarak kaydeder (spec §12A.3)."""
+    session.add(
+        ProductDraft(
+            tenant_id=tenant_id,
+            brand_id=brand_id,
+            name=clean["name"],
+            alis_maliyeti=clean["cost"] or ZERO,
+            hedef_satis_fiyati=clean["price"] or ZERO,
+            kanal=clean["channel"],
+            vat_rate=clean["vat"],
+            desi=clean["desi"],
+            status=DraftStatus.DRAFT,
+        )
+    )
+    session.flush()
 
 
 def error_workbook(payload: bytes, summary: ImportSummary) -> bytes:

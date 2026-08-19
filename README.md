@@ -143,6 +143,20 @@ hiçbir şey yazılmaz; yeşil yeni / mavi güncelleme / kırmızı hata) → on
   olarak indirilebilir.
 - Her import (dry-run dahil) `import_batches` tablosuna loglanır.
 
+### Taslak ürün akışı
+
+"Bu ürünü satsak ne kazanırız?" — form doldurulurken kâr motorun kendisiyle hesaplanır ve
+kartta gösterilir; hiçbir şey kaydedilmez. Beğenilirse taslak olarak kaydedilir, sonra
+`Ürüne dönüştür` ile gerçek ürüne çevrilir (`products` + `sku_costs` + `sku_logistics` +
+fiyat kayıtları doğar). İptal edilen taslak silinmez, `discarded` olarak işaretlenir.
+
+Komisyon **kategori tarifesinden** tahmin edilir; kategori yoksa ya da tarife bulunamazsa
+oran uydurulmaz — analiz `komisyon_orani_yok` uyarısı taşır. Kargo tahmini de girilmezse
+sıfır sayılır ve `kargo_tarifesi_yok` uyarısı çıkar (desi bazlı tarife KVN-14'te gelecek).
+
+Excel yüklemesinde `?as_draft=true` ile **SKU'su boş satırlar** ürün yerine taslak olarak
+alınır — ürün ağacına yarım kayıt düşmez (spec §12A.3).
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -171,6 +185,7 @@ fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ; `make seed-demo
 | `/{marka}/orders` | Sipariş listesi |
 | `/{marka}/orders/{id}` | Sipariş detayı — **waterfall kâr dökümü** (ürünün imza ekranı) |
 | `/{marka}/products` | Ürün çalışma alanı — fiyat listesi + Excel aktar/yükle + diff önizleme |
+| `/{marka}/drafts` | Yeni ürün değerlendir — form + anlık kâr kartı + taslak listesi |
 
 Dönem seçimi URL'de taşınır (`?days=7|30|90|365`), böylece ekran paylaşılabilir ve geri
 tuşu çalışır. Kâr rakamlarının yanındaki amber "Tahmini" rozeti kargo/komisyon
@@ -236,6 +251,12 @@ GET  /{brand}/price-list/export    # xlsx indir (aynı zamanda yükleme şablonu
 POST /{brand}/price-list/import    # yükle — ?dry_run=true iken hiçbir şey yazılmaz
 POST /{brand}/price-list/import/errors  # hatalı satırlar işaretlenmiş dosya
 
+GET  /{brand}/drafts               # taslak listesi + güncel analizleri
+POST /{brand}/drafts/analyze       # anlık kâr analizi (hiçbir şey kaydedilmez)
+POST /{brand}/drafts               # taslak kaydet
+POST /{brand}/drafts/{id}/promote  # ürüne dönüştür (ürün + maliyet + desi + fiyat)
+POST /{brand}/drafts/{id}/discard  # iptal et (kayıt silinmez)
+
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
 GET  /{brand}/import-files  # yalnızca `import_files` bayrağı açık markada (aksi halde 404)
@@ -300,5 +321,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-11 — taslak ürün
-akışı** (spec §12A.3).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-12 — senaryo motoru,
+karşılaştırma ve hedef marj çözücü** (spec §12A.4).

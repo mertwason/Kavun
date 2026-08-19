@@ -29,7 +29,8 @@
     "dashboard": "Panel",
     "skuMargins": "SKU marjları",
     "orders": "Siparişler",
-    "products": "Ürün çalışma alanı"
+    "products": "Ürün çalışma alanı",
+    "drafts": "Yeni ürün değerlendir"
   },
   "period": {
     "label": "Dönem",
@@ -124,7 +125,9 @@
     "ordersHint": "Dönemi genişletmeyi ya da demo veriyi yüklemeyi deneyin: make seed-demo",
     "orderLines": "Bu siparişin satırı bulunamadı.",
     "products": "Bu markada ürün yok.",
-    "productsHint": "Excel şablonunu indirip doldurun ya da demo veriyi yükleyin: make seed-demo"
+    "productsHint": "Excel şablonunu indirip doldurun ya da demo veriyi yükleyin: make seed-demo",
+    "drafts": "Henüz taslak yok.",
+    "draftsHint": "Yukarıdaki formu doldurup taslak olarak kaydedin."
   },
   "error": {
     "unreachable": "API'ye ulaşılamıyor.",
@@ -166,6 +169,36 @@
       "guncelleme": "Güncelleme",
       "hata": "Hata",
       "degisiklik_yok": "Değişiklik yok"
+    }
+  },
+  "drafts": {
+    "formTitle": "Yeni ürün değerlendir",
+    "formSubtitle": "Maliyet ve hedef fiyatı girin; kâr anında hesaplanır, kaydetmeden.",
+    "listTitle": "Taslaklar",
+    "name": "Ürün adı",
+    "sku": "SKU önerisi",
+    "skuHint": "Ürüne dönüştürmek için gerekli",
+    "cost": "Alış maliyeti (KDV hariç)",
+    "targetPrice": "Hedef satış fiyatı (KDV dahil)",
+    "cargo": "Kargo tahmini",
+    "analyze": "Hesapla",
+    "save": "Taslak olarak kaydet",
+    "saved": "Kaydedildi",
+    "promote": "Ürüne dönüştür",
+    "discard": "İptal et",
+    "profitCard": "Birim net kâr",
+    "emptyCard": "Formu doldurup Hesapla'ya basın.",
+    "missingFields": "Ürün adı, maliyet ve hedef fiyat zorunlu.",
+    "status": {
+      "draft": "Taslak",
+      "promoted": "Ürüne dönüştü",
+      "discarded": "İptal"
+    },
+    "warnings": {
+      "maliyet_yok": "Maliyet girilmedi — kâr eksik hesaplanıyor.",
+      "komisyon_orani_yok": "Bu kategoride komisyon tarifesi yok; komisyon 0 sayıldı.",
+      "kargo_tarifesi_yok": "Kargo tahmini girilmedi; 0 sayıldı (desi tarifesi KVN-14'te).",
+      "iptal": "İptal satırı."
     }
   }
 }

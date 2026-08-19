@@ -30,6 +30,7 @@ export default function BrandLayout({
     { href: `/${brand.slug}/sku`, label: tr.nav.skuMargins },
     { href: `/${brand.slug}/orders`, label: tr.nav.orders },
     { href: `/${brand.slug}/products`, label: tr.nav.products },
+    { href: `/${brand.slug}/drafts`, label: tr.nav.drafts },
   ];
 
   return (

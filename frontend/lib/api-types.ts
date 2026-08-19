@@ -419,6 +419,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/drafts/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Anlık kâr analizi (kaydetmeden)
+         * @description Form doldurulurken kâr kartını besler; hiçbir şey kaydedilmez (spec §12A.5).
+         */
+        post: operations["analyze_input__brand_slug__drafts_analyze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Taslak listesi
+         * @description Markanın taslakları, güncel analizleriyle.
+         */
+        get: operations["list_drafts__brand_slug__drafts_get"];
+        put?: never;
+        /**
+         * Taslak kaydet
+         * @description Taslağı kaydeder ve analizini döner (spec §12A.3).
+         */
+        post: operations["create_draft__brand_slug__drafts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/drafts/{draft_id}/promote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Taslağı ürüne dönüştür
+         * @description Ürün + maliyet + desi + fiyat kayıtları doğar; taslak `promoted` olur.
+         */
+        post: operations["promote_draft__brand_slug__drafts__draft_id__promote_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/drafts/{draft_id}/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Taslağı iptal et
+         * @description Kayıt silinmez, `discarded` olarak işaretlenir.
+         */
+        post: operations["discard_draft__brand_slug__drafts__draft_id__discard_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/products": {
         parameters: {
             query?: never;
@@ -511,6 +595,37 @@ export interface components {
             created_at: string;
             /** Acknowledged At */
             acknowledged_at: string | null;
+        };
+        /**
+         * AnalysisOut
+         * @description Kâr analizi — motorun çıktısı.
+         */
+        AnalysisOut: {
+            /** Revenue Gross */
+            revenue_gross: string;
+            /** Cost Cogs */
+            cost_cogs: string;
+            /** Cost Commission */
+            cost_commission: string;
+            /** Cost Cargo */
+            cost_cargo: string;
+            /** Cost Service Fee */
+            cost_service_fee: string;
+            /** Vat Net */
+            vat_net: string;
+            /** Profit */
+            profit: string;
+            /** Margin Pct */
+            margin_pct: string;
+            /** Commission Rate */
+            commission_rate: string | null;
+            commission_source: components["schemas"]["CommissionSource"] | null;
+            /** Warnings */
+            warnings: string[];
+            /** Waterfall */
+            waterfall: {
+                [key: string]: unknown;
+            }[];
         };
         /** Body_download_error_report__brand_slug__price_list_import_errors_post */
         Body_download_error_report__brand_slug__price_list_import_errors_post: {
@@ -626,6 +741,76 @@ export interface components {
             /** Brand */
             brand?: string | null;
         };
+        /**
+         * DraftInput
+         * @description Yeni ürün değerlendirme formu.
+         */
+        DraftInput: {
+            /** Name */
+            name: string;
+            /** Sku Onerisi */
+            sku_onerisi?: string | null;
+            /**
+             * Alis Maliyeti
+             * @description KDV hariç birim maliyet
+             */
+            alis_maliyeti: number | string;
+            /**
+             * Hedef Satis Fiyati
+             * @description KDV dahil satış fiyatı
+             */
+            hedef_satis_fiyati: number | string;
+            /** Kanal */
+            kanal?: string | null;
+            /** Kategori */
+            kategori?: string | null;
+            /** Vat Rate */
+            vat_rate: number | string;
+            /** Desi */
+            desi?: number | string | null;
+            /**
+             * Kargo Tahmini
+             * @description Verilmezse 0 sayılır ve analiz uyarı taşır
+             */
+            kargo_tahmini?: number | string | null;
+        };
+        /**
+         * DraftOut
+         * @description Kayıtlı taslak + güncel analizi.
+         */
+        DraftOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Sku Onerisi */
+            sku_onerisi: string | null;
+            /** Alis Maliyeti */
+            alis_maliyeti: string;
+            /** Hedef Satis Fiyati */
+            hedef_satis_fiyati: string;
+            /** Kanal */
+            kanal: string | null;
+            /** Kategori */
+            kategori: string | null;
+            /** Vat Rate */
+            vat_rate: string;
+            /** Desi */
+            desi: string | null;
+            status: components["schemas"]["DraftStatus"];
+            /** Promoted Product Id */
+            promoted_product_id: string | null;
+            analysis: components["schemas"]["AnalysisOut"];
+        };
+        /**
+         * DraftStatus
+         * @description `product_drafts.status` (spec §12A.3).
+         * @enum {string}
+         */
+        DraftStatus: "draft" | "promoted" | "discarded";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -673,6 +858,8 @@ export interface components {
             guncelleme: number;
             /** Degisiklik Yok */
             degisiklik_yok: number;
+            /** Taslak */
+            taslak: number;
             /** Hata */
             hata: number;
             /** Rows */
@@ -898,6 +1085,21 @@ export interface components {
             vat_rate: string;
             /** Msrp */
             msrp: string | null;
+        };
+        /**
+         * PromotedOut
+         * @description `promote` yanıtı.
+         */
+        PromotedOut: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Sku */
+            sku: string;
+            /** Name */
+            name: string;
         };
         /**
          * RowResultOut
@@ -1825,6 +2027,8 @@ export interface operations {
             query?: {
                 /** @description true iken hiçbir şey yazılmaz */
                 dry_run?: boolean;
+                /** @description SKU'su boş satırları taslak ürün olarak al (spec §12A.3) */
+                as_draft?: boolean;
             };
             header?: {
                 authorization?: string | null;
@@ -1886,6 +2090,186 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyze_input__brand_slug__drafts_analyze_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_drafts__brand_slug__drafts_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_draft__brand_slug__drafts_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promote_draft__brand_slug__drafts__draft_id__promote_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                draft_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotedOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    discard_draft__brand_slug__drafts__draft_id__discard_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                draft_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftOut"];
                 };
             };
             /** @description Validation Error */

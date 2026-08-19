@@ -21,6 +21,9 @@ export type OrderDetail = components["schemas"]["OrderDetailOut"];
 export type WaterfallStep = components["schemas"]["WaterfallStep"];
 export type PriceRow = components["schemas"]["PriceRowOut"];
 export type ImportSummary = components["schemas"]["ImportSummaryOut"];
+export type Draft = components["schemas"]["DraftOut"];
+export type DraftInput = components["schemas"]["DraftInput"];
+export type DraftAnalysis = components["schemas"]["AnalysisOut"];
 
 export type HealthStatus = {
   online: boolean;
@@ -160,4 +163,56 @@ export async function uploadPriceList(
   } catch {
     return { ok: false, status: 0, reason: "unreachable" };
   }
+}
+
+export function fetchDrafts(brand: string) {
+  return get<Draft[]>(brand, "/drafts");
+}
+
+/** Marka kapsamlı POST — sunucu tarafında çalışır, token istemciye geçmez. */
+async function post<T>(
+  brand: string,
+  path: string,
+  body?: unknown,
+): Promise<ApiResult<T> & { detail?: string }> {
+  const token = await issueToken(brand);
+  if (!token) return { ok: false, status: 401, reason: "no-session" };
+  try {
+    const response = await fetch(`${API_URL}/${brand}${path}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { detail?: unknown } | null;
+      const detail = typeof payload?.detail === "string" ? payload.detail : undefined;
+      return { ok: false, status: response.status, reason: "http-error", detail };
+    }
+    return { ok: true, data: (await response.json()) as T };
+  } catch {
+    return { ok: false, status: 0, reason: "unreachable" };
+  }
+}
+
+export function analyzeDraft(brand: string, input: DraftInput) {
+  return post<DraftAnalysis>(brand, "/drafts/analyze", input);
+}
+
+export function createDraft(brand: string, input: DraftInput) {
+  return post<Draft>(brand, "/drafts", input);
+}
+
+export function promoteDraft(brand: string, draftId: string) {
+  return post<{ product_id: string; sku: string; name: string }>(
+    brand,
+    `/drafts/${draftId}/promote`,
+  );
+}
+
+export function discardDraft(brand: string, draftId: string) {
+  return post<Draft>(brand, `/drafts/${draftId}/discard`);
 }

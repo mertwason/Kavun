@@ -40,6 +40,9 @@ class ProductDraft(Base, TimestampMixin):
     alis_maliyeti: Mapped[Decimal] = mapped_column(Money, nullable=False)
     hedef_satis_fiyati: Mapped[Decimal] = mapped_column(Money, nullable=False)
     kanal: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # Spec §12A.3'e ek (KVN-11): komisyon tahmini kategori tarifesinden çözülüyor,
+    # kategori olmadan oran bulunamıyordu; promote'ta ürüne de taşınır.
+    kategori: Mapped[str | None] = mapped_column(String(200), nullable=True)
     vat_rate: Mapped[Decimal] = mapped_column(VatRate, nullable=False)
     desi: Mapped[Decimal | None] = mapped_column(Desi, nullable=True)
     status: Mapped[DraftStatus] = mapped_column(

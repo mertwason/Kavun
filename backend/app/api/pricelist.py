@@ -51,6 +51,9 @@ def export_price_list(workspace: Workspace = Depends(get_workspace)) -> Response
 async def import_price_list(
     file: UploadFile = File(..., description="Kavun şablonuyla üretilmiş xlsx"),
     dry_run: bool = Query(default=True, description="true iken hiçbir şey yazılmaz"),
+    as_draft: bool = Query(
+        default=False, description="SKU'su boş satırları taslak ürün olarak al (spec §12A.3)"
+    ),
     workspace: Workspace = Depends(require_role(UserRole.ADMIN, UserRole.EDITOR)),
 ) -> pricelist.ImportSummary:
     """`dry_run=true` → yalnızca diff; `false` → uygulanır ve batch loglanır."""
@@ -68,6 +71,9 @@ async def import_price_list(
             today=date.today(),
             user=workspace.claims.email,
             dry_run=dry_run,
+            as_draft=as_draft,
+            tenant_id=workspace.brand.tenant_id,
+            brand_id=workspace.brand_id,
         )
     except pricelist.TemplateError as exc:
         raise HTTPException(

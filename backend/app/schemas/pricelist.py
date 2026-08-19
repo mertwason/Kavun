@@ -16,7 +16,7 @@ class RowResultOut(BaseModel):
     row_no: int
     sku: str
     channel: str
-    # yeni | guncelleme | degisiklik_yok | hata
+    # yeni | guncelleme | degisiklik_yok | taslak | hata
     action: str
     message: str
     changes: dict[str, str]
@@ -31,6 +31,7 @@ class ImportSummaryOut(BaseModel):
     yeni: int
     guncelleme: int
     degisiklik_yok: int
+    taslak: int
     hata: int
     rows: list[RowResultOut]
 
