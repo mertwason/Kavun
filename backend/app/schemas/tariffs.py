@@ -89,3 +89,24 @@ class TariffImpactOut(BaseModel):
     target_margin_pct: Decimal | None
     monthly_profit_impact: Decimal
     rows: list[TariffImpactRowOut]
+
+
+class TariffUploadOut(BaseModel):
+    """Tarife yükleme yanıtı — eşleştirme + fark analizi (spec §12B.2)."""
+
+    mapping: dict[str, object]
+    """Parser'ın hangi sütunu ne olarak okuduğu; UI onay kutusunda gösterilir."""
+
+    valid_from: date
+    dry_run: bool
+    total_rows: int
+    matched: int
+    unchanged: int
+    changed: int
+    new_categories: int
+    written: int
+    unmatched: list[str]
+    errors: list[str]
+    changes: list[dict[str, object]]
+    affected_sku_count: int
+    monthly_profit_impact: Decimal

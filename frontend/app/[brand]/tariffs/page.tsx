@@ -1,6 +1,7 @@
 /** Komisyon tarifeleri — güncel oranlar, değişiklik geçmişi, etki analizi (spec §12B). */
 
 import { TariffImpact } from "@/components/tariff-impact";
+import { TariffUpload } from "@/components/tariff-upload";
 import {
   Card,
   DataTable,
@@ -37,6 +38,11 @@ export default async function TariffsPage({ params }: { params: { brand: BrandSl
   return (
     <>
       <h1 className="text-lg font-medium">{tr.nav.tariffs}</h1>
+
+      <Card className="flex flex-col gap-4 p-5">
+        <SectionHeader title={tr.tariffs.uploadTitle} subtitle={tr.tariffs.uploadSubtitle} />
+        <TariffUpload brand={params.brand} />
+      </Card>
 
       <Card className="flex flex-col gap-4 p-5">
         <SectionHeader title={tr.tariffs.impactTitle} subtitle={tr.tariffs.impactSubtitle} />

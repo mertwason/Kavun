@@ -269,6 +269,24 @@
     "projectedMargin": "Yeni marj",
     "requiredPrice": "Gereken fiyat",
     "impact": "Etki",
-    "missingDelta": "Oran değişimi zorunlu."
+    "missingDelta": "Oran değişimi zorunlu.",
+    "uploadTitle": "Tarife Excel'i yükle",
+    "uploadSubtitle": "Kanaldan indirdiğiniz dosyayı formatını değiştirmeden yükleyin.",
+    "missingValidFrom": "Yürürlük tarihi zorunlu.",
+    "readAs": "Dosyayı şöyle okudum",
+    "rateColumn": "Oran sütunu",
+    "categoryColumns": "Kategori sütunları",
+    "codeColumn": "Kod sütunu",
+    "campaignColumn": "Kampanya sütunu",
+    "headerRow": "Başlık satırı",
+    "matched": "Eşleşen",
+    "changedRows": "Değişen",
+    "unchangedRows": "Aynı kalan",
+    "newRows": "Yeni",
+    "unmatchedRows": "Eşleşmeyen kategori",
+    "unmatchedNote": "Bu kategorilerde henüz ürününüz yok; kayıtlar yazılır, ürün açılınca kullanılır.",
+    "confirmUpload": "Onayla ve yaz",
+    "uploaded": "Tarife yazıldı",
+    "validFromLabel": "Yürürlük tarihi"
   }
 }

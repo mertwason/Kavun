@@ -82,6 +82,7 @@ def _to_input(payload: ScenarioInputIn) -> scenarios.ScenarioInput:
         adet_varsayimi=payload.adet_varsayimi,
         commission_mode=payload.commission_mode,
         pinned_commission_rate=payload.pinned_commission_rate,
+        future_tariff_date=payload.future_tariff_date,
         kargo_tahmini=payload.kargo_tahmini,
     )
 
@@ -161,6 +162,7 @@ def create_scenario(
         adet_varsayimi=payload.adet_varsayimi,
         commission_mode=payload.commission_mode,
         pinned_commission_rate=payload.pinned_commission_rate,
+        future_tariff_date=payload.future_tariff_date,
         kargo_tahmini=payload.kargo_tahmini,
         created_by=workspace.claims.email,
     )

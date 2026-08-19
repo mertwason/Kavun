@@ -31,6 +31,7 @@ export type CommissionRate = components["schemas"]["CommissionRateOut"];
 export type CommissionChange = components["schemas"]["CommissionChangeOut"];
 export type TariffImpact = components["schemas"]["TariffImpactOut"];
 export type TariffImpactInput = components["schemas"]["TariffImpactIn"];
+export type TariffUpload = components["schemas"]["TariffUploadOut"];
 
 export type HealthStatus = {
   online: boolean;
@@ -257,4 +258,37 @@ export function fetchCommissionChanges(brand: string) {
 
 export function fetchTariffImpact(brand: string, input: TariffImpactInput) {
   return post<TariffImpact>(brand, "/tariffs/impact", input);
+}
+
+/** Tarife dosyasını API'ye iletir; `dryRun` iken hiçbir şey yazılmaz (spec §12B.2). */
+export async function uploadTariff(
+  brand: string,
+  file: File,
+  validFrom: string,
+  dryRun: boolean,
+): Promise<ApiResult<TariffUpload> & { detail?: string }> {
+  const token = await issueToken(brand);
+  if (!token) return { ok: false, status: 401, reason: "no-session" };
+  const form = new FormData();
+  form.append("file", file, file.name);
+  const query = new URLSearchParams({
+    valid_from: validFrom,
+    dry_run: dryRun ? "true" : "false",
+  });
+  try {
+    const response = await fetch(`${API_URL}/${brand}/tariffs/upload?${query.toString()}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { detail?: unknown } | null;
+      const detail = typeof payload?.detail === "string" ? payload.detail : undefined;
+      return { ok: false, status: response.status, reason: "http-error", detail };
+    }
+    return { ok: true, data: (await response.json()) as TariffUpload };
+  } catch {
+    return { ok: false, status: 0, reason: "unreachable" };
+  }
 }

@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %73** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░
-Son güncelleme: 2026-08-19 05:20 · Aktif görev: KVN-14
+**TOPLAM: %77** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░
+Son güncelleme: 2026-08-19 05:45 · Aktif görev: KVN-15
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -19,19 +19,65 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-11 | Taslak ürün akışı                                           | 3       | ✅ Bitti    |
 | KVN-12 | Senaryo motoru + karşılaştırma + hedef marj çözücü          | 6       | ✅ Bitti    |
 | KVN-13 | Komisyon çözümleme hiyerarşisi + snapshot/diff + etki       | 6       | ✅ Bitti    |
-| KVN-14 | Tarife Excel yükleme (esnek parser)                         | 4       | 🔄 Yapılıyor|
-| KVN-15 | PDF fatura ayrıştırma + öğrenen SKU eşleştirme + onay       | 7       | ⏳ Sırada   |
+| KVN-14 | Tarife Excel yükleme (esnek parser)                         | 4       | ✅ Bitti    |
+| KVN-15 | PDF fatura ayrıştırma + öğrenen SKU eşleştirme + onay       | 7       | 🔄 Yapılıyor|
 | KVN-16 | Inventory ledger + WAC motoru + açılış stoku                | 7       | ⏳ Sırada   |
 | KVN-17 | İthalat dosyası modu + kur farkı takibi (Alessi)            | 5       | ⏳ Sırada   |
 | KVN-18 | D2B kanal + fire/hasar + MSRP disiplini                     | 3       | ⏳ Sırada   |
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 73 · **Faz 1 (KVN-01…09) tamamlandı**
+Toplam ağırlık: 100 · Biten ağırlık: 77 · **Faz 1 (KVN-01…09) tamamlandı**
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-14 bitti
+
+**Ne bitti:** Tarife Excel yüklemesi — esnek parser (spec §12B.2) + yükleme ekranı.
+Testler: 362 yeşil, parser coverage %94, genel %95. Akış gerçek tarayıcıda denendi.
+
+**Kabul kriterleri (§12B.2) kanıtlandı:**
+- Tarife dosyası SIFIR manuel müdahale ile okunuyor: başlık satırı 4. satırda (üstte
+  duyuru blokları), sütun sırası sabit değil, oranlar `%16,0` biçiminde METİN
+- Eşleşmeyen kategoriler hata değil, `unmatched` listesi
+- İleri tarihli yükleme + `future_tariff` senaryosu uçtan uca çalışıyor
+
+**Parser davranışı:**
+- Başlık satırı ilk 20 satır içinde aranıyor; tanınan başlık sayısı en yüksek satır seçiliyor
+- Türkçe başlık varyasyonları fuzzy eşleşiyor (aksan/büyük-küçük harf duyarsız)
+- Oran `%21,5` · `21,5` · `21.5` · `0,215` · sayı hücresi — hepsinden doğru okunuyor
+- Çok seviyeli kategori (ana > alt) destekleniyor, eşleştirme EN SPESİFİK seviyeden
+- Oran hücresi tamamen boş olan satırlar (dosya sonu notları, ara başlıklar) sessizce
+  atlanıyor — sahte hata üretmemek için
+- Dry-run yanıtı "şu sütunu kategori, şu sütunu oran olarak okudum" bilgisini taşıyor;
+  ekran bunu onay kutusunda gösteriyor
+
+**Otomatik fark analizi:** yükleme anında yeni tarife ile mevcut oranlar karşılaştırılıp
+değişen kategoriler, etkilenen SKU sayısı ve aylık kâr etkisi dönüyor — kullanıcı
+tarifeyi yüklerken "bu tarife sana ne yapacak" raporunu anında görüyor.
+
+**`future_tariff` senaryo modu tamamlandı** (§12B.4): duyurulmuş ileri tarihli tarife
+varsa senaryo o oranı kullanıyor. `pricing_scenarios.future_tariff_date` alanı artık
+gerçekten okunuyor.
+
+**Fixture dürüstlüğü:** `tests/fixtures/tariffs/trendyol_komisyon_2026_09.xlsx` gerçek bir
+Trendyol dosyası DEĞİL — yayımlanan dosyaların yapısını (üstte duyuru blokları, çok
+seviyeli kategori, metin oranlar) taklit ediyor. Gerçek satıcı hesabı ve tarife sayfasına
+erişim yok. `tests/fixtures/tariffs/README.md` bunu açıkça yazıyor; ilk gerçek dosya elde
+edilince fixture değiştirilip testler tekrar çalıştırılmalı.
+
+**Canlı tarayıcı testi (Playwright):** fixture yüklendi → parser eşleştirmesi ekranda
+göründü → 5 değişen kategori (Kahve/Harman %14,5 → %16,0 …), 6 eşleşmeyen kategori ve
+−₺412,38 aylık etki listelendi → onaydan sonra 5 kayıt yazıldı. JS hatası yok.
+
+**Bilinen risk:** Parser'ın başlık sözlüğü Trendyol'un YAYIMLADIĞI biçime göre yazıldı;
+gerçek dosyada farklı başlıklar çıkarsa sözlüğe eklenmesi gerekecek (kod tek yerde,
+`CATEGORY_HEADERS`/`RATE_HEADERS`). Hepsiburada/N11 için kanal bazlı sözlükler Faz 3'te.
+Yüklenen tarifenin `valid_to` alanı doldurulmuyor: aynı kategoriye yeni tarife gelince
+eskisi kapanmıyor, sadece daha güncel `valid_from` kazanıyor — çözümleme doğru çalışıyor
+ama tarife tablosu zamanla birikecek.
 
 ### 2026-08-19 — KVN-13 bitti
 

@@ -7,21 +7,23 @@ from __future__ import annotations
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import select
 
 from app.api.deps import Workspace, get_workspace, require_role
 from app.models.catalog import CommissionChange, CommissionRate
 from app.models.enums import CommissionScope, UserRole
 from app.models.identity import Channel, Store
+from app.models.workspace import ImportBatch
 from app.schemas.tariffs import (
     CommissionChangeOut,
     CommissionRateOut,
     TariffImpactIn,
     TariffImpactOut,
     TariffImpactRowOut,
+    TariffUploadOut,
 )
-from app.services import tariffs
+from app.services import tariff_import, tariffs
 
 router = APIRouter(prefix="/{brand_slug}/tariffs", tags=["tariffs"])
 
@@ -144,4 +146,79 @@ def tariff_impact(
         target_margin_pct=result.target_margin_pct,
         monthly_profit_impact=result.monthly_profit_impact,
         rows=[TariffImpactRowOut.model_validate(row) for row in result.rows],
+    )
+
+
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
+
+@router.post(
+    "/upload",
+    response_model=TariffUploadOut,
+    summary="Tarife Excel'i yükle (Trendyol'dan indirildiği hâliyle)",
+)
+async def upload_tariff(
+    file: UploadFile = File(..., description="Kanalın yayımladığı tarife dosyası"),
+    valid_from: date = Query(..., description="Tarifenin yürürlük tarihi (ileri tarih olabilir)"),
+    dry_run: bool = Query(default=True, description="true iken hiçbir şey yazılmaz"),
+    workspace: Workspace = Depends(require_role(UserRole.ADMIN, UserRole.EDITOR)),
+) -> TariffUploadOut:
+    """§12B.2: esnek parser + otomatik fark analizi.
+
+    `dry_run=true` yanıtı hangi sütunun ne olarak okunduğunu ve tarifenin kâra etkisini
+    taşır; kullanıcı onaylayınca aynı dosya `dry_run=false` ile gönderilir.
+    """
+    payload = await file.read()
+    if len(payload) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Dosya çok büyük (en fazla 10 MB)",
+        )
+
+    try:
+        preview = tariff_import.import_tariff(
+            workspace.session,
+            payload,
+            store=_store(workspace),
+            valid_from=valid_from,
+            today=date.today(),
+            dry_run=dry_run,
+            user=workspace.claims.email,
+        )
+    except tariff_import.TariffFileError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+        ) from exc
+
+    if not dry_run:
+        workspace.session.add(
+            ImportBatch(
+                tenant_id=workspace.brand.tenant_id,
+                brand_id=workspace.brand_id,
+                kind="commission_tariff",
+                filename=file.filename or "tarife.xlsx",
+                user=workspace.claims.email,
+                dry_run=False,
+                yeni=preview.new_categories,
+                guncelleme=preview.changed,
+                hata=len(preview.errors),
+            )
+        )
+    workspace.session.commit()
+
+    return TariffUploadOut(
+        mapping=preview.mapping,
+        valid_from=preview.valid_from,
+        dry_run=dry_run,
+        total_rows=preview.total_rows,
+        matched=preview.matched,
+        unchanged=preview.unchanged,
+        changed=preview.changed,
+        new_categories=preview.new_categories,
+        written=preview.written,
+        unmatched=preview.unmatched,
+        errors=preview.errors,
+        changes=preview.changes,
+        affected_sku_count=preview.affected_sku_count,
+        monthly_profit_impact=preview.monthly_profit_impact,
     )

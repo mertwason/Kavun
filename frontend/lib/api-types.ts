@@ -709,6 +709,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/tariffs/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Tarife Excel'i yükle (Trendyol'dan indirildiği hâliyle)
+         * @description §12B.2: esnek parser + otomatik fark analizi.
+         *
+         *     `dry_run=true` yanıtı hangi sütunun ne olarak okunduğunu ve tarifenin kâra etkisini
+         *     taşır; kullanıcı onaylayınca aynı dosya `dry_run=false` ile gönderilir.
+         */
+        post: operations["upload_tariff__brand_slug__tariffs_upload_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/products": {
         parameters: {
             query?: never;
@@ -851,6 +874,14 @@ export interface components {
             /**
              * File
              * @description Kavun senaryo şablonuyla üretilmiş xlsx
+             */
+            file: string;
+        };
+        /** Body_upload_tariff__brand_slug__tariffs_upload_post */
+        Body_upload_tariff__brand_slug__tariffs_upload_post: {
+            /**
+             * File
+             * @description Kanalın yayımladığı tarife dosyası
              */
             file: string;
         };
@@ -1443,6 +1474,11 @@ export interface components {
             commission_mode: components["schemas"]["CommissionMode"];
             /** Pinned Commission Rate */
             pinned_commission_rate?: number | string | null;
+            /**
+             * Future Tariff Date
+             * @description `future_tariff` modunda hangi tarihteki tarife kullanılsın
+             */
+            future_tariff_date?: string | null;
             /** Kargo Tahmini */
             kargo_tahmini?: number | string | null;
         };
@@ -1662,6 +1698,11 @@ export interface components {
             commission_mode: components["schemas"]["CommissionMode"];
             /** Pinned Commission Rate */
             pinned_commission_rate?: number | string | null;
+            /**
+             * Future Tariff Date
+             * @description `future_tariff` modunda hangi tarihteki tarife kullanılsın
+             */
+            future_tariff_date?: string | null;
             /** Kargo Tahmini */
             kargo_tahmini?: number | string | null;
             /**
@@ -1761,6 +1802,47 @@ export interface components {
             revenue_gross: string;
             /** Profit Impact */
             profit_impact: string;
+        };
+        /**
+         * TariffUploadOut
+         * @description Tarife yükleme yanıtı — eşleştirme + fark analizi (spec §12B.2).
+         */
+        TariffUploadOut: {
+            /** Mapping */
+            mapping: {
+                [key: string]: unknown;
+            };
+            /**
+             * Valid From
+             * Format: date
+             */
+            valid_from: string;
+            /** Dry Run */
+            dry_run: boolean;
+            /** Total Rows */
+            total_rows: number;
+            /** Matched */
+            matched: number;
+            /** Unchanged */
+            unchanged: number;
+            /** Changed */
+            changed: number;
+            /** New Categories */
+            new_categories: number;
+            /** Written */
+            written: number;
+            /** Unmatched */
+            unmatched: string[];
+            /** Errors */
+            errors: string[];
+            /** Changes */
+            changes: {
+                [key: string]: unknown;
+            }[];
+            /** Affected Sku Count */
+            affected_sku_count: number;
+            /** Monthly Profit Impact */
+            monthly_profit_impact: string;
         };
         /**
          * TokenResponse
@@ -3183,6 +3265,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TariffImpactOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_tariff__brand_slug__tariffs_upload_post: {
+        parameters: {
+            query: {
+                /** @description Tarifenin yürürlük tarihi (ileri tarih olabilir) */
+                valid_from: string;
+                /** @description true iken hiçbir şey yazılmaz */
+                dry_run?: boolean;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_tariff__brand_slug__tariffs_upload_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TariffUploadOut"];
                 };
             };
             /** @description Validation Error */

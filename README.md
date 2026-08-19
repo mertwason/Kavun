@@ -201,6 +201,18 @@ hedef marjı **koruyan** yeni fiyat (hedef marj çözücüsüyle, ±0,01 puan ga
 Hakedişten gelen gerçek oran tarifeden farklıysa sessiz geçilmez: `settlement_actual`
 kaydı yazılır ve çözümleme hiyerarşisi bundan sonra onu kullanır.
 
+**Tarife Excel yüklemesi (esnek parser).** Kanalın yayımladığı dosya **formatı
+değiştirilmeden** yüklenir: parser başlık satırını arar (ilk satırda olmak zorunda değil),
+sütunları Türkçe başlık varyasyonlarıyla eşleştirir (`Komisyon %`, `Komisyon Oranı`,
+`Ana Kategori`, `Alt Kategori`…) ve oranı `%21,5` · `21,5` · `0,215` biçimlerinin
+hepsinden okur. Dry-run yanıtı "şu sütunu kategori, şu sütunu oran olarak okudum" bilgisini
+ve tarifenin kâra etkisini taşır; onaydan önce hiçbir kayıt yazılmaz.
+
+Çok seviyeli kategori desteklenir, eşleştirme en spesifik seviyeden yapılır. Kavun'da
+karşılığı olmayan tarife satırları **hata değildir** — `unmatched` listesinde raporlanır.
+İleri tarihli yükleme bugünün hesabını etkilemez; senaryoların `future_tariff` modu o
+tarihteki oranı kullanır ("yeni tarife yürürlüğe girince marjım ne olur").
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -315,6 +327,7 @@ GET  /{brand}/tariffs              # geçerli komisyon tarifeleri
 GET  /{brand}/tariffs/changes      # değişiklik geçmişi + etki tutarları
 POST /{brand}/tariffs/detect-changes  # günlük diff'i elle tetikle
 POST /{brand}/tariffs/impact       # "komisyon %X artarsa ne olur" (toplu senaryo)
+POST /{brand}/tariffs/upload       # tarife Excel'i yükle (?valid_from&dry_run)
 
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
@@ -380,5 +393,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-14 — tarife Excel
-yükleme** (esnek parser, spec §12B.2).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-15 — PDF fatura
+ayrıştırma, öğrenen SKU eşleştirme ve onay akışı** (spec §12C.3).

@@ -1,8 +1,10 @@
 "use server";
 
-/** Tarife etki analizi sunucu aksiyonu (spec §12B.4). */
+/** Tarife etki analizi ve dosya yükleme sunucu aksiyonları (spec §12B.2, §12B.4). */
 
-import { fetchTariffImpact, type TariffImpact } from "@/lib/api";
+import { revalidatePath } from "next/cache";
+
+import { fetchTariffImpact, type TariffImpact, type TariffUpload, uploadTariff } from "@/lib/api";
 import { isBrandSlug } from "@/lib/brands";
 import tr from "@/locales/tr.json";
 
@@ -40,4 +42,46 @@ export async function impactAction(
     return { status: "error", message: result.detail ?? tr.error.unreachable };
   }
   return { status: "ready", impact: result.data };
+}
+
+
+export type UploadState = {
+  status: "idle" | "preview" | "applied" | "error";
+  result?: TariffUpload;
+  message?: string;
+};
+
+async function runUpload(formData: FormData, dryRun: boolean): Promise<UploadState> {
+  const brand = String(formData.get("brand") ?? "");
+  const file = formData.get("file");
+  const validFrom = String(formData.get("valid_from") ?? "").trim();
+
+  if (!isBrandSlug(brand)) return { status: "error", message: tr.error.notFound };
+  if (!(file instanceof File) || file.size === 0) {
+    return { status: "error", message: tr.pricelist.noFile };
+  }
+  if (!validFrom) return { status: "error", message: tr.tariffs.missingValidFrom };
+
+  const result = await uploadTariff(brand, file, validFrom, dryRun);
+  if (!result.ok) {
+    return { status: "error", message: result.detail ?? tr.error.unreachable };
+  }
+  if (!dryRun) {
+    revalidatePath(`/${brand}/tariffs`);
+  }
+  return { status: dryRun ? "preview" : "applied", result: result.data };
+}
+
+export async function previewTariffUpload(
+  _previous: UploadState,
+  formData: FormData,
+): Promise<UploadState> {
+  return runUpload(formData, true);
+}
+
+export async function applyTariffUpload(
+  _previous: UploadState,
+  formData: FormData,
+): Promise<UploadState> {
+  return runUpload(formData, false);
 }

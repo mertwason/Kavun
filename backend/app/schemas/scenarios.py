@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -22,6 +23,9 @@ class ScenarioInputIn(BaseModel):
     adet_varsayimi: int = Field(default=1, ge=1)
     commission_mode: CommissionMode = CommissionMode.CURRENT
     pinned_commission_rate: Decimal | None = Field(default=None, ge=0, le=1)
+    future_tariff_date: date | None = Field(
+        default=None, description="`future_tariff` modunda hangi tarihteki tarife kullanılsın"
+    )
     kargo_tahmini: Decimal | None = Field(default=None, ge=0)
 
 

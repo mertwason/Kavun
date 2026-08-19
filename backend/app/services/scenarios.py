@@ -83,6 +83,7 @@ class ScenarioInput:
     adet_varsayimi: int = 1
     commission_mode: CommissionMode = CommissionMode.CURRENT
     pinned_commission_rate: Decimal | None = None
+    future_tariff_date: date | None = None
     kargo_tahmini: Decimal | None = None
     scenario_id: uuid.UUID | None = None
 
@@ -104,9 +105,25 @@ def _commission(
     product: Product,
     on_date: date,
 ) -> tuple[Decimal | None, CommissionSource | None]:
-    """Senaryonun komisyon oranı: sabitlenmiş oran ya da tarifeden çözülen (spec §12B.4)."""
+    """Senaryonun komisyon oranı (spec §12B.4).
+
+    - `current`: çözümleme hiyerarşisinden bugünkü oran
+    - `pinned`: kullanıcının girdiği sabit oran (what-if)
+    - `future_tariff`: duyurulmuş ileri tarihli tarife varsa O TARİHTEKİ oran
+    """
     if scenario.commission_mode is CommissionMode.PINNED and scenario.pinned_commission_rate:
         return scenario.pinned_commission_rate, CommissionSource.MANUAL
+
+    if scenario.commission_mode is CommissionMode.FUTURE_TARIFF:
+        from app.services.tariff_import import future_rate
+
+        effective_date = scenario.future_tariff_date or on_date
+        future = future_rate(
+            session, store_id=store.id, category=product.category, on_date=effective_date
+        )
+        if future is not None:
+            return future.rate, future.source
+
     rate_row, source = resolve_commission(
         session, store_id=store.id, product=product, on_date=on_date
     )
@@ -203,6 +220,7 @@ def from_record(record: PricingScenario, *, cargo_estimate: Decimal | None = Non
         adet_varsayimi=record.adet_varsayimi,
         commission_mode=record.commission_mode,
         pinned_commission_rate=record.pinned_commission_rate,
+        future_tariff_date=record.future_tariff_date,
         kargo_tahmini=cargo_estimate if cargo_estimate is not None else record.kargo_tahmini,
         scenario_id=record.id,
     )
@@ -301,6 +319,7 @@ def solve_target_margin(
         adet_varsayimi=scenario.adet_varsayimi,
         commission_mode=scenario.commission_mode,
         pinned_commission_rate=scenario.pinned_commission_rate,
+        future_tariff_date=scenario.future_tariff_date,
         kargo_tahmini=scenario.kargo_tahmini,
     )
     return TargetMarginResult(
