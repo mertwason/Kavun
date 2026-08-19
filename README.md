@@ -349,6 +349,27 @@ yan yana. Sayılar yeniden hesaplanmaz — marka içindeki motorun yazdığı ka
 toplanır, böylece holding ile marka görünümü çelişemez. Erişim (ve her ret) audit'e
 yazılır; yetkisiz kullanıcı 403 alır.
 
+### Kargo faturası: `estimated → actual` (KVN-EK-02)
+
+Faz 1'de kargo maliyeti **tahminidir** (desi × tarife). Gerçek tutar ay sonunda kargo
+firmasının faturasından gelir; bu akış o faturayı gönderilerle eşleştirir ve maliyeti
+kesinleştirir.
+
+```
+Şablonu indir → kargo firmasının dökümünü doldur → Önizle → Uygula
+```
+
+- Eşleştirme anahtarı **gönderi (takip) numarasıdır**; kanal onu vermiyorsa **sipariş
+  numarası** kullanılır. İkisi de tutmazsa satır "eşleşmedi" kuyruğuna düşer ve uyarı
+  üretilir — uydurma eşleştirme yapılmaz, yanlış gönderiye yazılan maliyet sessizce
+  yanlış kâr üretirdi.
+- **Kesinleşmiş maliyet ezilmez:** `cost_state = actual` olan gönderi ikinci faturayla
+  güncellenmez, satır "zaten kesin" olarak raporlanır.
+- Kesinleşen her sipariş için kâr yeniden hesaplanır ve değişen alanlar
+  `profit_revisions`'a **tetikleyici gerekçesiyle** (`kargo_faturasi`) loglanır (spec §6.2).
+  Satır böylece "Tahmini" rozetinden "Kesinleşti"ye geçer (tasarım brief'i, kalıp 2).
+- Önizleme "tahmin farkı"nı gösterir: pozitifse tahmin düşük kalmış, kâr aşağı revize olur.
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -428,6 +449,7 @@ hazır Chromium farklı sürümdeyse `PLAYWRIGHT_CHROMIUM_PATH` ile yol verilebi
 | `/{marka}/tariffs` | Komisyon tarifeleri — geçerli oranlar, değişiklik geçmişi, etki analizi |
 | `/{marka}/invoices` | Alış faturaları — PDF yükleme + satır eşleştirme + onay |
 | `/{marka}/inventory` | Stok & maliyet — eldeki adet, ortalama maliyet, hareket defteri, açılış/düzeltme |
+| `/{marka}/cargo` | Kargo faturaları — kesinleşme durumu + fatura yükleme/eşleştirme |
 | `/{marka}/imports` | İthalat dosyaları + açık döviz pozisyonu (yalnızca bayrağı açık markada) |
 | `/{marka}/imports/{id}` | Dosya detayı — masraf kalemleri, dağıtım önizlemesi, ödemeler/kur farkı |
 | `/{marka}/d2b` | D2B satışlar — şablon indir/yükle + kademe bazlı özet (bayrağa bağlı) |
@@ -546,6 +568,11 @@ POST /{brand}/inventory/damage     # fire/hasar kaydı (gerekçe zorunlu)
 GET  /{brand}/inventory/damage     # SKU bazlı hasar oranı ve fire gideri
 GET  /{brand}/discipline           # MSRP ve marj tabanı ihlalleri (bayrağa bağlı)
 
+GET  /{brand}/cargo-invoices             # yüklenen kargo faturaları
+GET  /{brand}/cargo-invoices/cost-state  # kaç gönderi kesinleşti / tahmini kaldı
+GET  /{brand}/cargo-invoices/template    # kargo faturası şablonu (xlsx)
+POST /{brand}/cargo-invoices/import      # eşleştir + kesinleştir (?dry_run)
+
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
 GET  /{brand}/import-files  # yalnızca `import_files` bayrağı açık markada (aksi halde 404)
@@ -611,7 +638,8 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Faz 1 ve Faz 1.5'in kanonik görev listesi (KVN-01…20) tamamlandı; durum ve oturum
-özetleri `PROGRESS.md` dosyasındadır. Sırada spec'in **Faz 2**'si var: kargo faturası ve
-hakediş (settlement) senkronu, `estimated → actual` geçişleri ve mutabakat modülü.
-Faz 2'nin kabul kriteri gerçek hakediş dökümü ister (§11).
+Faz 1 ve Faz 1.5'in kanonik görev listesi (KVN-01…20) tamamlandı. Şimdi spec'in
+**Faz 2**'si sürüyor (`KVN-EK` görevleri, bkz. `PROGRESS.md`): kargo faturası eşleştirme
+bitti, sırada **hakediş mutabakatı** var (spec §7) — `settlement_records` eşleştirme,
+beklenen/gerçek farkı, mutabakat ekranı. Faz 2'nin nihai kabul kriteri gerçek bir aylık
+hakediş dökümü ister (§11).

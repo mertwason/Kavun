@@ -21,6 +21,7 @@ const SHARED_PAGES = [
   { path: "/tariffs", heading: "Komisyon tarifeleri" },
   { path: "/invoices", heading: "Alış faturaları" },
   { path: "/inventory", heading: "Stok & maliyet" },
+  { path: "/cargo", heading: "Kargo faturaları" },
 ] as const;
 
 /** Yalnızca bayrağı açık markada (Alessi) bulunan ekranlar. */
@@ -167,4 +168,16 @@ test("fiyat listesi Excel'i indirilebilir", async ({ page }) => {
   // Dosya adı marka önekiyle üretilir (spec §3A.2).
   expect(download.suggestedFilename()).toContain("alessi");
   expect(download.suggestedFilename()).toMatch(/\.xlsx$/);
+});
+
+test("kargo ekranı kesinleşme durumunu gösterir", async ({ page }) => {
+  await page.goto("/kahveji/cargo");
+
+  // Demo veride gönderilerin bir kısmı kesinleşmiş olmalı (spec §6.2).
+  const kpis = await page.locator(".card .tabular").allInnerTexts();
+  expect(kpis.length).toBeGreaterThanOrEqual(4);
+  expect(Number(kpis[1].replace(/\D/g, ""))).toBeGreaterThan(0);
+
+  // Yüklenen fatura listesi dolu.
+  await expect(page.locator("table tbody tr").last()).toContainText("KRG-");
 });

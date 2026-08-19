@@ -50,6 +50,7 @@ export default async function BrandLayout({
     { href: `/${brand.slug}/tariffs`, label: tr.nav.tariffs },
     { href: `/${brand.slug}/invoices`, label: tr.nav.invoices },
     { href: `/${brand.slug}/inventory`, label: tr.nav.inventory },
+    { href: `/${brand.slug}/cargo`, label: tr.nav.cargo },
     ...(imports.ok ? [{ href: `/${brand.slug}/imports`, label: tr.nav.imports }] : []),
     ...(tiers.ok ? [{ href: `/${brand.slug}/d2b`, label: tr.nav.d2b }] : []),
   ];

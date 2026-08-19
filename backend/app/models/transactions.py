@@ -138,6 +138,9 @@ class Shipment(Base, TimestampMixin):
     brand_id: Mapped[uuid.UUID] = brand_fk()
     order_id: Mapped[uuid.UUID] = uuid_fk("orders.id")
     carrier: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # Kargo faturası eşleştirmesinin anahtarı (spec §5.3). Kanal sağlamıyorsa boş kalır;
+    # o durumda eşleştirme sipariş numarasından yapılır.
+    tracking_no: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
     desi_declared: Mapped[Decimal | None] = mapped_column(Desi, nullable=True)
     desi_invoiced: Mapped[Decimal | None] = mapped_column(Desi, nullable=True)
     cargo_cost_estimated: Mapped[Decimal] = mapped_column(Money, nullable=False)

@@ -199,8 +199,14 @@ def _persist(
     line: OrderLine,
     breakdown: ProfitBreakdown,
     summary: RecomputeSummary,
+    reason: str = "recompute",
 ) -> LineProfit:
-    """Sonucu `line_profit`'e yazar; değişiklikleri `profit_revisions`'a loglar."""
+    """Sonucu `line_profit`'e yazar; değişiklikleri `profit_revisions`'a loglar.
+
+    `reason` hesabı TETİKLEYEN olaydır (spec §6.2): `kargo_faturasi`, `hakedis`,
+    `maliyet_guncellemesi`… Revizyon logunda bu durur; "kâr neden değişti" sorusunun
+    cevabı kayıttan okunabilmelidir.
+    """
     now = datetime.now(UTC)
     existing = session.scalar(select(LineProfit).where(LineProfit.order_line_id == line.id))
 
@@ -246,7 +252,7 @@ def _persist(
                     field=field_name,
                     old_value=old_value,
                     new_value=new_value,
-                    reason="recompute",
+                    reason=reason,
                     revised_at=now,
                 )
             )
@@ -258,7 +264,9 @@ def _persist(
     return existing
 
 
-def recompute_order(session: Session, order: Order, summary: RecomputeSummary) -> None:
+def recompute_order(
+    session: Session, order: Order, summary: RecomputeSummary, reason: str = "recompute"
+) -> None:
     """Bir siparişin tüm satırlarının kârını hesaplar ve yazar."""
     for line, line_input in build_line_inputs(session, order):
         breakdown = compute_line_profit(line_input)
@@ -276,7 +284,7 @@ def recompute_order(session: Session, order: Order, summary: RecomputeSummary) -
 
         for code in breakdown.warnings:
             summary.warn(code)
-        _persist(session, order, line, breakdown, summary)
+        _persist(session, order, line, breakdown, summary, reason=reason)
         summary.lines += 1
     summary.orders += 1
 
@@ -287,8 +295,12 @@ def recompute_orders(
     store_id: uuid.UUID | None = None,
     order_ids: list[uuid.UUID] | None = None,
     limit: int = 5000,
+    reason: str = "recompute",
 ) -> RecomputeSummary:
-    """Verilen kapsamdaki siparişlerin kârını yeniden hesaplar."""
+    """Verilen kapsamdaki siparişlerin kârını yeniden hesaplar.
+
+    `reason` revizyon loguna yazılır — hesabı hangi olayın tetiklediği kaybolmasın (§6.2).
+    """
     summary = RecomputeSummary()
     with system_scope():
         statement = select(Order).order_by(Order.order_date).limit(limit)
@@ -298,7 +310,7 @@ def recompute_orders(
             statement = statement.where(Order.id.in_(order_ids))
 
         for order in session.scalars(statement).all():
-            recompute_order(session, order, summary)
+            recompute_order(session, order, summary, reason=reason)
         session.commit()
 
     log.info("profit.recomputed", **summary.as_dict())

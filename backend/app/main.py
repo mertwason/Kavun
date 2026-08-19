@@ -10,6 +10,7 @@ from app.api import (
     analytics,
     auth,
     b2b,
+    cargo,
     drafts,
     health,
     holding,
@@ -77,6 +78,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(tariffs.router)
     app.include_router(invoices.router)
     app.include_router(b2b.router)
+    app.include_router(cargo.router)
     app.include_router(imports.router)
     app.include_router(inventory.router)
     app.include_router(workspace.router)

@@ -952,6 +952,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/cargo-invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Kargo faturaları
+         * @description Marka kapsamlı fatura listesi.
+         */
+        get: operations["list_invoices__brand_slug__cargo_invoices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/cargo-invoices/cost-state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Kesinleşme durumu
+         * @description Kaç gönderinin kargo maliyeti kesinleşti, kaçı hâlâ tahmini.
+         */
+        get: operations["cost_state__brand_slug__cargo_invoices_cost_state_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/cargo-invoices/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Kargo faturası şablonu (xlsx)
+         * @description İndirilen dosya birebir yüklenebilir olmalıdır (KVN-10 disiplini).
+         */
+        get: operations["download_template__brand_slug__cargo_invoices_template_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/cargo-invoices/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Kargo faturasını eşleştir
+         * @description Eşleşen gönderilerin maliyeti kesinleşir ve kâr yeniden hesaplanır (spec §6.2).
+         */
+        post: operations["import_invoice__brand_slug__cargo_invoices_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/imports": {
         parameters: {
             query?: never;
@@ -1391,6 +1471,15 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_import_invoice__brand_slug__cargo_invoices_import_post */
+        Body_import_invoice__brand_slug__cargo_invoices_import_post: {
+            /** File */
+            file: string;
+            /** Invoice No */
+            invoice_no: string;
+            /** Period */
+            period: string;
+        };
         /** Body_import_price_list__brand_slug__price_list_import_post */
         Body_import_price_list__brand_slug__price_list_import_post: {
             /**
@@ -1478,6 +1567,72 @@ export interface components {
             order_count: number;
             /** Open Alert Count */
             open_alert_count: number;
+        };
+        /**
+         * CargoImportOut
+         * @description Yükleme özeti — `dry_run` iken hiçbir şey yazılmaz.
+         */
+        CargoImportOut: {
+            /** Dry Run */
+            dry_run: boolean;
+            /** Rows */
+            rows: number;
+            /** Kesinlesti */
+            kesinlesti: number;
+            /** Zaten Kesin */
+            zaten_kesin: number;
+            /** Eslesmedi */
+            eslesmedi: number;
+            /** Hata */
+            hata: number;
+            /** Total Amount */
+            total_amount: string;
+            /** Delta */
+            delta: string;
+            /** Invoice Id */
+            invoice_id: string | null;
+            /** Results */
+            results: components["schemas"]["CargoRowOut"][];
+        };
+        /**
+         * CargoInvoiceOut
+         * @description Kayıtlı kargo faturası.
+         */
+        CargoInvoiceOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invoice No */
+            invoice_no: string;
+            /** Period */
+            period: string;
+            /** Total */
+            total: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * CargoRowOut
+         * @description Fatura satırının eşleştirme sonucu.
+         */
+        CargoRowOut: {
+            /** Row No */
+            row_no: number;
+            /** Reference */
+            reference: string;
+            /** Action */
+            action: string;
+            /** Amount */
+            amount: string;
+            /** Previous */
+            previous: string | null;
+            /** Message */
+            message: string;
         };
         /**
          * ChannelCode
@@ -1691,6 +1846,22 @@ export interface components {
             vendor: string | null;
             /** Doc Ref */
             doc_ref: string | null;
+        };
+        /**
+         * CostStateOut
+         * @description Kargo maliyetinin kesinleşme durumu (tasarım brief'i, kalıp 2).
+         */
+        CostStateOut: {
+            /** Total */
+            total: number;
+            /** Actual */
+            actual: number;
+            /** Estimated */
+            estimated: number;
+            /** Estimated Amount */
+            estimated_amount: string;
+            /** Actual Amount */
+            actual_amount: string;
         };
         /**
          * CredentialStatus
@@ -4931,6 +5102,149 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ViolationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_invoices__brand_slug__cargo_invoices_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CargoInvoiceOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cost_state__brand_slug__cargo_invoices_cost_state_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostStateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_template__brand_slug__cargo_invoices_template_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_invoice__brand_slug__cargo_invoices_import_post: {
+        parameters: {
+            query?: {
+                /** @description true iken hiçbir şey yazılmaz */
+                dry_run?: boolean;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_invoice__brand_slug__cargo_invoices_import_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CargoImportOut"];
                 };
             };
             /** @description Validation Error */

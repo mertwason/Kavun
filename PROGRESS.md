@@ -1,8 +1,8 @@
 # KAVUN İlerleme
 
 **TOPLAM: %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-**FAZ 2 (ek görevler): %22** ▓▓▓▓░░░░░░░░░░░░░░░░
-Son güncelleme: 2026-08-19 05:10 · Aktif görev: KVN-EK-02
+**FAZ 2 (ek görevler): %56** ▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░
+Son güncelleme: 2026-08-19 05:55 · Aktif görev: KVN-EK-03
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -40,10 +40,10 @@ Toplam ağırlık: **110** · Biten ağırlık: 110 · **Faz 1 ve Faz 1.5 tamaml
 | ID        | İş Akışı                                                  | Ağırlık | Durum        | Not |
 |-----------|-----------------------------------------------------------|---------|--------------|-----|
 | KVN-EK-01 | Ekran smoke testleri (Playwright) + CI adımı              | 4       | ✅ Bitti     | KVN-20'de yazılan risk: UI regresyona karşı korumasızdı |
-| KVN-EK-02 | Kargo faturası eşleştirme + `estimated → actual` + revizyon | 6       | 🔄 Yapılıyor | spec §5.3, §6.2 |
-| KVN-EK-03 | Hakediş mutabakatı: eşleştirme + fark motoru + ekran       | 8       | ⏳ Sırada    | spec §7 — "katil özellik" |
+| KVN-EK-02 | Kargo faturası eşleştirme + `estimated → actual` + revizyon | 6       | ✅ Bitti     | spec §5.3, §6.2 |
+| KVN-EK-03 | Hakediş mutabakatı: eşleştirme + fark motoru + ekran       | 8       | 🔄 Yapılıyor | spec §7 — "katil özellik" |
 
-Faz 2 ağırlığı: 18 · Biten: 4
+Faz 2 ağırlığı: 18 · Biten: 10
 
 > **Düzeltme (2026-08-19):** CLAUDE.md §0'daki kanonik listenin başlığı "toplam ağırlık 100"
 > diyor ama tablodaki 20 görevin ağırlıkları **110** ediyor. §0 kuralı yüzdeyi "bitmiş
@@ -55,6 +55,36 @@ Faz 2 ağırlığı: 18 · Biten: 4
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-EK-02 bitti
+
+**Ne bitti:** Kargo faturası eşleştirme ve `estimated → actual` geçişi (spec §5.3, §6.2)
++ Kargo faturaları ekranı. Şablon indirilir, kargo firmasının dökümü doldurulur, önizleme
+kaç gönderinin kesinleşeceğini ve tahminle farkı gösterir; onayda maliyetler kesinleşir ve
+etkilenen siparişlerin kârı yeniden hesaplanır. Testler: 556 yeşil (backend) + 33 e2e,
+kargo servisi coverage %94, genel %94.
+
+**Kararlar / notlar:**
+- **Revizyon gerekçesi artık tetikleyiciyi taşıyor.** `profit_revisions.reason` sabit
+  `recompute` yazıyordu; §6.2 "her tetikleyici loglanır" diyor. Kargo faturasından gelen
+  revizyonlar `kargo_faturasi` gerekçesiyle düşüyor — "kâr neden değişti" sorusunun cevabı
+  kayıttan okunabiliyor.
+- **Eşleştirme anahtarı:** önce gönderi (takip) numarası, yoksa sipariş numarası. `shipments`
+  tablosuna `tracking_no` eklendi (migration `d1444dcdfe5c`). Trendyol connector'ı bu alanı
+  doldurmuyor — alan adı developers.trendyol.com'dan doğrulanmadan yazılmaz (CLAUDE.md §4);
+  `TODO(verify)` olarak aşağıda risk notunda.
+- **Kesinleşmiş maliyet ezilmez**, eşleşmeyen satır uydurulmaz: ikisi de testli.
+- Demo veri artık gönderilerin ~%60'ını kesinleştiriyor. Böylece "Tahmini / Kesinleşti"
+  rozeti (KVN-09'dan beri duruyordu) demo veride ilk kez gerçek bir ayrım gösteriyor:
+  145 satırın 74'ü kesinleşmiş.
+
+**Bilinen risk:** `shipments.tracking_no` şu an yalnızca demo seed ve fatura yüklemesi
+tarafından doldurulur; Trendyol sync'i doldurmaz çünkü alan adı doğrulanmadı
+(`cargoTrackingNumber` olduğu sanılıyor ama CLAUDE.md §4 tahmini yasaklıyor). Doğrulanana
+kadar gerçek veride eşleştirme **sipariş numarası** üzerinden yürür — kargo faturası
+sipariş numarası taşımıyorsa eşleşme yapılamaz. Mert'in Trendyol dokümanına erişimi varsa
+alan adı doğrulanıp connector'a eklenmeli.
+
 
 ### 2026-08-19 — KVN-EK-01 bitti
 

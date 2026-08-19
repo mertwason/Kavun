@@ -54,6 +54,9 @@ export type DisciplineViolation = components["schemas"]["ViolationOut"];
 export type DamageInput = components["schemas"]["DamageIn"];
 export type Consolidated = components["schemas"]["ConsolidatedOut"];
 export type Session = components["schemas"]["MeResponse"];
+export type CargoInvoice = components["schemas"]["CargoInvoiceOut"];
+export type CargoImportResult = components["schemas"]["CargoImportOut"];
+export type CargoCostState = components["schemas"]["CostStateOut"];
 
 export type HealthStatus = {
   online: boolean;
@@ -507,6 +510,60 @@ export async function fetchSession(brand: string): Promise<ApiResult<Session>> {
     });
     if (!response.ok) return { ok: false, status: response.status, reason: "http-error" };
     return { ok: true, data: (await response.json()) as Session };
+  } catch {
+    return { ok: false, status: 0, reason: "unreachable" };
+  }
+}
+
+export function fetchCargoInvoices(brand: string) {
+  return get<CargoInvoice[]>(brand, "/cargo-invoices");
+}
+
+export function fetchCargoCostState(brand: string) {
+  return get<CargoCostState>(brand, "/cargo-invoices/cost-state");
+}
+
+/** Kargo faturası şablonunu indirir (token sunucuda kalır). */
+export async function downloadCargoTemplate(
+  brand: string,
+): Promise<{ ok: true; body: ArrayBuffer; filename: string } | { ok: false; status: number }> {
+  const token = await issueToken(brand);
+  if (!token) return { ok: false, status: 401 };
+  const response = await fetch(`${API_URL}/${brand}/cargo-invoices/template`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!response.ok) return { ok: false, status: response.status };
+  return {
+    ok: true,
+    body: await response.arrayBuffer(),
+    filename: `${brand}-kargo-faturasi-sablon.xlsx`,
+  };
+}
+
+/** Kargo faturasını yükler; `dryRun` iken hiçbir maliyet kesinleşmez. */
+export async function uploadCargoInvoice(
+  brand: string,
+  file: File,
+  fields: { invoice_no: string; period: string },
+  dryRun: boolean,
+): Promise<ApiResult<CargoImportResult> & { detail?: string }> {
+  const token = await issueToken(brand);
+  if (!token) return { ok: false, status: 401, reason: "no-session" };
+  const form = new FormData();
+  form.append("file", file, file.name);
+  for (const [key, value] of Object.entries(fields)) form.append(key, value);
+  try {
+    const response = await fetch(
+      `${API_URL}/${brand}/cargo-invoices/import?dry_run=${dryRun ? "true" : "false"}`,
+      { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form, cache: "no-store" },
+    );
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { detail?: unknown } | null;
+      const detail = typeof payload?.detail === "string" ? payload.detail : undefined;
+      return { ok: false, status: response.status, reason: "http-error", detail };
+    }
+    return { ok: true, data: (await response.json()) as CargoImportResult };
   } catch {
     return { ok: false, status: 0, reason: "unreachable" };
   }

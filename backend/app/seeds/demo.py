@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import random
+import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
@@ -442,6 +443,7 @@ def _seed_orders(
                     brand_id=brand.id,
                     order_id=order.id,
                     carrier="Trendyol Express" if prefix != "D2B" else "Aras Kargo",
+                    tracking_no=f"TK{order.external_order_id[-10:]}",
                     desi_declared=total_desi,
                     cargo_cost_estimated=_cargo_cost(total_desi),
                     cost_state=CostState.ESTIMATED,
@@ -646,6 +648,71 @@ def _seed_customers(
         summary.bump("customers")
     session.flush()
     return created
+
+
+def _seed_cargo_invoice(
+    session: Session,
+    tenant: Tenant,
+    brand: Brand,
+    summary: DemoSummary,
+    rng: random.Random,
+    today: date,
+) -> None:
+    """Kargo faturası: gönderilerin ~%60'ının maliyeti kesinleşir (spec §5.3, §6.2).
+
+    Gerçek tutar tahminden sapar (kargo firması desiyi kendi ölçer); demo veride bu sapma
+    bilinçli olarak hem yukarı hem aşağı yönlüdür ki "revize edilen kâr" görünsün.
+    """
+    shipments = list(
+        session.scalars(
+            select(Shipment).where(Shipment.brand_id == brand.id).order_by(Shipment.id)
+        ).all()
+    )
+    if not shipments:
+        return
+
+    chosen = shipments[: max(1, len(shipments) * 6 // 10)]
+    lines: list[dict[str, Any]] = []
+    total = Decimal("0")
+    for index, shipment in enumerate(chosen, start=1):
+        # Fatura tutarı tahminin %85-%125'i arasında: kargo firması kendi desisini ölçer.
+        factor = Decimal(rng.randint(85, 125)) / Decimal("100")
+        actual = _rounded(shipment.cargo_cost_estimated * factor)
+        shipment.cargo_cost_actual = actual
+        shipment.desi_invoiced = shipment.desi_declared
+        shipment.cost_state = CostState.ACTUAL
+        total += actual
+        lines.append(
+            {
+                "row_no": index,
+                "reference": shipment.tracking_no or "",
+                "action": "kesinlesti",
+                "amount": str(actual),
+                "previous": str(shipment.cargo_cost_estimated),
+                "message": "",
+            }
+        )
+
+    session.add(
+        CargoInvoice(
+            tenant_id=tenant.id,
+            brand_id=brand.id,
+            store_id=chosen[0].order_id and _store_of(session, chosen[0]),
+            invoice_no=f"KRG-{today:%Y%m}-001",
+            period=f"{today:%Y-%m}",
+            total=_rounded(total),
+            lines=lines,
+        )
+    )
+    summary.bump("cargo_invoices")
+    session.flush()
+
+
+def _store_of(session: Session, shipment: Shipment) -> uuid.UUID:
+    """Gönderinin siparişinin mağazası."""
+    order = session.scalar(select(Order).where(Order.id == shipment.order_id))
+    assert order is not None
+    return order.store_id
 
 
 def _seed_alerts_and_workspace(
@@ -905,6 +972,7 @@ def _seed_demo(session: Session) -> DemoSummary:
     returns = record_returns(session)
     summary.bump("inventory_ledger", sales.sale_out + returns.return_in + returns.return_out)
 
+    _seed_cargo_invoice(session, tenant, kahveji, summary, rng, today)
     _seed_alerts_and_workspace(
         session, tenant, kahveji, alessi, kahveji_products, alessi_products, summary
     )

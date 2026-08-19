@@ -37,7 +37,8 @@
     "inventory": "Stok & maliyet",
     "imports": "İthalat dosyaları",
     "d2b": "D2B satışlar",
-    "holding": "Holding"
+    "holding": "Holding",
+    "cargo": "Kargo faturaları"
   },
   "period": {
     "label": "Dönem",
@@ -156,7 +157,9 @@
     "damage": "Kayıtlı fire/hasar yok.",
     "damageHint": "Kırılan ürünü stok ekranındaki hasar formundan düşün.",
     "discipline": "Fiyat disiplini ihlali yok.",
-    "disciplineHint": "MSRP altı fiyat ya da marj tabanının altı burada listelenir."
+    "disciplineHint": "MSRP altı fiyat ya da marj tabanının altı burada listelenir.",
+    "cargo": "Henüz kargo faturası yüklenmedi.",
+    "cargoHint": "Kargo firmasının Excel dökümünü şablona doldurup yükleyin."
   },
   "error": {
     "unreachable": "API'ye ulaşılamıyor.",
@@ -528,5 +531,47 @@
     "backHome": "Workspace seçimine dön",
     "open": "Holding görünümünü aç",
     "breakdown": "Marka kırılımı"
+  },
+  "cargo": {
+    "title": "Kargo faturaları",
+    "subtitle": "Tahmini kargo maliyeti burada kesinleşir; kesinleşen satırların kârı yeniden hesaplanır.",
+    "uploadTitle": "Fatura yükle",
+    "uploadSubtitle": "Önizlemede hiçbir maliyet kesinleşmez; onaydan sonra kâr revize edilir.",
+    "downloadTemplate": "Şablonu indir",
+    "chooseFile": "Dosya seç",
+    "noFile": "Önce bir dosya seçin.",
+    "invoiceNo": "Fatura no",
+    "period": "Dönem",
+    "preview": "Önizle",
+    "apply": "Uygula",
+    "checking": "Kontrol ediliyor…",
+    "missingFields": "Fatura no ve dönem zorunlu.",
+    "rows": "Satır",
+    "matched": "Kesinleşen",
+    "already": "Zaten kesin",
+    "unmatched": "Eşleşmeyen",
+    "errors": "Hatalı",
+    "total": "Fatura tutarı",
+    "delta": "Tahmin farkı",
+    "deltaHint": "Pozitif: tahmin düşük kalmış, kâr aşağı revize olur.",
+    "previewNote": "Bu bir önizlemedir; hiçbir maliyet kesinleşmedi.",
+    "appliedNote": "Maliyetler kesinleşti ve etkilenen siparişlerin kârı yeniden hesaplandı.",
+    "stateTitle": "Kesinleşme durumu",
+    "shipments": "Gönderi",
+    "actualCount": "Kesinleşen",
+    "estimatedCount": "Tahmini kalan",
+    "actualAmount": "Kesinleşen tutar",
+    "estimatedAmount": "Tahmini tutar",
+    "listTitle": "Yüklenen faturalar",
+    "reference": "Referans",
+    "previousAmount": "Tahmin",
+    "newAmount": "Fatura",
+    "resultTitle": "Satır sonuçları",
+    "actions": {
+      "kesinlesti": "Kesinleşti",
+      "zaten_kesin": "Zaten kesin",
+      "eslesmedi": "Eşleşmedi",
+      "hata": "Hata"
+    }
   }
 }
