@@ -34,6 +34,7 @@ export default function BrandLayout({
     { href: `/${brand.slug}/scenarios`, label: tr.nav.scenarios },
     { href: `/${brand.slug}/tariffs`, label: tr.nav.tariffs },
     { href: `/${brand.slug}/invoices`, label: tr.nav.invoices },
+    { href: `/${brand.slug}/inventory`, label: tr.nav.inventory },
   ];
 
   return (

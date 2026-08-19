@@ -88,3 +88,17 @@ def detect_commission_changes() -> dict[str, int]:
 
     log.info("tariffs.daily_diff", detected=detected, alerts=alerts)
     return {"detected": detected, "alerts": alerts}
+
+
+@celery_app.task(name="kavun.record_stock_movements")
+def record_stock_movements() -> dict[str, int]:
+    """Satış ve iade hareketlerini stok defterine yazar (spec §12C.1)."""
+    from app.services.inventory import record_returns, record_sales
+
+    with SessionLocal() as session, system_scope():
+        sales = record_sales(session)
+        returns = record_returns(session)
+        session.commit()
+
+    log.info("inventory.movements_recorded", sale_out=sales.sale_out, return_in=returns.return_in)
+    return {"sale_out": sales.sale_out, "return_in": returns.return_in}

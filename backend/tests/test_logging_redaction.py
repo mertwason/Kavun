@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from app.core.logging import REDACTED_PLACEHOLDER, redact_secrets
+import pytest
+
+from app.core.logging import (
+    REDACTED_PLACEHOLDER,
+    configure_logging,
+    get_logger,
+    redact_secrets,
+)
 
 
 def test_top_level_secrets_are_redacted() -> None:
@@ -26,3 +33,24 @@ def test_encryption_key_is_redacted() -> None:
         "kavun_encryption_key": REDACTED_PLACEHOLDER,
         "jwt_secret": REDACTED_PLACEHOLDER,
     }
+
+
+def test_logs_go_to_stderr_not_stdout(capsys: pytest.CaptureFixture[str]) -> None:
+    """CLI stdout'u yalnızca komut çıktısı (JSON) taşır; log satırı stdout'u kirletmez."""
+    configure_logging("INFO")
+    get_logger("test").info("kavun.log_stream_check", value=1)
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "kavun.log_stream_check" in captured.err
+
+
+def test_logger_survives_a_swapped_stderr(capsys: pytest.CaptureFixture[str]) -> None:
+    """Akış kurulumda yakalanmaz: pytest stderr'i test başına değiştirir, logger kırılmaz."""
+    configure_logging("INFO")
+    log = get_logger("test")
+    log.info("kavun.first")
+    capsys.readouterr()  # akışı tüketip yenile
+
+    log.info("kavun.second")
+    assert "kavun.second" in capsys.readouterr().err

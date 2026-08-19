@@ -60,6 +60,7 @@ make revision m="açıklama"   # yeni migration üret (autogenerate)
 make seed        # çekirdek veri: mokka tenant, 2 marka, kanallar, mağazalar
 make seed-demo   # demo veri: 50 SKU, ~210 sipariş, iade, fatura, tarife, alert (+ kâr hesabı)
 make recompute   # kâr kaydı olmayan satırların kârını hesaplar
+make stock       # satış/iade stok hareketlerini deftere yaz (idempotent)
 make wipe-demo   # demo verisini sil (gerçek tenant'a dokunmaz)
 make gen-api     # OpenAPI şemasından frontend tipleri
 ```
@@ -236,6 +237,35 @@ WAC formülü bağlayıcıdır (spec §12C.1) ve `app/engine/inventory.py` için
 olarak durur: yalnızca girişler ortalamayı günceller, çıkışlar stoku düşürür ama ortalamayı
 değiştirmez. Spec'in örneği testtir: 34 adet @100 + 100 adet @120 → **114,9254**.
 
+### Stok defteri (KVN-16)
+
+`inventory_ledger` **append-only**'dir: hiçbir hareket güncellenmez ya da silinmez,
+düzeltme her zaman yeni bir satırdır. `sku_cost_state` (eldeki adet + ortalama maliyet)
+bu defterin türevidir ve her an yeniden kurulabilir:
+
+```bash
+python -m app.cli stock                      # satış/iade hareketlerini yaz (idempotent)
+python -m app.cli stock --rebuild --dry-run  # durumu defterden kur, farkı raporla
+python -m app.cli stock --rebuild            # farkı uygula
+```
+
+Hareket yönleri (spec §12C.1): `purchase_in` · `opening` · `return_in` stoku artırır ve
+**ortalamayı günceller**; `sale_out` · `return_out` (hurda) · `damage` · negatif
+`adjustment` stoku düşürür, **ortalamaya dokunmaz**.
+
+Kurallar:
+
+- **Satış hareketleri idempotenttir** — aynı sipariş satırı için ikinci `sale_out`
+  yazılmaz (`ref_type='order_line'`). İptal siparişler stoktan düşmez.
+- **Açılış (devir) ürün başına tektir.** Kontrol referansa değil ürüne bakar: açılışı kim
+  yazmış olursa olsun (seed, içe aktarım, API) ikincisi reddedilir.
+- **Düzeltmede gerekçe zorunludur**; kayıt `adjustment` olarak deftere düşer.
+- Stok eksiye düşerse `negatif_stok` uyarısı üretilir — genelde açılış stoku girilmemiştir.
+- Arka planda `kavun.record_stock_movements` (45 dakikada bir) aynı işi yapar.
+
+`stock --rebuild --dry-run` demo veride de koşulur ve CI'da testtir: elle kurulan seed
+satırları motorun üreteceğinden saparsa test kırılır.
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -268,6 +298,7 @@ fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ; `make seed-demo
 | `/{marka}/scenarios` | Senaryolar — karşılaştırma tablosu + hedef marj çözücü |
 | `/{marka}/tariffs` | Komisyon tarifeleri — geçerli oranlar, değişiklik geçmişi, etki analizi |
 | `/{marka}/invoices` | Alış faturaları — PDF yükleme + satır eşleştirme + onay |
+| `/{marka}/inventory` | Stok & maliyet — eldeki adet, ortalama maliyet, hareket defteri, açılış/düzeltme |
 
 Dönem seçimi URL'de taşınır (`?days=7|30|90|365`), böylece ekran paylaşılabilir ve geri
 tuşu çalışır. Kâr rakamlarının yanındaki amber "Tahmini" rozeti kargo/komisyon
@@ -360,6 +391,12 @@ GET  /{brand}/invoices/{id}        # onay ekranı: satırlar + SKU önerileri
 POST /{brand}/invoices/{id}/lines/{line}/match  # SKU eşleştir (öğrenilir)
 POST /{brand}/invoices/{id}/confirm             # ledger + WAC + maliyet versiyonu
 
+GET  /{brand}/inventory            # eldeki stok + ortalama maliyet + stok değeri
+GET  /{brand}/inventory/ledger     # append-only hareket defteri (?product_id&limit)
+POST /{brand}/inventory/opening    # açılış (devir) stoku — ürün başına tek seferlik
+POST /{brand}/inventory/adjust     # düzeltme kaydı (gerekçe zorunlu)
+POST /{brand}/inventory/rebuild    # durumu defterden yeniden kur (?dry_run)
+
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
 GET  /{brand}/import-files  # yalnızca `import_files` bayrağı açık markada (aksi halde 404)
@@ -424,5 +461,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-16 — inventory
-ledger, WAC motoru ve açılış stoku** (spec §12C.1-4).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-17 — ithalat
+dosyası modu ve kur farkı takibi** (spec §12C.7-8).

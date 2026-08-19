@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %84** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░
-Son güncelleme: 2026-08-19 06:20 · Aktif görev: KVN-16
+**TOPLAM: %91** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░
+Son güncelleme: 2026-08-19 02:40 · Aktif görev: KVN-17
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -21,17 +21,55 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-13 | Komisyon çözümleme hiyerarşisi + snapshot/diff + etki       | 6       | ✅ Bitti    |
 | KVN-14 | Tarife Excel yükleme (esnek parser)                         | 4       | ✅ Bitti    |
 | KVN-15 | PDF fatura ayrıştırma + öğrenen SKU eşleştirme + onay       | 7       | ✅ Bitti    |
-| KVN-16 | Inventory ledger + WAC motoru + açılış stoku                | 7       | 🔄 Yapılıyor|
-| KVN-17 | İthalat dosyası modu + kur farkı takibi (Alessi)            | 5       | ⏳ Sırada   |
+| KVN-16 | Inventory ledger + WAC motoru + açılış stoku                | 7       | ✅ Bitti    |
+| KVN-17 | İthalat dosyası modu + kur farkı takibi (Alessi)            | 5       | 🔄 Yapılıyor|
 | KVN-18 | D2B kanal + fire/hasar + MSRP disiplini                     | 3       | ⏳ Sırada   |
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 84 · **Faz 1 (KVN-01…09) tamamlandı**
+Toplam ağırlık: 100 · Biten ağırlık: 91 · **Faz 1 (KVN-01…09) tamamlandı**
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-16 bitti
+
+**Ne bitti:** Stok defteri, WAC motoru ve açılış stoku (spec §12C.1-4) + Stok & maliyet
+ekranı (tasarım brief'i ekran 8). `inventory_ledger` append-only; `sku_cost_state` onun
+türevi ve her an defterden yeniden kurulabiliyor (`stock --rebuild`, §12C.11 kabul
+kriteri testtir). Satış/iade hareketleri idempotent (`ref_type='order_line'`), iptal
+sipariş stoktan düşmüyor, negatif stokta `negatif_stok` uyarısı üretiliyor. Arka planda
+`kavun.record_stock_movements` 45 dakikada bir koşuyor. Testler: 413 yeşil, stok servisi
+ve motoru coverage %94, genel %95. Ekran gerçek tarayıcıda dolu ve boş durumla denendi;
+açılış tekrarı ve düzeltme akışı UI'dan doğrulandı.
+
+**Kararlar / notlar:**
+- **Açılış kontrolü referansa değil ürüne bakıyor.** İlk yazımda "aynı ref bir daha
+  yazılmasın" idempotency kontrolü açılış için de kullanılmıştı; seed farklı bir referans
+  yazdığı için tarayıcıdan ikinci bir açılış girilebildi ve stok sessizce şişti. Kural
+  artık şu: bir üründe OPENING hareketi varsa ikincisi reddedilir — kim yazmış olursa
+  olsun. Regresyon testi yazıldı.
+- **Replay kontrolü elle kurulan seed satırını yakaladı.** `stock --rebuild --dry-run`
+  demo veride 1 uyuşmazlık verdi: adedi 0 olan abonelik SKU'suna açılış hareketi
+  yazılıyordu, sıfır adetli devir ortalama maliyet üretemediği için durum defterden
+  yeniden kurulunca tutmuyordu. Seed düzeltildi (adet 0 → hareket yok) ve "demo veri
+  defterden birebir yeniden kurulabilir" testi eklendi.
+- **Loglar stderr'e alındı.** `seed-demo` artık stok hareketi de yazdığı için log satırları
+  CLI'nin stdout'undaki JSON çıktısını kirletiyordu. structlog stderr'e bağlandı; akış
+  nesnesi kurulumda yakalanmıyor (pytest test başına değiştiriyor), yazma anında çözülüyor.
+  İki regresyon testi var.
+- Demo açılış adetleri 4 katına çıkarıldı: 4 aylık satış hacmi karşısında 13 SKU eksiye
+  düşüyordu ve ekran bozuk görünüyordu. Şimdi tek negatif örnek kaldı (stok tutulmayan
+  abonelik SKU'su) — uyarı akışının demosu olarak bilinçli bırakıldı.
+- Frontend'de prettier kullanılmadı: repoda config'i ve CI adımı yok, varsayılan 80 sütun
+  mevcut 100 sütunluk stille çakışıyor.
+
+**Bilinen risk:** `record_sales` sipariş satırını stoktan düşerken maliyet kaynağı olarak
+`sku_cost_state`'i kullanmıyor — kâr motoru maliyeti hâlâ `sku_costs` versiyonundan
+okuyor. İkisinin birleştirilmesi (WAC'ın kâr hesabının tek maliyet kaynağı olması)
+KVN-20'nin golden dataset turunda netleşmeli; şu an iki kaynak da doğru ama aynı anda
+farklı değer taşıyabilir.
 
 ### 2026-08-19 — KVN-15 bitti
 

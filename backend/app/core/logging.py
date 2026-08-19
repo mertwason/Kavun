@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 from collections.abc import MutableMapping
 from typing import Any
 
@@ -39,6 +40,27 @@ def redact_secrets(
     return event_dict
 
 
+class StderrLogger:
+    """Log satırını **yazma anındaki** `sys.stderr`e basar.
+
+    Akış nesnesi kurulumda yakalanmaz: pytest (ve capture yapan başka koşucular)
+    `sys.stderr`i test başına değiştirir; yakalanmış akış bir sonraki testte kapalı olur.
+    stdout'a hiç dokunulmaz — orası komut çıktısının (JSON) alanıdır.
+    """
+
+    def msg(self, message: str) -> None:
+        """Tek satır yazar."""
+        print(message, file=sys.stderr, flush=True)
+
+    log = debug = info = warn = warning = msg
+    fatal = error = err = exception = critical = failure = msg
+
+
+def _stderr_logger_factory(*_args: Any) -> StderrLogger:
+    """structlog logger fabrikası."""
+    return StderrLogger()
+
+
 def configure_logging(level: str = "INFO", *, json_output: bool = True) -> None:
     """structlog'u yapılandırır. Tüm servisler (api, worker, cli) bunu çağırır."""
     logging.basicConfig(format="%(message)s", level=getattr(logging, level))
@@ -48,6 +70,9 @@ def configure_logging(level: str = "INFO", *, json_output: bool = True) -> None:
         else structlog.dev.ConsoleRenderer(colors=False)
     )
     structlog.configure(
+        # Log akışı stderr'e gider: stdout yalnızca komut çıktısına (JSON) ayrılmıştır,
+        # böylece `python -m app.cli ... | jq` gibi kullanımlar log satırıyla bozulmaz.
+        logger_factory=_stderr_logger_factory,
         processors=[
             structlog.contextvars.merge_contextvars,
             structlog.processors.add_log_level,

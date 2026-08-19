@@ -113,6 +113,10 @@ seed-demo: ## Demo tenant'ını gerçekçi örnek veriyle doldurur (kâr hesabı
 recompute: ## Kâr kaydı olmayan satırların kârını hesaplar (spec §6)
 	$(COMPOSE) exec -T api python -m app.cli recompute --pending
 
+.PHONY: stock
+stock: ## Satış/iade stok hareketlerini deftere yazar (spec §12C.1)
+	$(COMPOSE) exec -T api python -m app.cli stock
+
 .PHONY: wipe-demo
 wipe-demo: ## Demo verisini siler (gerçek tenant'a dokunmaz)
 	$(COMPOSE) exec -T api python -m app.cli wipe-demo

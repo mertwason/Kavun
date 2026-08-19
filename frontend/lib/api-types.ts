@@ -852,6 +852,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/inventory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Eldeki stok ve ortalama maliyet
+         * @description Stok & maliyet ekranı (tasarım brief'i ekran 8).
+         */
+        get: operations["list_stock__brand_slug__inventory_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/inventory/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stok hareket defteri
+         * @description Append-only hareket zaman çizelgesi.
+         */
+        get: operations["list_ledger__brand_slug__inventory_ledger_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/inventory/opening": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Açılış (devir) stoku gir
+         * @description §12C.4: sistem kullanılmaya başlarken eldeki stok buradan girilir (tek seferlik).
+         */
+        post: operations["create_opening_stock__brand_slug__inventory_opening_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/inventory/adjust": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stok düzeltme kaydı (gerekçe zorunlu)
+         * @description Geçmiş silinmez; düzeltme ayrı kayıtla yapılır (CLAUDE.md §1).
+         */
+        post: operations["create_adjustment__brand_slug__inventory_adjust_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/inventory/rebuild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Durumu defterden yeniden kur
+         * @description §12C.11: `sku_cost_state` ledger'dan yeniden üretilebilir olmalı.
+         */
+        post: operations["rebuild__brand_slug__inventory_rebuild_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/products": {
         parameters: {
             query?: never;
@@ -916,6 +1016,26 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AdjustmentIn
+         * @description Stok düzeltmesi — gerekçe zorunlu.
+         */
+        AdjustmentIn: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /**
+             * Qty Delta
+             * @description Pozitif = giriş, negatif = çıkış
+             */
+            qty_delta: number | string;
+            /** Reason */
+            reason: string;
+            /** Unit Cost */
+            unit_cost?: number | string | null;
+        };
         /**
          * AlertSeverity
          * @description Uyarı seviyesi — tasarım brief'i: bilgi / dikkat / kritik.
@@ -1350,6 +1470,12 @@ export interface components {
             rows: components["schemas"]["RowResultOut"][];
         };
         /**
+         * InventoryMovement
+         * @description `inventory_ledger.movement` (spec §12C.2, §12C.10).
+         * @enum {string}
+         */
+        InventoryMovement: "opening" | "purchase_in" | "sale_out" | "return_in" | "return_out" | "adjustment" | "damage";
+        /**
          * InvoiceDetailOut
          * @description Fatura onay ekranının kaynağı (tasarım brief'i, kalıp 6).
          */
@@ -1482,6 +1608,39 @@ export interface components {
             final_line_count: number;
         };
         /**
+         * LedgerEntryOut
+         * @description Hareket defteri kaydı (append-only).
+         */
+        LedgerEntryOut: {
+            /** Id */
+            id: number;
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            movement: components["schemas"]["InventoryMovement"];
+            /** Qty Delta */
+            qty_delta: string;
+            /** Unit Cost At Movement */
+            unit_cost_at_movement: string | null;
+            /** Avg Cost After */
+            avg_cost_after: string;
+            /** On Hand After */
+            on_hand_after: string;
+            /** Ref Type */
+            ref_type: string | null;
+            /** Ref Id */
+            ref_id: string | null;
+            /** Reason */
+            reason: string | null;
+            /**
+             * Moved At
+             * Format: date-time
+             */
+            moved_at: string;
+        };
+        /**
          * MatchStatus
          * @description `purchase_invoice_lines.match_status` (spec §12C.2).
          * @enum {string}
@@ -1513,6 +1672,26 @@ export interface components {
             features: {
                 [key: string]: boolean;
             };
+        };
+        /**
+         * OpeningStockIn
+         * @description Açılış (devir) girişi — ürün başına tek seferlik (spec §12C.4).
+         */
+        OpeningStockIn: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Qty */
+            qty: number | string;
+            /**
+             * Unit Cost
+             * @description KDV hariç birim maliyet
+             */
+            unit_cost: number | string;
+            /** On Date */
+            on_date?: string | null;
         };
         /**
          * OrderDetailOut
@@ -1698,6 +1877,20 @@ export interface components {
             name: string;
         };
         /**
+         * RebuildOut
+         * @description Replay sonucu (spec §12C.11).
+         */
+        RebuildOut: {
+            /** Products */
+            products: number;
+            /** Movements */
+            movements: number;
+            /** Mismatches */
+            mismatches: string[];
+            /** Dry Run */
+            dry_run: boolean;
+        };
+        /**
          * RowResultOut
          * @description Diff önizlemesindeki bir satır.
          */
@@ -1848,6 +2041,31 @@ export interface components {
              * @description Açılışta seçilecek workspace
              */
             brand?: string | null;
+        };
+        /**
+         * StockRowOut
+         * @description Stok & maliyet ekranının bir satırı.
+         */
+        StockRowOut: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Sku */
+            sku: string;
+            /** Name */
+            name: string;
+            /** Category */
+            category: string | null;
+            /** On Hand */
+            on_hand: string;
+            /** Avg Cost */
+            avg_cost: string;
+            /** Stock Value */
+            stock_value: string;
+            /** Last Movement At */
+            last_movement_at: string | null;
         };
         /**
          * StoreBreakdownOut
@@ -3855,6 +4073,190 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoiceDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_stock__brand_slug__inventory_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockRowOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_ledger__brand_slug__inventory_ledger_get: {
+        parameters: {
+            query?: {
+                product_id?: string | null;
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEntryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_opening_stock__brand_slug__inventory_opening_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpeningStockIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEntryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_adjustment__brand_slug__inventory_adjust_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdjustmentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEntryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rebuild__brand_slug__inventory_rebuild_post: {
+        parameters: {
+            query?: {
+                /** @description true iken yalnızca fark raporlanır */
+                dry_run?: boolean;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RebuildOut"];
                 };
             };
             /** @description Validation Error */

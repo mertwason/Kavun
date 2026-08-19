@@ -36,6 +36,10 @@ export type InvoiceSummary = components["schemas"]["InvoiceSummaryOut"];
 export type InvoiceDetail = components["schemas"]["InvoiceDetailOut"];
 export type InvoiceUploadResult = components["schemas"]["UploadResultOut"];
 export type SupplierOption = components["schemas"]["SupplierOut"];
+export type StockRow = components["schemas"]["StockRowOut"];
+export type LedgerEntry = components["schemas"]["LedgerEntryOut"];
+export type OpeningStockInput = components["schemas"]["OpeningStockIn"];
+export type AdjustmentInput = components["schemas"]["AdjustmentIn"];
 
 export type HealthStatus = {
   online: boolean;
@@ -351,4 +355,21 @@ export async function uploadInvoice(
   } catch {
     return { ok: false, status: 0, reason: "unreachable" };
   }
+}
+
+export function fetchStock(brand: string) {
+  return get<StockRow[]>(brand, "/inventory");
+}
+
+export function fetchLedger(brand: string, productId?: string) {
+  const query = productId ? `?product_id=${encodeURIComponent(productId)}` : "";
+  return get<LedgerEntry[]>(brand, `/inventory/ledger${query}`);
+}
+
+export function createOpeningStock(brand: string, input: OpeningStockInput) {
+  return post<LedgerEntry>(brand, "/inventory/opening", input);
+}
+
+export function createAdjustment(brand: string, input: AdjustmentInput) {
+  return post<LedgerEntry>(brand, "/inventory/adjust", input);
 }

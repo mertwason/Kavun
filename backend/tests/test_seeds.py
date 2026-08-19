@@ -11,14 +11,15 @@ from sqlalchemy.orm import Session
 
 from app.core.context import system_scope
 from app.models.catalog import CommissionRate, Product
-from app.models.enums import AlertSeverity, CommissionScope, OrderStatus
+from app.models.enums import AlertSeverity, CommissionScope, InventoryMovement, OrderStatus
 from app.models.identity import Brand, BrandFeature, Store, Tenant, User
-from app.models.inventory import ImportCostItem, ImportFile, SkuCostState
+from app.models.inventory import ImportCostItem, ImportFile, InventoryLedger, SkuCostState
 from app.models.results import Alert
 from app.models.transactions import Order, OrderLine, Return
 from app.seeds.base import ALESSI_FEATURES, TENANT_SLUG, seed_base
-from app.seeds.catalog_data import demo_product_count
+from app.seeds.catalog_data import demo_opening_stock_count, demo_product_count
 from app.seeds.demo import DEMO_TENANT_SLUG, _demo_barcode, seed_demo, wipe_demo
+from app.services.inventory import rebuild_state
 
 
 @pytest.fixture(autouse=True)
@@ -160,10 +161,31 @@ def test_demo_opening_stock_matches_ledger(db_session: Session) -> None:
     """Açılış stoku hem ledger'a hem güncel duruma yazılır (spec §12C.4)."""
     seed_demo(db_session)
 
+    # Adedi 0 olan SKU'ya (abonelik) devir yazılmaz — sıfır adet ortalama maliyet üretmez.
+    openings = db_session.scalar(
+        select(func.count())
+        .select_from(InventoryLedger)
+        .where(InventoryLedger.movement == InventoryMovement.OPENING)
+    )
+    assert openings == demo_opening_stock_count()
+
     states = db_session.scalars(select(SkuCostState)).all()
-    assert len(states) == demo_product_count()
-    assert all(state.avg_cost > 0 for state in states)
     assert any(state.on_hand_qty > 0 for state in states)
+    assert all(state.avg_cost > 0 for state in states if state.on_hand_qty > 0)
+
+
+def test_demo_state_can_be_rebuilt_from_the_ledger(db_session: Session) -> None:
+    """§12C.11: demo verinin durumu defterden birebir yeniden üretilebilir olmalı.
+
+    Elle kurulan seed satırları motorun üreteceğinden sapamaz; sapma burada yakalanır.
+    """
+    seed_demo(db_session)
+
+    with system_scope():
+        summary = rebuild_state(db_session, dry_run=True)
+
+    assert summary.mismatches == []
+    assert summary.movements > 0
 
 
 def test_demo_import_file_excludes_import_vat_from_cost(db_session: Session) -> None:

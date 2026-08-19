@@ -1,7 +1,7 @@
 """Kavun komut satırı arayüzü.
 
 Komutlar: `version`, `check`, `generate-key`, `seed`, `seed-demo`, `wipe-demo`,
-`normalize`, `replay`, `recompute`.
+`normalize`, `replay`, `recompute`, `stock`.
 
 Replay (spec §3.2): normalize tablolar silinip ham olaylardan yeniden üretilir.
 
@@ -16,14 +16,18 @@ import sys
 import uuid
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from typing import Any
 
 from app.core.config import get_settings
+from app.core.context import system_scope
 from app.core.crypto import generate_key
 from app.core.db import SessionLocal, check_database
+from app.core.logging import configure_logging
 from app.main import API_VERSION
 from app.models.enums import ChannelCode
 from app.seeds.base import seed_base
 from app.seeds.demo import seed_demo, wipe_demo
+from app.services.inventory import rebuild_state, record_returns, record_sales
 from app.services.normalize import normalize_pending, replay
 from app.services.profit import recompute_orders, recompute_pending
 
@@ -59,6 +63,13 @@ def _build_parser() -> argparse.ArgumentParser:
         "--pending", action="store_true", help="Yalnızca kâr kaydı olmayan satırlar"
     )
     recompute.add_argument("--limit", type=int, default=5000, help="En fazla kaç sipariş")
+
+    stock = sub.add_parser("stock", help="Satış/iade stok hareketlerini yazar (spec §12C.1)")
+    stock.add_argument(
+        "--rebuild", action="store_true", help="Durumu defterden yeniden kurar (§12C.11)"
+    )
+    stock.add_argument("--dry-run", action="store_true", help="Rebuild'de yalnızca farkı gösterir")
+    stock.add_argument("--limit", type=int, default=5000, help="En fazla kaç hareket")
     return parser
 
 
@@ -110,6 +121,26 @@ def _run_recompute(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_stock(args: argparse.Namespace) -> int:
+    with SessionLocal() as session, system_scope():
+        if args.rebuild:
+            summary = rebuild_state(session, dry_run=args.dry_run)
+            payload: dict[str, Any] = {
+                "rebuild": True,
+                "dry_run": args.dry_run,
+                "products": summary.products,
+                "movements": summary.movements,
+                "mismatches": len(summary.mismatches),
+            }
+        else:
+            sales = record_sales(session, limit=args.limit)
+            returns = record_returns(session, limit=args.limit)
+            payload = {"sales": sales.as_dict(), "returns": returns.as_dict()}
+        session.commit()
+    print(json.dumps(payload, ensure_ascii=False))
+    return 0
+
+
 def _run_seed() -> int:
     with SessionLocal() as session:
         result = seed_base(session)
@@ -151,6 +182,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     """CLI giriş noktası; çıkış kodu döner (0 = başarılı)."""
     args = _build_parser().parse_args(argv)
     settings = get_settings()
+    # Loglar stderr'e; stdout yalnızca komut çıktısı (JSON) taşır.
+    configure_logging(settings.log_level, json_output=settings.environment != "local")
 
     if args.command == "version":
         print(json.dumps({"app": settings.app_name, "version": API_VERSION}))
@@ -177,6 +210,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "recompute":
         return _run_recompute(args)
+
+    if args.command == "stock":
+        return _run_stock(args)
 
     database = check_database()
     print(json.dumps({"environment": settings.environment, "database": database}))

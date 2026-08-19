@@ -99,6 +99,7 @@ from app.seeds.base import (
     get_or_create_tenant,
 )
 from app.seeds.catalog_data import ALESSI_PRODUCTS, KAHVEJI_PRODUCTS, DemoProduct
+from app.services.inventory import record_returns, record_sales
 
 DEMO_TENANT_SLUG = "demo"
 DEMO_TENANT_NAME = "Demo (örnek veri)"
@@ -242,34 +243,39 @@ def _seed_products(
             )
         )
 
-        # Açılış stoku: ledger hareketi + güncel durum (spec §12C.4).
+        # Açılış stoku: ledger hareketi + güncel durum (spec §12C.4). Adet 0 ise hareket
+        # YAZILMAZ — sıfır adetli bir "devir" ortalama maliyet üretemez, defterden yeniden
+        # kurulduğunda duruma uymazdı (stok tutulmayan abonelik SKU'ları böyledir).
         opening_qty = Decimal(definition.opening_qty)
-        avg_cost = _rounded(definition.unit_cost).quantize(Decimal("0.000001"))
-        moved_at = datetime.combine(today - timedelta(days=120), datetime.min.time(), tzinfo=UTC)
-        session.add(
-            InventoryLedger(
-                tenant_id=tenant.id,
-                brand_id=brand.id,
-                product_id=product.id,
-                movement=InventoryMovement.OPENING,
-                qty_delta=opening_qty,
-                unit_cost_at_movement=avg_cost,
-                avg_cost_after=avg_cost,
-                on_hand_after=opening_qty,
-                ref_type="seed",
-                ref_id="opening",
-                moved_at=moved_at,
+        if opening_qty > 0:
+            avg_cost = _rounded(definition.unit_cost).quantize(Decimal("0.000001"))
+            moved_at = datetime.combine(
+                today - timedelta(days=120), datetime.min.time(), tzinfo=UTC
             )
-        )
-        session.add(
-            SkuCostState(
-                product_id=product.id,
-                on_hand_qty=opening_qty,
-                avg_cost=avg_cost,
-                last_movement_at=moved_at,
+            session.add(
+                InventoryLedger(
+                    tenant_id=tenant.id,
+                    brand_id=brand.id,
+                    product_id=product.id,
+                    movement=InventoryMovement.OPENING,
+                    qty_delta=opening_qty,
+                    unit_cost_at_movement=avg_cost,
+                    avg_cost_after=avg_cost,
+                    on_hand_after=opening_qty,
+                    ref_type="opening",
+                    ref_id=str(product.id),
+                    moved_at=moved_at,
+                )
             )
-        )
-        summary.bump("inventory_ledger")
+            session.add(
+                SkuCostState(
+                    product_id=product.id,
+                    on_hand_qty=opening_qty,
+                    avg_cost=avg_cost,
+                    last_movement_at=moved_at,
+                )
+            )
+            summary.bump("inventory_ledger")
         created.append((product, definition))
     session.flush()
     return created
@@ -821,6 +827,11 @@ def _seed_demo(session: Session) -> DemoSummary:
     _seed_purchasing(
         session, tenant, kahveji, alessi, kahveji_products, alessi_products, summary, today, now
     )
+    # Satış/iade stok hareketleri (spec §12C.1) — stok defteri ekranı boş kalmasın.
+    sales = record_sales(session)
+    returns = record_returns(session)
+    summary.bump("inventory_ledger", sales.sale_out + returns.return_in + returns.return_out)
+
     _seed_alerts_and_workspace(
         session, tenant, kahveji, alessi, kahveji_products, alessi_products, summary
     )
