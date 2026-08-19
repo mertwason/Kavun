@@ -31,7 +31,8 @@
     "orders": "Siparişler",
     "products": "Ürün çalışma alanı",
     "drafts": "Yeni ürün değerlendir",
-    "scenarios": "Senaryolar"
+    "scenarios": "Senaryolar",
+    "tariffs": "Komisyon tarifeleri"
   },
   "period": {
     "label": "Dönem",
@@ -130,7 +131,11 @@
     "drafts": "Henüz taslak yok.",
     "draftsHint": "Yukarıdaki formu doldurup taslak olarak kaydedin.",
     "scenarios": "Bu markada senaryo kurulacak ürün yok.",
-    "scenariosHint": "Önce ürün ekleyin: fiyat listesi Excel'i ya da yeni ürün değerlendirme."
+    "scenariosHint": "Önce ürün ekleyin: fiyat listesi Excel'i ya da yeni ürün değerlendirme.",
+    "tariffs": "Bu mağazada tanımlı komisyon tarifesi yok.",
+    "tariffsHint": "Tarife Excel yüklemesi KVN-14 ile gelecek; şimdilik demo veriyi yükleyin.",
+    "tariffChanges": "Henüz komisyon değişikliği tespit edilmedi.",
+    "tariffChangesHint": "Günlük job her gece 03:00'te tarifeyi dünküyle karşılaştırır."
   },
   "error": {
     "unreachable": "API'ye ulaşılamıyor.",
@@ -239,5 +244,31 @@
       "platform": "Platform"
     },
     "commissionRate": "Komisyon oranı"
+  },
+  "tariffs": {
+    "impactTitle": "Etki analizi",
+    "impactSubtitle": "Komisyon oranı değişirse katalogda ne olur — tek soruya tek cevap.",
+    "currentTitle": "Geçerli tarifeler",
+    "historyTitle": "Değişiklik geçmişi",
+    "historySubtitle": "Günlük snapshot karşılaştırmasından doğan kayıtlar",
+    "rate": "Oran",
+    "oldRate": "Eski oran",
+    "newRate": "Yeni oran",
+    "source": "Kaynak",
+    "validFrom": "Yürürlük",
+    "productScope": "(ürün bazlı)",
+    "allCategories": "Tüm kategoriler",
+    "rateDelta": "Oran değişimi (puan)",
+    "targetMargin": "Korunacak marj %",
+    "targetHint": "boşsa mevcut marj",
+    "analyze": "Etkiyi hesapla",
+    "monthlyImpact": "Aylık kâr etkisi",
+    "affected": "Etkilenen SKU",
+    "turningNegative": "Negatife düşen",
+    "currentMargin": "Mevcut marj",
+    "projectedMargin": "Yeni marj",
+    "requiredPrice": "Gereken fiyat",
+    "impact": "Etki",
+    "missingDelta": "Oran değişimi zorunlu."
   }
 }

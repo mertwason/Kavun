@@ -78,7 +78,8 @@ docker compose exec api python -m app.cli replay --store <uuid> --dry-run  # yal
 `replay` normalize kayıtları siler ve ham olaylardan yeniden üretir; ham veriye asla
 dokunmaz. Kesinleşmiş (`actual`) kargo maliyeti yeniden normalize'de ezilmez.
 Zamanlanmış işler (Celery beat): `normalize_pending` 15 dakikada bir,
-`recompute_pending_profits` 30 dakikada bir, `ensure_raw_event_partitions` her gece 02:30
+`recompute_pending_profits` 30 dakikada bir, `detect_commission_changes` her gece 03:00,
+`ensure_raw_event_partitions` her gece 02:30
 (gelecek ayların partition'larını açar).
 
 ### Kâr hesabı
@@ -177,6 +178,29 @@ yapısı elvermiyorsa) fiyat uydurulmaz — çözücü bunu açıkça söyler.
 Senaryolar da Excel'e aktarılıp geri yüklenebilir; sonuç sütunları import'ta yok sayılır,
 dosya hesaplanmış hâliyle geri iner.
 
+### Komisyon tarife motoru
+
+Komisyon statik parametre değil, **versiyonlu tarife verisidir**; motor ve senaryolar her
+zaman bu modülden çözer. Çözümleme sırası: `settlement_actual` > `api_product` >
+`api_category` / `manual_tariff_upload` > `manual`; aynı seviyede daha güncel `valid_from`
+kazanır.
+
+Her gece 03:00'te `detect_commission_changes` job'ı dünkü geçerli oranla bugünkünü
+karşılaştırır. Değişen kategori için `commission_changes` kaydı + alert üretilir; alert
+metni parasal etkiyi taşır: *"Kahve/Harman kategorisinde komisyon %21,5 → %23,0. Mevcut
+satış hızıyla aylık kâr etkisi: −25 TL. Negatif marja düşen SKU: 1 (…)"*.
+
+**Etki formülü motorla birebir tutarlıdır.** Komisyon kâra `−P·k` girer, KDV'si `+P·k·α`
+indirilir; dolayısıyla `Δkâr = −P·(k₁−k₀)·(1−α)`. Bu kapalı ifade, aynı satırın iki oranla
+motorda hesaplanmasıyla test edilerek doğrulanır — ikinci bir "yaklaşık" formül yaşamaz.
+
+`POST /{brand}/tariffs/impact` tek çağrıda "komisyon %1,5 artarsa katalogda ne olur"
+sorusunu cevaplar: etkilenen SKU'lar, mevcut fiyatla yeni marj, negatife düşenler ve
+hedef marjı **koruyan** yeni fiyat (hedef marj çözücüsüyle, ±0,01 puan garantili).
+
+Hakedişten gelen gerçek oran tarifeden farklıysa sessiz geçilmez: `settlement_actual`
+kaydı yazılır ve çözümleme hiyerarşisi bundan sonra onu kullanır.
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -207,6 +231,7 @@ fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ; `make seed-demo
 | `/{marka}/products` | Ürün çalışma alanı — fiyat listesi + Excel aktar/yükle + diff önizleme |
 | `/{marka}/drafts` | Yeni ürün değerlendir — form + anlık kâr kartı + taslak listesi |
 | `/{marka}/scenarios` | Senaryolar — karşılaştırma tablosu + hedef marj çözücü |
+| `/{marka}/tariffs` | Komisyon tarifeleri — geçerli oranlar, değişiklik geçmişi, etki analizi |
 
 Dönem seçimi URL'de taşınır (`?days=7|30|90|365`), böylece ekran paylaşılabilir ve geri
 tuşu çalışır. Kâr rakamlarının yanındaki amber "Tahmini" rozeti kargo/komisyon
@@ -286,6 +311,11 @@ POST /{brand}/scenarios/target-margin  # hedef marj için gereken fiyatı çöz
 GET  /{brand}/scenarios/export     # senaryoları xlsx indir
 POST /{brand}/scenarios/import     # senaryo dosyası → hesaplanmış dosya
 
+GET  /{brand}/tariffs              # geçerli komisyon tarifeleri
+GET  /{brand}/tariffs/changes      # değişiklik geçmişi + etki tutarları
+POST /{brand}/tariffs/detect-changes  # günlük diff'i elle tetikle
+POST /{brand}/tariffs/impact       # "komisyon %X artarsa ne olur" (toplu senaryo)
+
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
 GET  /{brand}/import-files  # yalnızca `import_files` bayrağı açık markada (aksi halde 404)
@@ -350,5 +380,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-13 — komisyon
-çözümleme hiyerarşisi, snapshot/diff ve etki analizi** (spec §12B).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-14 — tarife Excel
+yükleme** (esnek parser, spec §12B.2).

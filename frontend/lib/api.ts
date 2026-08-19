@@ -27,6 +27,10 @@ export type DraftAnalysis = components["schemas"]["AnalysisOut"];
 export type ScenarioResult = components["schemas"]["ScenarioResultOut"];
 export type ScenarioInput = components["schemas"]["ScenarioInputIn"];
 export type TargetMargin = components["schemas"]["TargetMarginOut"];
+export type CommissionRate = components["schemas"]["CommissionRateOut"];
+export type CommissionChange = components["schemas"]["CommissionChangeOut"];
+export type TariffImpact = components["schemas"]["TariffImpactOut"];
+export type TariffImpactInput = components["schemas"]["TariffImpactIn"];
 
 export type HealthStatus = {
   online: boolean;
@@ -241,4 +245,16 @@ export function solveTargetMargin(
   input: ScenarioInput & { hedef_marj_pct: string },
 ) {
   return post<TargetMargin>(brand, "/scenarios/target-margin", input);
+}
+
+export function fetchCommissionRates(brand: string) {
+  return get<CommissionRate[]>(brand, "/tariffs");
+}
+
+export function fetchCommissionChanges(brand: string) {
+  return get<CommissionChange[]>(brand, "/tariffs/changes");
+}
+
+export function fetchTariffImpact(brand: string, input: TariffImpactInput) {
+  return post<TariffImpact>(brand, "/tariffs/impact", input);
 }

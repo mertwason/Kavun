@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %67** ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░
-Son güncelleme: 2026-08-19 04:55 · Aktif görev: KVN-13
+**TOPLAM: %73** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░
+Son güncelleme: 2026-08-19 05:20 · Aktif görev: KVN-14
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -18,8 +18,8 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-10 | Excel round-trip — fiyat listesi export/import + diff       | 6       | ✅ Bitti    |
 | KVN-11 | Taslak ürün akışı                                           | 3       | ✅ Bitti    |
 | KVN-12 | Senaryo motoru + karşılaştırma + hedef marj çözücü          | 6       | ✅ Bitti    |
-| KVN-13 | Komisyon çözümleme hiyerarşisi + snapshot/diff + etki       | 6       | 🔄 Yapılıyor|
-| KVN-14 | Tarife Excel yükleme (esnek parser)                         | 4       | ⏳ Sırada   |
+| KVN-13 | Komisyon çözümleme hiyerarşisi + snapshot/diff + etki       | 6       | ✅ Bitti    |
+| KVN-14 | Tarife Excel yükleme (esnek parser)                         | 4       | 🔄 Yapılıyor|
 | KVN-15 | PDF fatura ayrıştırma + öğrenen SKU eşleştirme + onay       | 7       | ⏳ Sırada   |
 | KVN-16 | Inventory ledger + WAC motoru + açılış stoku                | 7       | ⏳ Sırada   |
 | KVN-17 | İthalat dosyası modu + kur farkı takibi (Alessi)            | 5       | ⏳ Sırada   |
@@ -27,11 +27,52 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 67 · **Faz 1 (KVN-01…09) tamamlandı**
+Toplam ağırlık: 100 · Biten ağırlık: 73 · **Faz 1 (KVN-01…09) tamamlandı**
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-13 bitti
+
+**Ne bitti:** Komisyon snapshot diff'i, etki analizi, toplu tarife senaryosu (spec §12B.3,
+§12B.4) + Komisyon Tarifeleri ekranı. Testler: 333 yeşil, tarife servisi coverage %98,
+genel %95. Ekran gerçek tarayıcıda denendi.
+
+**Kabul kriterleri (§12B.5) kanıtlandı:**
+- Üç kaynaktan çözümleme (api_product / api_category / manual + settlement) sırası doğru
+- Snapshot diff: oran değişince change kaydı + alert, etki tutarı formülle birebir aynı
+- `tariff-impact` round-trip: önerilen fiyat motorla geri hesaplanınca hedef marjı ±0,01 tutuyor
+- Hakediş çelişkisi sessiz geçilmiyor: `settlement_actual` kaydı yazılıyor ve hiyerarşi
+  bundan sonra onu kullanıyor
+
+**Karar 1 — etki formülü motorla ispatlanıyor.** `Δkâr = −P·(k₁−k₀)·(1−α)` kapalı ifadesi
+kullanılıyor (α = hizmet KDV payı); doğruluğu, aynı satırın iki oranla motorda
+hesaplanmasıyla test ediliyor. "Yaklaşık" ikinci bir formül yok.
+
+**Karar 2 — değişiklik yalnızca yürürlük gününde tespit edilir.** Job dünkü geçerli oranla
+bugünkünü karşılaştırıyor; ileri tarihli tarife yüklense bile alert, tarife yürürlüğe
+girdiği gün çıkıyor. Aksi hâlde aynı değişiklik için her gün alert yağardı.
+
+**Karar 3 — alert seviyesi etkiye göre.** Negatife düşen SKU varsa `critical`, yoksa
+`warning`. Alert metni spec §12B.3'teki cümlenin birebir karşılığı (oranlar + TL etkisi +
+negatife düşen SKU listesi).
+
+**Günlük job:** `kavun.detect_commission_changes`, beat programında her gece 03:00
+(spec §12B.3: "03:00 sync'in parçası"). Görev kaydı regresyon testine eklendi.
+
+**Canlı tarayıcı testi (Playwright):** Kahveji kataloğunda komisyon +1,5 puan senaryosu
+çalıştırıldı → aylık kâr etkisi −₺926,65, etkilenen 22 SKU, negatife düşen 1 SKU ve her
+SKU için %25 marjı koruyan yeni fiyat listelendi. JS hatası yok.
+
+**Yakalanan hata:** alert kaydı `brand_id` olmadan yazılıyordu (NOT NULL ihlali) — testte
+yakalandı, düzeltildi. Marka kapsamlı her kayıt için bu alan zorunlu.
+
+**Bilinen risk:** Etki analizi son 30 günün satış hızını sabit varsayıyor (spec böyle
+istiyor) — mevsimsellik yok. Şu an yalnızca KATEGORİ tarifelerindeki değişim tespit
+ediliyor; ürün bazlı oran değişimi (`api_product`) Faz 2'de hakedişle gelecek.
+`api_category` kaydı üretecek bir kaynak henüz yok (Trendyol'da komisyon API'si yok);
+tarife verisi KVN-14'teki Excel yüklemesiyle girecek.
 
 ### 2026-08-19 — KVN-12 bitti
 

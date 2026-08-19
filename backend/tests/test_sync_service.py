@@ -277,4 +277,5 @@ def test_worker_tasks_are_registered() -> None:
         "kavun.normalize_pending",
         "kavun.ensure_raw_event_partitions",
         "kavun.recompute_pending_profits",
+        "kavun.detect_commission_changes",
     } <= registered

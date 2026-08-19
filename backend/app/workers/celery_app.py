@@ -42,6 +42,11 @@ celery_app.conf.beat_schedule = {
         "task": "kavun.recompute_pending_profits",
         "schedule": crontab(minute="*/30"),
     },
+    # Spec §12B.3: günlük tarife snapshot diff'i (03:00 sync'in parçası).
+    "detect-commission-changes": {
+        "task": "kavun.detect_commission_changes",
+        "schedule": crontab(hour=3, minute=0),
+    },
     "ensure-raw-event-partitions": {
         "task": "kavun.ensure_raw_event_partitions",
         "schedule": crontab(hour=2, minute=30),

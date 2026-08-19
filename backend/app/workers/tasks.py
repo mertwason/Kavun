@@ -1,16 +1,15 @@
-"""Celery görevleri — sync zamanlaması (spec §9).
-
-Beat programı KVN-06'da (normalize pipeline) tamamlanacak; burada manuel/zamanlanmış
-tetiklenebilen sync görevi tanımlıdır.
-"""
+"""Celery görevleri — sync, normalize, kâr hesabı ve tarife diff'i (spec §9, §12B.3)."""
 
 from __future__ import annotations
 
 import asyncio
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
+from sqlalchemy import select
+
+from app.core.context import system_scope
 from app.core.db import SessionLocal
 from app.core.logging import get_logger
 from app.models.partitions import ensure_monthly_partition, month_bounds
@@ -70,3 +69,22 @@ def ensure_raw_event_partitions_task(months_ahead: int = 3) -> dict[str, Any]:
         session.commit()
     log.info("partitions.ensured", partitions=created)
     return {"partitions": created}
+
+
+@celery_app.task(name="kavun.detect_commission_changes")
+def detect_commission_changes() -> dict[str, int]:
+    """Günlük tarife diff'i: değişen oran → `commission_changes` + alert (spec §12B.3)."""
+    from app.models.identity import Store
+    from app.services import tariffs
+
+    detected = 0
+    alerts = 0
+    with SessionLocal() as session, system_scope():
+        for store in session.scalars(select(Store)).all():
+            summary = tariffs.detect_changes(session, store=store, on_date=date.today())
+            detected += summary.detected
+            alerts += summary.alerts
+        session.commit()
+
+    log.info("tariffs.daily_diff", detected=detected, alerts=alerts)
+    return {"detected": detected, "alerts": alerts}

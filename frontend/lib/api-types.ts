@@ -629,6 +629,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/tariffs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Geçerli komisyon tarifeleri
+         * @description Verilen tarihte (varsayılan bugün) geçerli kategori tarifeleri.
+         */
+        get: operations["list_rates__brand_slug__tariffs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/tariffs/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Komisyon değişiklik geçmişi + etki tutarları
+         * @description Snapshot diff'inden doğan değişiklikler (spec §12B.3).
+         */
+        get: operations["list_changes__brand_slug__tariffs_changes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/tariffs/detect-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bugünün tarifesini dünküyle karşılaştır (günlük job'ın elle tetiklenmesi)
+         * @description Değişiklik varsa `commission_changes` + alert üretir (spec §12B.3).
+         */
+        post: operations["detect_changes__brand_slug__tariffs_detect_changes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/tariffs/impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Toplu tarife senaryosu — 'komisyon %X artarsa ne olur'
+         * @description §12B.4: etkilenen SKU'lar, yeni marjlar ve hedef marjı koruyan fiyatlar.
+         */
+        post: operations["tariff_impact__brand_slug__tariffs_impact_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/products": {
         parameters: {
             query?: never;
@@ -808,11 +888,71 @@ export interface components {
          */
         ChannelCode: "trendyol" | "hepsiburada" | "n11" | "shopify" | "manual";
         /**
+         * CommissionChangeOut
+         * @description Snapshot diff'inden doğan değişiklik (spec §12B.3).
+         */
+        CommissionChangeOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Category Code */
+            category_code: string | null;
+            /** Product Id */
+            product_id: string | null;
+            /** Old Rate */
+            old_rate: string;
+            /** New Rate */
+            new_rate: string;
+            /**
+             * Detected At
+             * Format: date-time
+             */
+            detected_at: string;
+            /** Monthly Profit Impact */
+            monthly_profit_impact: string | null;
+        };
+        /**
          * CommissionMode
          * @description `pricing_scenarios.commission_mode` (spec §12B.4).
          * @enum {string}
          */
         CommissionMode: "current" | "pinned" | "future_tariff";
+        /**
+         * CommissionRateOut
+         * @description Geçerli tarife satırı.
+         */
+        CommissionRateOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            scope: components["schemas"]["CommissionScope"];
+            /** Category Code */
+            category_code: string | null;
+            /** Product Id */
+            product_id: string | null;
+            /** Rate */
+            rate: string;
+            source: components["schemas"]["CommissionSource"];
+            /**
+             * Valid From
+             * Format: date
+             */
+            valid_from: string;
+            /** Valid To */
+            valid_to: string | null;
+            /** Is Campaign Period */
+            is_campaign_period: boolean;
+        };
+        /**
+         * CommissionScope
+         * @description `commission_rates.scope` (spec §5.2).
+         * @enum {string}
+         */
+        CommissionScope: "product" | "category";
         /**
          * CommissionSource
          * @description Komisyon çözümleme hiyerarşisi (spec §12B.1) — sıra önem taşır.
@@ -1544,6 +1684,83 @@ export interface components {
             /** Message */
             message: string;
             result: components["schemas"]["ScenarioResultOut"] | null;
+        };
+        /**
+         * TariffImpactIn
+         * @description Toplu tarife senaryosu girdisi (spec §12B.4).
+         */
+        TariffImpactIn: {
+            /**
+             * Category
+             * @description Boşsa tüm katalog
+             */
+            category?: string | null;
+            /**
+             * New Rate
+             * @description Mutlak yeni oran
+             */
+            new_rate?: number | string | null;
+            /**
+             * Rate Delta
+             * @description Mevcut orana eklenecek fark
+             */
+            rate_delta?: number | string | null;
+            /**
+             * Target Margin Pct
+             * @description Verilirse bu marjı koruyan fiyat çözülür
+             */
+            target_margin_pct?: number | string | null;
+            /** Kargo Tahmini */
+            kargo_tahmini?: number | string | null;
+        };
+        /**
+         * TariffImpactOut
+         * @description Toplu tarife senaryosunun sonucu.
+         */
+        TariffImpactOut: {
+            /** Scope */
+            scope: string;
+            /** Target Margin Pct */
+            target_margin_pct: string | null;
+            /** Monthly Profit Impact */
+            monthly_profit_impact: string;
+            /** Rows */
+            rows: components["schemas"]["TariffImpactRowOut"][];
+        };
+        /**
+         * TariffImpactRowOut
+         * @description Etki analizinin bir SKU satırı.
+         */
+        TariffImpactRowOut: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Sku */
+            sku: string;
+            /** Name */
+            name: string;
+            /** Category */
+            category: string | null;
+            /** Old Rate */
+            old_rate: string;
+            /** New Rate */
+            new_rate: string;
+            /** Current Price */
+            current_price: string | null;
+            /** Current Margin Pct */
+            current_margin_pct: string;
+            /** Projected Margin Pct */
+            projected_margin_pct: string;
+            /** Required Price */
+            required_price: string | null;
+            /** Qty Sold */
+            qty_sold: number;
+            /** Revenue Gross */
+            revenue_gross: string;
+            /** Profit Impact */
+            profit_impact: string;
         };
         /**
          * TokenResponse
@@ -2820,6 +3037,152 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_rates__brand_slug__tariffs_get: {
+        parameters: {
+            query?: {
+                on_date?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommissionRateOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_changes__brand_slug__tariffs_changes_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommissionChangeOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    detect_changes__brand_slug__tariffs_detect_changes_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tariff_impact__brand_slug__tariffs_impact_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TariffImpactIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TariffImpactOut"];
                 };
             };
             /** @description Validation Error */

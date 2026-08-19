@@ -15,6 +15,7 @@ from app.api import (
     pricelist,
     scenarios,
     stores,
+    tariffs,
     workspace,
 )
 from app.core.config import Settings, get_settings
@@ -69,6 +70,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(pricelist.router)
     app.include_router(drafts.router)
     app.include_router(scenarios.router)
+    app.include_router(tariffs.router)
     app.include_router(workspace.router)
     return app
 
