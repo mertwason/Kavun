@@ -1,35 +1,58 @@
 /**
- * Kâr şelalesi — ürünün imza görseli (tasarım brief'i, kalıp 4).
+ * Kâr şelalesi — ürünün imza görseli (handoff `Siparis Detayi.dc.html`).
  *
- * Satış fiyatından net kâra inen adımlar. Recharts yerine düz SVG: grafik bu
- * sadelikte kaldığı sürece ek bağımlılık taşımaya değmez (brief: "Recharts ile
- * uygulanabilir sadelikte tut").
+ * Dikey kolon düzeni: 300px çizim alanı, eşit genişlikte kolonlar, barlar kolon içinde
+ * %20–%80 aralığında. Her bar bir öncekinin bıraktığı yerden başlar; aralarındaki kesikli
+ * bağlantı çizgisi komşu kolonlara %18 taşar. Bar üstünde tutar (kırmızı kesinti, yeşil
+ * kâr), altında kolon etiketi; solda ₺ gutter'ı ve yatay kesikli gridline'lar.
  *
- * Sunucu bileşeni — etkileşim yok, hover bilgisi `<title>` ile erişilebilir.
+ * Ek bağımlılık yok — düz HTML/CSS. Kesinleşmemiş kalemin tutarı amber noktayla işaretli
+ * (ürünün DNA'sı: kesin vs tahmini hücre seviyesinde görünür).
  */
 
+import { EstimateDot } from "@/components/estimate-dot";
 import type { WaterfallStep } from "@/lib/api";
-import { formatMoney, toNumber } from "@/lib/format";
+import { formatMoney, formatMoneyWhole, toNumber } from "@/lib/format";
 import tr from "@/locales/tr.json";
 
 const LABELS: Record<string, string> = tr.waterfall;
 
-const ROW_HEIGHT = 34;
-const BAR_HEIGHT = 18;
-const LABEL_WIDTH = 132;
-const VALUE_WIDTH = 116;
+const PLOT_HEIGHT = 300;
+const LABEL_ROOM = 24;
+const GRID_LINES = 4;
 
-export function Waterfall({ steps }: { steps: WaterfallStep[] }) {
-  // Sıfır adımlar gösterilmez (reklam payı Faz 4'e kadar hep sıfır) ama satış ve
-  // kâr her zaman durur — şelalenin başı ve sonu görünmeli.
+/**
+ * Bar rengi **işarete** göre seçilir, konuma göre değil: KDV adımı pozitif olabilir
+ * (indirilecek KDV satış KDV'sini aşarsa) ve kârı ARTIRIR — onu kesinti kırmızısıyla
+ * çizmek yanıltıcı olurdu.
+ */
+function barColor(bar: { amount: number }, isStart: boolean, isTotal: boolean): string {
+  if (isStart) return "#E7E5E4";
+  if (isTotal) return bar.amount < 0 ? "#DC2626" : "#16A34A";
+  return bar.amount < 0 ? "rgba(220,38,38,0.8)" : "rgba(22,163,74,0.75)";
+}
+
+function labelColor(bar: { amount: number }, isStart: boolean, isTotal: boolean): string {
+  if (isStart) return "#44403C";
+  if (isTotal) return bar.amount < 0 ? "#DC2626" : "#15803D";
+  return bar.amount < 0 ? "#DC2626" : "#15803D";
+}
+
+export function Waterfall({
+  steps,
+  estimatedKeys = [],
+}: {
+  steps: WaterfallStep[];
+  /** Kesinleşmemiş adımlar — tutarlarının yanında amber nokta çıkar. */
+  estimatedKeys?: string[];
+}) {
+  // Sıfır adımlar gizlenir (reklam payı Faz 4'e kadar sıfır) ama satış ve kâr her zaman
+  // durur: şelalenin başı ve sonu görünmeli.
   const visible = steps.filter(
     (step) => toNumber(step.amount) !== 0 || step.key === "satis" || step.key === "kar",
   );
-  if (visible.length === 0) {
-    return null;
-  }
+  if (visible.length === 0) return null;
 
-  // Kümülatif konumlar: her adım bir öncekinin bıraktığı yerden başlar.
   let running = 0;
   const bars = visible.map((step) => {
     const amount = toNumber(step.amount);
@@ -37,78 +60,108 @@ export function Waterfall({ steps }: { steps: WaterfallStep[] }) {
     const start = isTotal ? 0 : running;
     const end = isTotal ? amount : running + amount;
     if (!isTotal) running = end;
-    return { key: step.key, amount, start, end, isTotal };
+    return { key: step.key, amount, top: Math.min(start, end), bottom: Math.max(start, end) };
   });
 
-  const bounds = bars.flatMap((bar) => [bar.start, bar.end]);
-  const min = Math.min(0, ...bounds);
-  const max = Math.max(0, ...bounds);
-  const span = max - min || 1;
+  const peak = Math.max(...bars.map((bar) => bar.bottom), 0);
+  const floor = Math.min(...bars.map((bar) => bar.top), 0);
+  const span = peak - floor || 1;
+  const toY = (value: number) => ((peak - value) / span) * PLOT_HEIGHT;
 
-  const plotWidth = 100; // yüzde tabanlı; SVG viewBox ile ölçeklenir
-  const scale = (value: number) => ((value - min) / span) * plotWidth;
-  const height = bars.length * ROW_HEIGHT;
+  const gridValues = Array.from({ length: GRID_LINES + 1 }, (_, index) =>
+    floor + (span * index) / GRID_LINES,
+  );
 
   return (
-    <svg
-      viewBox={`0 0 ${LABEL_WIDTH + plotWidth + VALUE_WIDTH} ${height}`}
-      className="w-full"
-      role="img"
-      aria-label={tr.chart.waterfallTitle}
-    >
-      {bars.map((bar, index) => {
-        const y = index * ROW_HEIGHT;
-        const left = LABEL_WIDTH + Math.min(scale(bar.start), scale(bar.end));
-        const width = Math.max(Math.abs(scale(bar.end) - scale(bar.start)), 0.6);
-        const fill = bar.isTotal
-          ? bar.amount < 0
-            ? "#B91C1C"
-            : "#1C1917"
-          : bar.amount < 0
-            ? "#B91C1C"
-            : "#15803D";
-        return (
-          <g key={bar.key}>
-            <title>{`${LABELS[bar.key] ?? bar.key}: ${formatMoney(bar.amount)}`}</title>
-            <text
-              x={LABEL_WIDTH - 8}
-              y={y + BAR_HEIGHT}
-              textAnchor="end"
-              className="fill-ink-muted text-[11px]"
-            >
+    <div className="flex gap-2">
+      <div className="relative w-11 shrink-0" style={{ height: PLOT_HEIGHT + LABEL_ROOM }}>
+        {gridValues.map((value) => (
+          <span
+            key={value}
+            className="absolute right-0 -translate-y-1/2 text-micro text-ink-muted"
+            style={{ top: LABEL_ROOM + toY(value) }}
+          >
+            {formatMoneyWhole(value)}
+          </span>
+        ))}
+      </div>
+
+      <div className="relative min-w-0 flex-1" style={{ height: PLOT_HEIGHT + LABEL_ROOM }}>
+        {gridValues.map((value, index) => (
+          <div
+            key={value}
+            className="absolute inset-x-0"
+            style={{
+              top: LABEL_ROOM + toY(value),
+              borderTop: index === GRID_LINES ? "1px solid #E7E5E4" : "1px dashed #EBE9E7",
+            }}
+          />
+        ))}
+
+        <div
+          className="absolute inset-x-0 grid"
+          style={{
+            top: LABEL_ROOM,
+            height: PLOT_HEIGHT,
+            gridTemplateColumns: `repeat(${bars.length}, minmax(0, 1fr))`,
+          }}
+        >
+          {bars.map((bar, index) => {
+            const top = toY(bar.bottom);
+            const height = Math.max(2, toY(bar.top) - toY(bar.bottom));
+            const isTotal = bar.key === "kar";
+            const isStart = index === 0;
+            const estimated = estimatedKeys.includes(bar.key);
+
+            return (
+              <div key={bar.key} className="relative">
+                {/* Bir önceki barın bittiği yerden bu bara uzanan kesikli bağlantı. */}
+                {isStart ? null : (
+                  <div
+                    className="absolute border-t border-dashed border-ink-ghost"
+                    style={{ top: toY(isTotal ? 0 : bar.bottom), left: "-18%", width: "36%" }}
+                  />
+                )}
+
+                <div
+                  className="absolute inset-x-0 flex items-center justify-center gap-1.5 text-helper font-semibold"
+                  style={{ top: Math.max(0, top - 22), color: labelColor(bar, isStart, isTotal) }}
+                >
+                  {estimated ? <EstimateDot /> : null}
+                  {formatMoney(bar.amount)}
+                </div>
+
+                <div
+                  title={`${LABELS[bar.key] ?? bar.key}: ${formatMoney(bar.amount)}`}
+                  className="absolute rounded-[3px]"
+                  style={{
+                    top,
+                    height,
+                    left: "20%",
+                    right: "20%",
+                    background: barColor(bar, isStart, isTotal),
+                    border: isStart ? "1px solid #D6D3D1" : undefined,
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        <div
+          className="absolute inset-x-0 grid gap-1"
+          style={{
+            top: LABEL_ROOM + PLOT_HEIGHT + 8,
+            gridTemplateColumns: `repeat(${bars.length}, minmax(0, 1fr))`,
+          }}
+        >
+          {bars.map((bar) => (
+            <span key={bar.key} className="truncate text-center text-helper text-ink-secondary">
               {LABELS[bar.key] ?? bar.key}
-            </text>
-            <rect
-              x={left}
-              y={y + 5}
-              width={width}
-              height={BAR_HEIGHT}
-              rx={1.5}
-              fill={fill}
-              fillOpacity={bar.isTotal ? 1 : 0.85}
-            />
-            <text
-              x={LABEL_WIDTH + plotWidth + VALUE_WIDTH - 4}
-              y={y + BAR_HEIGHT}
-              textAnchor="end"
-              className={`text-[11px] tabular ${
-                bar.isTotal ? "fill-ink font-medium" : "fill-ink-muted"
-              }`}
-            >
-              {formatMoney(bar.amount)}
-            </text>
-          </g>
-        );
-      })}
-      {/* Sıfır çizgisi: negatif adımların nereden başladığı görünsün. */}
-      <line
-        x1={LABEL_WIDTH + scale(0)}
-        x2={LABEL_WIDTH + scale(0)}
-        y1={0}
-        y2={height}
-        stroke="#E7E5E4"
-        strokeWidth={0.5}
-      />
-    </svg>
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

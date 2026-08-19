@@ -193,7 +193,19 @@
     "orderTitle": "Sipariş",
     "lineTitle": "Satır dökümü",
     "commission": "Komisyon kaynağı",
-    "netProfit": "Net kâr"
+    "netProfit": "Net kâr",
+    "breakdownTitle": "Kalem Dökümü",
+    "item": "Kalem",
+    "source": "Kaynak",
+    "amount": "Tutar",
+    "channel": "Kanal",
+    "city": "Müşteri şehri",
+    "cargo": "Kargo",
+    "statusLabel": "Durum",
+    "copy": "Sipariş numarasını kopyala",
+    "copied": "Kopyalandı",
+    "estimatedNote": "{count} tahmini kalem — kargo faturası bekleniyor",
+    "allFinal": "Tüm kalemler kesinleşti"
   },
   "pricelist": {
     "export": "Excel'e Aktar",
@@ -753,5 +765,15 @@
     "netProfit": "Net Kâr",
     "export": "Excel'e Aktar",
     "exportHint": "Arama kutusu dosyaya taşınmaz; kanal/kategori ve negatif filtresi taşınır."
+  },
+  "source": {
+    "api": "API · kesin",
+    "tarife": "tarife · kesin",
+    "hakedis": "hakediş · kesin",
+    "manuel": "manuel",
+    "desi": "desi tahmini",
+    "fatura": "fatura · ort. maliyet",
+    "hesaplanan": "hesaplanan",
+    "kargoFatura": "fatura · kesin"
   }
 }

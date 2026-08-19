@@ -5,6 +5,8 @@
  * şelale, önce sipariş toplamı sonra her satır için.
  */
 
+import { EstimateDot } from "@/components/estimate-dot";
+import { type SourceKind, SourceBadge } from "@/components/source-badge";
 import { Waterfall } from "@/components/waterfall";
 import {
   Card,
@@ -16,13 +18,31 @@ import {
 } from "@/components/ui";
 import { fetchOrderDetail } from "@/lib/api";
 import type { BrandSlug } from "@/lib/brands";
-import { formatCount, formatDateTime, formatMoney, formatPercent, signClass } from "@/lib/format";
+import {
+  formatCount,
+  formatDateTime,
+  formatMoney,
+  formatPercent,
+  signClass,
+  toNumber,
+} from "@/lib/format";
 import tr from "@/locales/tr.json";
 
 export const dynamic = "force-dynamic";
 
 const STATUS_LABELS: Record<string, string> = tr.status;
 const COMMISSION_LABELS: Record<string, string> = tr.commissionSource;
+const WATERFALL_LABELS: Record<string, string> = tr.waterfall;
+
+/** Şelale adımının kaynağı — hangi rozet çizilecek (handoff, Kalem Dökümü). */
+function sourceFor(key: string, order: { is_final: boolean }): SourceKind {
+  if (key === "kargo") return order.is_final ? "kargoFatura" : "desi";
+  if (key === "kdv") return "hesaplanan";
+  if (key === "maliyet") return "fatura";
+  if (key === "hizmet_bedeli") return "tarife";
+  if (key === "komisyon") return "tarife";
+  return "api";
+}
 
 export default async function OrderDetailPage({
   params,
@@ -78,11 +98,76 @@ export default async function OrderDetailPage({
       ) : (
         <>
           <Card className="flex flex-col gap-4 p-5">
-            <SectionHeader title={tr.chart.waterfallTitle} subtitle={tr.chart.waterfallSubtitle} />
-            <Waterfall steps={order.waterfall} />
-            {!order.is_final ? (
-              <p className="text-xs text-estimated">{tr.estimate.explain}</p>
-            ) : null}
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <SectionHeader
+                title={tr.chart.waterfallTitle}
+                subtitle={tr.chart.waterfallSubtitle}
+              />
+              <span
+                className={`flex items-center gap-1.5 text-helper ${
+                  order.is_final ? "text-positive-text" : "text-estimated-text"
+                }`}
+              >
+                {order.is_final ? null : <EstimateDot />}
+                {order.is_final
+                  ? tr.detail.allFinal
+                  : tr.detail.estimatedNote.replace("{count}", "1")}
+              </span>
+            </div>
+            <Waterfall
+              steps={order.waterfall}
+              estimatedKeys={order.is_final ? [] : ["kargo"]}
+            />
+          </Card>
+
+          <Card className="flex flex-col">
+            <div className="p-5 pb-2">
+              <SectionHeader title={tr.detail.breakdownTitle} />
+            </div>
+            <table className="w-full border-collapse text-cell">
+              <thead>
+                <tr className="border-b border-hairline">
+                  <th className="px-5 py-2 text-left">
+                    <span className="col-head">{tr.detail.item}</span>
+                  </th>
+                  <th className="px-5 py-2 text-left">
+                    <span className="col-head">{tr.detail.source}</span>
+                  </th>
+                  <th className="px-5 py-2 text-right">
+                    <span className="col-head">{tr.detail.amount}</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {order.waterfall
+                  .filter((step) => step.key !== "kar" && toNumber(step.amount) !== 0)
+                  .map((step) => (
+                    <tr key={step.key} className="border-b border-divider">
+                      <td className="px-5 py-[11px]">{WATERFALL_LABELS[step.key] ?? step.key}</td>
+                      <td className="px-5 py-[11px]">
+                        <SourceBadge kind={sourceFor(step.key, order)} />
+                      </td>
+                      <td className="px-5 py-[11px] text-right font-medium">
+                        {formatMoney(step.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                <tr className="bg-canvas">
+                  <td className="px-5 py-[11px] font-medium">{tr.detail.netProfit}</td>
+                  <td className="px-5 py-[11px]">
+                    <span className="badge border-positive-border bg-positive-tint text-positive-text">
+                      {tr.table.margin} {formatPercent(order.margin_pct)}
+                    </span>
+                  </td>
+                  <td className="px-5 py-[11px] text-right">
+                    <span className="inline-flex items-center gap-1.5 font-semibold text-positive-text">
+                      {order.is_final ? null : <EstimateDot />}
+                      {formatMoney(order.profit)}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </Card>
 
           <div className="flex flex-col gap-4">
