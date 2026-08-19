@@ -215,6 +215,26 @@ def test_holding_totals_match_the_brand_screens(api: TestClient) -> None:
     assert Decimal(str(consolidated["total_revenue"])) == brand_total
 
 
+def test_holding_pl_rows_sum_across_brands(api: TestClient) -> None:
+    """Karşılaştırmalı P&L'in "Toplam" kolonu marka kolonlarının toplamıdır (§3A.3).
+
+    Ekran satış maliyetini ve pazaryeri kesintilerini ayrı satırlar olarak gösteriyor;
+    toplam kolonu ile marka kolonları çelişirse tablo yalan söyler.
+    """
+    consolidated = api.get(
+        "/holding/consolidated",
+        params={"since": "2026-01-01", "until": "2027-01-01"},
+        headers=_headers(api, "kahveji"),
+    ).json()
+
+    for field in ("cost_goods", "marketplace_deductions", "profit"):
+        assert Decimal(str(consolidated[f"total_{field}"])) == _sum(consolidated["brands"], field)
+
+    # Demo veride her iki kalem de gerçekten dolu olmalı, yoksa test bir şey doğrulamaz.
+    assert Decimal(str(consolidated["total_cost_goods"])) > 0
+    assert Decimal(str(consolidated["total_marketplace_deductions"])) > 0
+
+
 # --- modül bayrakları ve izolasyon (§3A.6) ----------------------------------
 
 

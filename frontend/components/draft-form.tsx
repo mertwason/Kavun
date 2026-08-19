@@ -57,12 +57,12 @@ export function DraftForm({ brand }: { brand: BrandSlug }) {
           />
         </div>
         <div className="grid grid-cols-3 gap-3">
-          <label className="flex flex-col gap-1 text-xs">
-            <span className="text-ink-faint">{tr.table.vat}</span>
+          <label className="flex flex-col gap-1">
+            <span className="col-head">{tr.table.vat}</span>
             <select
               name="vat_rate"
               defaultValue="20"
-              className="rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm"
+              className="control"
             >
               <option value="0">%0</option>
               <option value="1">%1</option>
@@ -73,12 +73,12 @@ export function DraftForm({ brand }: { brand: BrandSlug }) {
           <Field name="desi" label={tr.pricelist.desi} type="number" step="0.01" />
           <Field name="kargo_tahmini" label={tr.drafts.cargo} type="number" step="0.01" />
         </div>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.pricelist.channel}</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.pricelist.channel}</span>
           <select
             name="kanal"
             defaultValue="trendyol"
-            className="rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm"
+            className="control"
           >
             <option value="trendyol">trendyol</option>
             <option value="manual">manual (D2B)</option>
@@ -89,7 +89,7 @@ export function DraftForm({ brand }: { brand: BrandSlug }) {
           <button
             type="submit"
             disabled={pending}
-            className="rounded-card border border-hairline px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-canvas"
+            className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
           >
             {pending ? tr.pricelist.checking : tr.drafts.analyze}
           </button>
@@ -100,15 +100,15 @@ export function DraftForm({ brand }: { brand: BrandSlug }) {
               const form = event.currentTarget.form;
               if (form) submit(form, true);
             }}
-            className="rounded-card border border-ink bg-ink px-3 py-1.5 text-sm text-surface disabled:opacity-40"
+            className="h-[34px] rounded-control border border-ink bg-ink px-3 text-cell font-medium text-white hover:bg-ink-secondary disabled:opacity-40"
           >
             {tr.drafts.save}
           </button>
           {state.status === "saved" ? (
-            <span className="text-sm text-positive">{tr.drafts.saved}</span>
+            <span className="text-cell text-positive-text">{tr.drafts.saved}</span>
           ) : null}
           {state.status === "error" ? (
-            <span className="text-sm text-negative">{state.message}</span>
+            <span className="text-cell text-negative">{state.message}</span>
           ) : null}
         </div>
       </form>
@@ -117,21 +117,21 @@ export function DraftForm({ brand }: { brand: BrandSlug }) {
         {analysis ? (
           <>
             <div className="flex items-baseline justify-between">
-              <span className="text-xs uppercase tracking-wide text-ink-faint">
+              <span className="col-head">
                 {tr.drafts.profitCard}
               </span>
-              <span className={`tabular text-2xl font-medium ${signClass(analysis.profit)}`}>
+              <span className={`text-kpi ${signClass(analysis.profit)}`}>
                 {formatMoney(analysis.profit)}
               </span>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-ink-faint">{tr.table.margin}</span>
+            <div className="flex items-center justify-between text-cell">
+              <span className="col-head">{tr.table.margin}</span>
               <span className={`tabular ${signClass(analysis.margin_pct)}`}>
                 {formatPercent(analysis.margin_pct)}
               </span>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-ink-faint">{tr.detail.commission}</span>
+            <div className="flex items-center justify-between text-cell">
+              <span className="col-head">{tr.detail.commission}</span>
               <span className="tabular">
                 {analysis.commission_rate === null
                   ? tr.commissionSource.unknown
@@ -139,7 +139,7 @@ export function DraftForm({ brand }: { brand: BrandSlug }) {
               </span>
             </div>
             {analysis.warnings.length > 0 ? (
-              <ul className="flex flex-col gap-1 border-t border-hairline pt-2 text-xs text-estimated">
+              <ul className="flex flex-col gap-1 border-t border-hairline pt-2 text-helper text-estimated-text">
                 {analysis.warnings.map((code) => (
                   <li key={code}>{WARNING_LABELS[code] ?? code}</li>
                 ))}
@@ -155,7 +155,7 @@ export function DraftForm({ brand }: { brand: BrandSlug }) {
             </div>
           </>
         ) : (
-          <p className="py-10 text-center text-sm text-ink-faint">{tr.drafts.emptyCard}</p>
+          <p className="py-10 text-center text-cell text-ink-muted">{tr.drafts.emptyCard}</p>
         )}
       </div>
     </div>
@@ -178,8 +178,8 @@ function Field({
   placeholder?: string;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-xs">
-      <span className="text-ink-faint">
+    <label className="flex flex-col gap-1">
+      <span className="col-head">
         {label}
         {required ? " *" : ""}
       </span>
@@ -189,7 +189,7 @@ function Field({
         step={step}
         required={required}
         placeholder={placeholder}
-        className="rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm tabular"
+        className="control tabular"
       />
     </label>
   );

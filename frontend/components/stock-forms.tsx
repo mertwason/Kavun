@@ -20,12 +20,12 @@ import tr from "@/locales/tr.json";
 
 export type ProductOption = { product_id: string; sku: string; name: string };
 
-const FIELD = "rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm";
+const FIELD = "control";
 
 function ProductSelect({ options }: { options: ProductOption[] }) {
   return (
-    <label className="flex flex-col gap-1 text-xs">
-      <span className="text-ink-faint">{tr.inventory.product} *</span>
+    <label className="flex flex-col gap-1">
+      <span className="col-head">{tr.inventory.product} *</span>
       <select name="product_id" required defaultValue="" className={`${FIELD} min-w-64`}>
         <option value="" disabled>
           {tr.inventory.chooseProduct}
@@ -43,7 +43,7 @@ function ProductSelect({ options }: { options: ProductOption[] }) {
 function Feedback({ state }: { state: MovementState }) {
   if (state.status === "idle") return null;
   const tone = state.status === "error" ? "text-negative" : "text-positive";
-  return <p className={`text-sm ${tone}`}>{state.message}</p>;
+  return <p className={`text-cell ${tone}`}>{state.message}</p>;
 }
 
 export function OpeningStockForm({
@@ -73,8 +73,8 @@ export function OpeningStockForm({
         }}
       >
         <ProductSelect options={products} />
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.inventory.qty} *</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.inventory.qty} *</span>
           <input
             name="qty"
             type="number"
@@ -84,8 +84,8 @@ export function OpeningStockForm({
             className={`${FIELD} w-24 tabular`}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.inventory.unitCost} *</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.inventory.unitCost} *</span>
           <input
             name="unit_cost"
             type="number"
@@ -95,14 +95,14 @@ export function OpeningStockForm({
             className={`${FIELD} w-36 tabular`}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.inventory.onDate}</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.inventory.onDate}</span>
           <input name="on_date" type="date" className={`${FIELD} w-40`} />
         </label>
         <button
           type="submit"
           disabled={pending}
-          className="rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-40"
+          className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
         >
           {pending ? tr.inventory.saving : tr.inventory.save}
         </button>
@@ -139,8 +139,8 @@ export function AdjustmentForm({
         }}
       >
         <ProductSelect options={products} />
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.inventory.qtyDelta} *</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.inventory.qtyDelta} *</span>
           <input
             name="qty_delta"
             type="number"
@@ -150,8 +150,8 @@ export function AdjustmentForm({
             className={`${FIELD} w-28 tabular`}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.inventory.unitCostOptional}</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.inventory.unitCostOptional}</span>
           <input
             name="unit_cost"
             type="number"
@@ -160,19 +160,19 @@ export function AdjustmentForm({
             className={`${FIELD} w-36 tabular`}
           />
         </label>
-        <label className="flex flex-1 flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.inventory.reason} *</span>
+        <label className="flex flex-1 flex-col gap-1">
+          <span className="col-head">{tr.inventory.reason} *</span>
           <input name="reason" type="text" required minLength={3} className={`${FIELD} w-full`} />
         </label>
         <button
           type="submit"
           disabled={pending}
-          className="rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-40"
+          className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
         >
           {pending ? tr.inventory.saving : tr.inventory.save}
         </button>
       </form>
-      <p className="text-xs text-ink-faint">{tr.inventory.qtyDeltaHint}</p>
+      <p className="text-helper text-ink-muted">{tr.inventory.qtyDeltaHint}</p>
       <Feedback state={state} />
     </div>
   );
@@ -205,8 +205,8 @@ export function DamageForm({
         }}
       >
         <ProductSelect options={products} />
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.damage.qty} *</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.damage.qty} *</span>
           <input
             name="qty"
             type="number"
@@ -216,19 +216,19 @@ export function DamageForm({
             className={`${FIELD} w-24 tabular`}
           />
         </label>
-        <label className="flex flex-1 flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.damage.reason} *</span>
+        <label className="flex flex-1 flex-col gap-1">
+          <span className="col-head">{tr.damage.reason} *</span>
           <input name="reason" type="text" required minLength={3} className={`${FIELD} w-full`} />
         </label>
         <button
           type="submit"
           disabled={pending}
-          className="rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-40"
+          className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
         >
           {pending ? tr.inventory.saving : tr.damage.record}
         </button>
       </form>
-      <p className="text-xs text-ink-faint">{tr.damage.subtitle}</p>
+      <p className="text-helper text-ink-muted">{tr.damage.subtitle}</p>
       <Feedback state={state} />
     </div>
   );

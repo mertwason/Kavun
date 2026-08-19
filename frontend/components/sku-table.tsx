@@ -3,17 +3,19 @@
 /**
  * SKU marj tablosu — handoff `SKU Marjlari.dc.html`.
  *
- * Filtreler **canlı** çalışır (arama ve negatif-marj anahtarı), bu yüzden istemci
- * bileşeni. Kanal ve kategori seçicileri de aynı listeden türetilir — sabit liste
- * yazmak yerine veriden çıkarılır, böylece markanın gerçekten sattığı kanallar görünür.
+ * Filtreler **canlı** çalışır (arama, kanal, kategori, negatif-marj anahtarı) ve tablo
+ * TanStack Table üzerinde kurulu: kolon başlığına tıklayınca istemci tarafında sıralanır.
+ * "Hangi SKU beni en çok zarara sokuyor" sorusu ancak sıralanabilir bir tabloda yanıtlanır.
  *
  * Rakam kolonları **daima sağa hizalı**; negatif marj satırı `#FEF7F7` zeminli ve marjı
  * kırmızı. Kargo hücresinde kesinleşmemiş maliyet amber noktayla işaretlenir.
  */
 
+import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { ChevronDown, Download, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { type ColumnMeta, DataGrid } from "@/components/data-table";
 import { EstimateDot } from "@/components/estimate-dot";
 import type { SkuMargin } from "@/lib/api";
 import { BRANDS, type BrandSlug } from "@/lib/brands";
@@ -22,6 +24,88 @@ import tr from "@/locales/tr.json";
 
 const CONTROL =
   "flex h-[34px] items-center gap-1.5 rounded-control border border-hairline bg-surface px-2.5 text-cell text-ink-secondary hover:border-ink-ghost hover:bg-canvas";
+
+const column = createColumnHelper<SkuMargin>();
+
+/** Para/oran alanları dizide geliyor; sıralama sayısal olmalı, sözlük sırası değil. */
+const numeric = (accessor: (row: SkuMargin) => string | number | null) => (row: SkuMargin) =>
+  toNumber(accessor(row));
+
+const COLUMNS: ColumnDef<SkuMargin, never>[] = [
+  column.accessor("sku", {
+    header: () => tr.table.sku,
+    cell: (info) => <span className="font-mono text-micro text-ink-muted">{info.getValue()}</span>,
+    meta: { align: "left", edge: "start" } satisfies ColumnMeta,
+  }),
+  column.accessor("name", {
+    header: () => tr.table.product,
+    cell: (info) => <span className="block max-w-[260px] truncate">{info.getValue()}</span>,
+    meta: { align: "left" } satisfies ColumnMeta,
+  }),
+  column.accessor("channel", {
+    header: () => tr.sku.channel,
+    cell: (info) => <ChannelBadge channel={info.getValue()} />,
+    meta: { align: "left" } satisfies ColumnMeta,
+  }),
+  column.accessor("qty_sold", {
+    header: () => tr.table.qty,
+    cell: (info) => formatCount(info.getValue()),
+    meta: { align: "right" } satisfies ColumnMeta,
+  }),
+  column.accessor(numeric((row) => row.revenue_gross), {
+    id: "revenue_gross",
+    header: () => tr.table.revenue,
+    cell: (info) => formatMoney(info.getValue()),
+    meta: { align: "right" } satisfies ColumnMeta,
+  }),
+  column.accessor(numeric((row) => row.unit_cost), {
+    id: "unit_cost",
+    header: () => tr.sku.unitCost,
+    cell: (info) => formatMoney(info.getValue()),
+    meta: { align: "right" } satisfies ColumnMeta,
+  }),
+  column.accessor(numeric((row) => row.cost_commission), {
+    id: "cost_commission",
+    header: () => tr.sku.commission,
+    cell: (info) => formatMoney(info.getValue()),
+    meta: { align: "right" } satisfies ColumnMeta,
+  }),
+  column.accessor(numeric((row) => row.cost_cargo), {
+    id: "cost_cargo",
+    header: () => tr.sku.cargo,
+    cell: (info) => (
+      <span className="inline-flex items-center justify-end gap-1.5">
+        {info.row.original.cargo_is_final ? null : <EstimateDot />}
+        {formatMoney(info.getValue())}
+      </span>
+    ),
+    meta: { align: "right" } satisfies ColumnMeta,
+  }),
+  column.accessor(numeric((row) => row.profit), {
+    id: "profit",
+    header: () => tr.sku.netProfit,
+    cell: (info) => (
+      <span className={info.getValue() < 0 ? "text-negative" : "text-positive-text"}>
+        {formatMoney(info.getValue())}
+      </span>
+    ),
+    meta: { align: "right" } satisfies ColumnMeta,
+  }),
+  column.accessor(numeric((row) => row.margin_pct), {
+    id: "margin_pct",
+    header: () => tr.table.margin,
+    cell: (info) => (
+      <span
+        className={`font-semibold ${
+          toNumber(info.row.original.profit) < 0 ? "text-negative" : ""
+        }`}
+      >
+        {formatPercent(info.getValue())}
+      </span>
+    ),
+    meta: { align: "right", edge: "end" } satisfies ColumnMeta,
+  }),
+] as ColumnDef<SkuMargin, never>[];
 
 export function SkuTable({
   rows,
@@ -108,6 +192,8 @@ export function SkuTable({
               onlyNegative ? "bg-negative" : "bg-hairline"
             }`}
           >
+            {/* design-allow: anahtarın topuzu handoff'ta da bu küçük gölgeyle çiziliyor;
+                gölge yasağı yüzey/kart gölgeleri içindir, kontrol topuzu için değil. */}
             <span
               className="absolute top-0.5 h-[11px] w-[11px] rounded-pill bg-white shadow-[0_1px_2px_rgba(0,0,0,0.2)] transition-all"
               style={{ left: onlyNegative ? "13px" : "2px" }}
@@ -132,128 +218,32 @@ export function SkuTable({
         </a>
       </div>
 
-      <div className="overflow-hidden rounded-card border border-hairline bg-surface">
-        <div className="max-h-[560px] overflow-auto">
-          <table className="w-full border-collapse text-cell">
-            <thead>
-              <tr>
-                <Head align="left" className="pl-5">
-                  {tr.table.sku}
-                </Head>
-                <Head align="left">{tr.table.product}</Head>
-                <Head align="left">{tr.sku.channel}</Head>
-                <Head>{tr.table.qty}</Head>
-                <Head>{tr.table.revenue}</Head>
-                <Head>{tr.sku.unitCost}</Head>
-                <Head>{tr.sku.commission}</Head>
-                <Head>{tr.sku.cargo}</Head>
-                <Head>{tr.sku.netProfit}</Head>
-                <Head className="pr-5">{tr.table.margin}</Head>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((row) => {
-                const negative = toNumber(row.profit) < 0;
-                return (
-                  <tr
-                    key={row.product_id}
-                    className={`border-b border-hairline ${
-                      negative ? "bg-negative-row" : "hover:bg-canvas"
-                    }`}
-                  >
-                    <Cell className="pl-5 font-mono text-micro text-ink-muted">{row.sku}</Cell>
-                    <Cell className="max-w-[260px] truncate">{row.name}</Cell>
-                    <Cell>
-                      <ChannelBadge channel={row.channel} />
-                    </Cell>
-                    <Cell align="right">{formatCount(row.qty_sold)}</Cell>
-                    <Cell align="right">{formatMoney(row.revenue_gross)}</Cell>
-                    <Cell align="right">{formatMoney(row.unit_cost)}</Cell>
-                    <Cell align="right">{formatMoney(row.cost_commission)}</Cell>
-                    <Cell align="right">
-                      <span className="inline-flex items-center justify-end gap-1.5">
-                        {row.cargo_is_final ? null : <EstimateDot />}
-                        {formatMoney(row.cost_cargo)}
-                      </span>
-                    </Cell>
-                    <Cell
-                      align="right"
-                      className={negative ? "text-negative" : "text-positive-text"}
-                    >
-                      {formatMoney(row.profit)}
-                    </Cell>
-                    <Cell
-                      align="right"
-                      className={`pr-5 font-semibold ${negative ? "text-negative" : ""}`}
-                    >
-                      {formatPercent(row.margin_pct)}
-                    </Cell>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-
-          {filtered.length === 0 ? (
-            <p className="p-6 text-center text-cell text-ink-muted">{tr.sku.noResult}</p>
-          ) : null}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 border-t border-hairline bg-canvas px-5 py-2.5 text-helper text-ink-body">
-          <span>
-            {tr.sku.footer
-              .replace("{shown}", formatCount(filtered.length))
-              .replace("{total}", formatCount(rows.length))}
-          </span>
-          <span className="text-ink-ghost">·</span>
-          <span>
-            {tr.table.revenue} {formatMoney(totals.revenue)}
-          </span>
-          <span className="text-ink-ghost">·</span>
-          <span>
-            {tr.table.profit} {formatMoney(totals.profit)}
-          </span>
-        </div>
-      </div>
+      <DataGrid
+        data={filtered}
+        columns={COLUMNS as unknown as ColumnDef<SkuMargin, unknown>[]}
+        initialSorting={[{ id: "profit", desc: true }]}
+        rowKey={(row) => `${row.product_id}-${row.channel}`}
+        rowClassName={(row) => (toNumber(row.profit) < 0 ? "bg-negative-row" : "hover:bg-canvas")}
+        empty={<p className="p-6 text-center text-cell text-ink-muted">{tr.sku.noResult}</p>}
+        footer={
+          <>
+            <span>
+              {tr.sku.footer
+                .replace("{shown}", formatCount(filtered.length))
+                .replace("{total}", formatCount(rows.length))}
+            </span>
+            <span className="text-ink-ghost">·</span>
+            <span>
+              {tr.table.revenue} {formatMoney(totals.revenue)}
+            </span>
+            <span className="text-ink-ghost">·</span>
+            <span>
+              {tr.table.profit} {formatMoney(totals.profit)}
+            </span>
+          </>
+        }
+      />
     </div>
-  );
-}
-
-function Head({
-  children,
-  align = "right",
-  className = "",
-}: {
-  children: React.ReactNode;
-  /** Hizalama prop'tur, sınıf üzerinden EZİLMEZ: `text-left`/`text-right` aynı
-   *  özgüllükte olduğu için sınıf sırası değil CSS kaynak sırası kazanırdı. */
-  align?: "left" | "right";
-  className?: string;
-}) {
-  return (
-    <th
-      className={`sticky top-0 z-[5] border-b border-hairline bg-canvas px-3 py-2.5 ${
-        align === "left" ? "text-left" : "text-right"
-      } ${className}`}
-    >
-      <span className="col-head">{children}</span>
-    </th>
-  );
-}
-
-function Cell({
-  children,
-  align,
-  className = "",
-}: {
-  children: React.ReactNode;
-  align?: "right";
-  className?: string;
-}) {
-  return (
-    <td className={`px-3 py-2.5 ${align === "right" ? "text-right" : ""} ${className}`}>
-      {children}
-    </td>
   );
 }
 

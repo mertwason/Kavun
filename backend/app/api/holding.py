@@ -74,6 +74,8 @@ def consolidated(
         until=report.until,
         brands=[ConsolidatedBrandOut.model_validate(line) for line in report.brands],
         total_revenue=report.total_revenue,
+        total_cost_goods=report.total_cost_goods,
+        total_marketplace_deductions=report.total_marketplace_deductions,
         total_profit=report.total_profit,
         total_stock_value=report.total_stock_value,
         total_damage_cost=report.total_damage_cost,

@@ -45,7 +45,7 @@ export function TariffUpload({ brand }: { brand: BrandSlug }) {
       }}
     >
       <div className="flex flex-wrap items-end gap-3">
-        <label className="cursor-pointer rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas">
+        <label className="flex h-[34px] cursor-pointer items-center rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas">
           <input
             type="file"
             name="file"
@@ -58,32 +58,32 @@ export function TariffUpload({ brand }: { brand: BrandSlug }) {
           />
           {tr.pricelist.chooseFile}
         </label>
-        <span className="text-xs text-ink-faint">{file ? file.name : tr.pricelist.noFile}</span>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.tariffs.validFromLabel} *</span>
+        <span className="text-helper text-ink-muted">{file ? file.name : tr.pricelist.noFile}</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.tariffs.validFromLabel} *</span>
           <input
             name="valid_from"
             type="date"
             required
-            className="rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm tabular"
+            className="control tabular"
           />
         </label>
         <button
           type="submit"
           disabled={!file || pending}
-          className="rounded-card border border-hairline px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-canvas"
+          className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
         >
           {pending ? tr.pricelist.checking : tr.pricelist.preview}
         </button>
       </div>
 
       {state.status === "error" ? (
-        <p className="text-sm text-negative">{state.message}</p>
+        <p className="text-cell text-negative">{state.message}</p>
       ) : null}
 
       {result ? (
         <div className="flex flex-col gap-3 border-t border-hairline pt-3">
-          <div className="rounded-card border border-hairline bg-canvas p-3 text-xs">
+          <div className="rounded-card border border-hairline bg-canvas p-3 text-helper">
             <p className="mb-1 font-medium">{tr.tariffs.readAs}</p>
             <ul className="flex flex-col gap-0.5 text-ink-muted">
               <li>
@@ -113,26 +113,26 @@ export function TariffUpload({ brand }: { brand: BrandSlug }) {
             </ul>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-sm">
+          <div className="flex flex-wrap items-center gap-4 text-cell">
             <span>
               {tr.tariffs.matched}: <span className="tabular">{result.matched}</span>
             </span>
             <span>
               {tr.tariffs.changedRows}: <span className="tabular">{result.changed}</span>
             </span>
-            <span className="text-ink-faint">
+            <span className="col-head">
               {tr.tariffs.unchangedRows}: <span className="tabular">{result.unchanged}</span>
             </span>
             <span className="text-positive">
               {tr.tariffs.newRows}: <span className="tabular">{result.new_categories}</span>
             </span>
-            <span className={result.errors.length > 0 ? "text-negative" : "text-ink-faint"}>
+            <span className={result.errors.length > 0 ? "text-negative" : "text-ink-muted"}>
               {tr.pricelist.errors}: <span className="tabular">{result.errors.length}</span>
             </span>
             <span className="ml-auto flex items-center gap-3">
-              <span className="text-xs text-ink-faint">{tr.tariffs.monthlyImpact}</span>
+              <span className="text-helper text-ink-muted">{tr.tariffs.monthlyImpact}</span>
               <span
-                className={`tabular text-lg font-medium ${signClass(result.monthly_profit_impact)}`}
+                className={`tabular text-title font-medium ${signClass(result.monthly_profit_impact)}`}
               >
                 {formatMoney(result.monthly_profit_impact)}
               </span>
@@ -148,23 +148,23 @@ export function TariffUpload({ brand }: { brand: BrandSlug }) {
                   const form = event.currentTarget.form;
                   if (form) send(form, true);
                 }}
-                className="rounded-card border border-ink bg-ink px-3 py-1.5 text-sm text-surface disabled:opacity-40"
+                className="h-[34px] rounded-control border border-ink bg-ink px-3 text-cell font-medium text-white hover:bg-ink-secondary disabled:opacity-40"
               >
                 {tr.tariffs.confirmUpload}
               </button>
-              <span className="text-xs text-ink-faint">{tr.pricelist.dryRunNote}</span>
+              <span className="text-helper text-ink-muted">{tr.pricelist.dryRunNote}</span>
             </div>
           ) : (
-            <p className="text-sm text-positive">
+            <p className="text-cell text-positive-text">
               {tr.tariffs.uploaded} ({result.written})
             </p>
           )}
 
           {result.changes.length > 0 ? (
             <div className="max-h-56 overflow-auto">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse text-cell">
                 <thead className="sticky top-0 bg-surface">
-                  <tr className="border-b border-hairline text-xs font-medium text-ink-faint">
+                  <tr className="border-b border-hairline text-column uppercase text-ink-muted">
                     <th className="px-3 py-2 text-left">{tr.table.category}</th>
                     <th className="px-3 py-2 text-right">{tr.tariffs.oldRate}</th>
                     <th className="px-3 py-2 text-right">{tr.tariffs.newRate}</th>
@@ -191,17 +191,17 @@ export function TariffUpload({ brand }: { brand: BrandSlug }) {
           ) : null}
 
           {result.unmatched.length > 0 ? (
-            <details className="text-xs text-ink-muted">
+            <details className="text-helper text-ink-muted">
               <summary className="cursor-pointer">
                 {tr.tariffs.unmatchedRows}: {result.unmatched.length}
               </summary>
-              <p className="mt-1 text-ink-faint">{tr.tariffs.unmatchedNote}</p>
+              <p className="mt-1 text-ink-muted">{tr.tariffs.unmatchedNote}</p>
               <p className="mt-1">{result.unmatched.join(" · ")}</p>
             </details>
           ) : null}
 
           {result.errors.length > 0 ? (
-            <ul className="flex flex-col gap-1 text-xs text-negative">
+            <ul className="flex flex-col gap-1 text-negative">
               {result.errors.map((error) => (
                 <li key={error}>{error}</li>
               ))}

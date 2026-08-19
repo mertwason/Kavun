@@ -13,16 +13,16 @@ import {
 import type { BrandSlug } from "@/lib/brands";
 import tr from "@/locales/tr.json";
 
-const FIELD = "rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm";
+const FIELD = "control";
 const BUTTON =
-  "rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-40";
+  "h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40";
 
 const ITEM_TYPES: Record<string, string> = tr.imports.itemTypes;
 
 function Feedback({ state }: { state: ImportActionState }) {
   if (state.status === "idle") return null;
   const tone = state.status === "error" ? "text-negative" : "text-positive";
-  return <p className={`text-sm ${tone}`}>{state.message}</p>;
+  return <p className={`text-cell ${tone}`}>{state.message}</p>;
 }
 
 type FormProps = { brand: BrandSlug; fileId: string; disabled?: boolean };
@@ -56,8 +56,8 @@ export function CostItemForm({ brand, fileId, disabled = false }: FormProps) {
         className="flex flex-wrap items-end gap-3"
         onSubmit={(event) => submit(event, brand, fileId)}
       >
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.imports.itemType} *</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.imports.itemType} *</span>
           <select name="item_type" required defaultValue="navlun" className={`${FIELD} min-w-44`}>
             {Object.entries(ITEM_TYPES)
               .filter(([code]) => code !== "mal_bedeli")
@@ -68,8 +68,8 @@ export function CostItemForm({ brand, fileId, disabled = false }: FormProps) {
               ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.imports.amount} *</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.imports.amount} *</span>
           <input
             name="amount_original"
             type="number"
@@ -79,20 +79,20 @@ export function CostItemForm({ brand, fileId, disabled = false }: FormProps) {
             className={`${FIELD} w-32 tabular`}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.imports.currency}</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.imports.currency}</span>
           <select name="currency" defaultValue="TRY" className={`${FIELD} w-24`}>
             <option value="TRY">TRY</option>
             <option value="EUR">EUR</option>
             <option value="USD">USD</option>
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.imports.fxBeyanname}</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.imports.fxBeyanname}</span>
           <input name="fx_rate" type="number" step="0.000001" className={`${FIELD} w-32 tabular`} />
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.imports.vendor}</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.imports.vendor}</span>
           <input name="vendor" type="text" className={`${FIELD} w-44`} />
         </label>
         <button type="submit" disabled={pending || disabled} className={BUTTON}>
@@ -113,12 +113,12 @@ export function PaymentForm({ brand, fileId }: FormProps) {
         className="flex flex-wrap items-end gap-3"
         onSubmit={(event) => submit(event, brand, fileId)}
       >
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.imports.payDate} *</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.imports.payDate} *</span>
           <input name="pay_date" type="date" required className={`${FIELD} w-40`} />
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.imports.payAmount} *</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.imports.payAmount} *</span>
           <input
             name="amount_original"
             type="number"
@@ -128,8 +128,8 @@ export function PaymentForm({ brand, fileId }: FormProps) {
             className={`${FIELD} w-32 tabular`}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.imports.payRate} *</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.imports.payRate} *</span>
           <input
             name="fx_rate_payment"
             type="number"
@@ -158,7 +158,7 @@ export function ConfirmFileForm({ brand, fileId, disabled = false }: FormProps) 
           {pending ? tr.imports.saving : tr.imports.confirm}
         </button>
       </form>
-      <p className="text-xs text-ink-faint">{tr.imports.confirmNote}</p>
+      <p className="text-helper text-ink-muted">{tr.imports.confirmNote}</p>
       <Feedback state={state} />
     </div>
   );

@@ -350,7 +350,12 @@
     "unmatchedNote": "Bu kategorilerde henüz ürününüz yok; kayıtlar yazılır, ürün açılınca kullanılır.",
     "confirmUpload": "Onayla ve yaz",
     "uploaded": "Tarife yazıldı",
-    "validFromLabel": "Yürürlük tarihi"
+    "validFromLabel": "Yürürlük tarihi",
+    "tabCurrent": "Güncel oranlar",
+    "tabHistory": "Değişiklik geçmişi",
+    "footerCounts": "{categories} kategori · {rates} tarife",
+    "sourceNote": "Hakediş kaynaklı oranlar mutabakattan türetilir; API oranını ezer.",
+    "analyzeThis": "Etkisini hesapla"
   },
   "invoices": {
     "uploadTitle": "Fatura PDF'i yükle",
@@ -597,7 +602,18 @@
     "deniedHint": "Konsolide rapor yalnızca holding görüntüleyicilerine açıktır (spec §3A.3).",
     "backHome": "Workspace seçimine dön",
     "open": "Holding görünümünü aç",
-    "breakdown": "Marka kırılımı"
+    "breakdown": "Marka kırılımı",
+    "plTitle": "Marka karşılaştırmalı P&L",
+    "plSubtitle": "{since} — {until} · kesinleşen + tahmini",
+    "costGoods": "Satış maliyeti",
+    "deductions": "Pazaryeri kesintileri",
+    "stockTitle": "Konsolide stok değeri",
+    "fxTitle": "Açık döviz pozisyonu",
+    "fxRisk": "kur riski",
+    "fxHint": "+1 ₺ kur artışının stok maliyeti etkisi",
+    "skuCount": "{count} SKU",
+    "readOnly": "salt okunur",
+    "noTrend": "Aylık trend grafiği için aylık kâr serisi henüz saklanmıyor; dönem seçildikçe tablo güncellenir."
   },
   "cargo": {
     "title": "Kargo faturaları",
@@ -767,6 +783,27 @@
       "n11": "n11",
       "shopify": "Shopify",
       "manual": "Elle giriş"
+    },
+    "wizardTitle": "Yeni mağaza bağla",
+    "wizardSteps": {
+      "1": "Kanal seç",
+      "2": "Mağaza bilgileri",
+      "3": "Doğrulama"
+    },
+    "wizardStart": "Mağaza bağla",
+    "wizardCancel": "İptal",
+    "wizardNext": "Devam",
+    "wizardBack": "Geri",
+    "wizardFinish": "Bağlantıyı doğrula",
+    "wizardDone": "Mağaza bağlandı. Senkron durumunu yukarıdaki kartta izleyebilirsin.",
+    "wizardVerifying": "Doğrulanıyor…",
+    "wizardVerifyHint": "Doğrulama gerçek bir senkron denemesi yapar; hata dönerse bilgiler kayıtlı kalır ve düzeltebilirsin.",
+    "channelHints": {
+      "trendyol": "API anahtarı ile",
+      "hepsiburada": "Kullanıcı adı + mağaza kodu ile",
+      "n11": "Uygulama anahtarı ile",
+      "shopify": "Erişim anahtarı ile",
+      "manual": "Elle giriş — bağlantı gerekmez"
     }
   },
   "alerts": {
@@ -842,7 +879,9 @@
     "noResult": "Sonuç yok — filtreleri gevşetmeyi dene.",
     "netProfit": "Net Kâr",
     "export": "Excel'e Aktar",
-    "exportHint": "Arama kutusu dosyaya taşınmaz; kanal/kategori ve negatif filtresi taşınır."
+    "exportHint": "Arama kutusu dosyaya taşınmaz; kanal/kategori ve negatif filtresi taşınır.",
+    "sortAsc": "Artan sırala",
+    "sortDesc": "Azalan sırala"
   },
   "source": {
     "api": "API · kesin",
@@ -853,5 +892,8 @@
     "fatura": "fatura · ort. maliyet",
     "hesaplanan": "hesaplanan",
     "kargoFatura": "fatura · kesin"
+  },
+  "orders": {
+    "footer": "{count} sipariş"
   }
 }

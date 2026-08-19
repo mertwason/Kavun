@@ -14,7 +14,7 @@ export default async function DraftsPage({ params }: { params: { brand: BrandSlu
 
   return (
     <>
-      <h1 className="text-lg font-medium">{tr.nav.drafts}</h1>
+      <h1 className="text-title font-medium">{tr.nav.drafts}</h1>
 
       <Card className="flex flex-col gap-4 p-5">
         <SectionHeader title={tr.drafts.formTitle} subtitle={tr.drafts.formSubtitle} />

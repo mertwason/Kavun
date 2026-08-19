@@ -2041,6 +2041,10 @@ export interface components {
             open_alert_count: number;
             /** Revenue */
             revenue: string;
+            /** Cost Goods */
+            cost_goods: string;
+            /** Marketplace Deductions */
+            marketplace_deductions: string;
             /** Profit */
             profit: string;
             /** Margin Pct */
@@ -2075,6 +2079,10 @@ export interface components {
             brands: components["schemas"]["ConsolidatedBrandOut"][];
             /** Total Revenue */
             total_revenue: string;
+            /** Total Cost Goods */
+            total_cost_goods: string;
+            /** Total Marketplace Deductions */
+            total_marketplace_deductions: string;
             /** Total Profit */
             total_profit: string;
             /** Total Stock Value */

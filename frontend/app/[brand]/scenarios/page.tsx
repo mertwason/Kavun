@@ -29,7 +29,7 @@ export default async function ScenariosPage({ params }: { params: { brand: Brand
 
   return (
     <>
-      <h1 className="text-lg font-medium">{tr.nav.scenarios}</h1>
+      <h1 className="sr-only">{tr.nav.scenarios}</h1>
       <Card className="flex flex-col gap-4 p-5">
         <SectionHeader title={tr.scenarios.title} subtitle={tr.scenarios.subtitle} />
         {products.length === 0 ? (

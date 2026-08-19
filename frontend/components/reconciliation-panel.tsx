@@ -85,7 +85,7 @@ export function ReconciliationRunner({
 
       {result ? (
         <div className="flex flex-col gap-3 border-t border-hairline pt-3">
-          <div className="flex flex-wrap items-baseline gap-6 text-sm">
+          <div className="flex flex-wrap items-baseline gap-6 text-cell">
             <Stat label={tr.reconciliation.records} value={String(result.records)} />
             <Stat
               label={tr.reconciliation.matchRate}
@@ -187,12 +187,12 @@ export function DiffRow({ brand, diff }: { brand: BrandSlug; diff: Reconciliatio
                 });
               }}
             >
-              <label className="flex flex-1 flex-col gap-1 text-xs">
-                <span className="text-ink-faint">{tr.reconciliation.note} *</span>
+              <label className="flex flex-1 flex-col gap-1">
+                <span className="col-head">{tr.reconciliation.note} *</span>
                 <input name="note" type="text" required minLength={3} className={`${FIELD} w-full`} />
               </label>
-              <label className="flex flex-col gap-1 text-xs">
-                <span className="text-ink-faint">{tr.reconciliation.status}</span>
+              <label className="flex flex-col gap-1">
+                <span className="col-head">{tr.reconciliation.status}</span>
                 <select name="status" defaultValue="explained" className={`${FIELD} w-36`}>
                   <option value="explained">{STATUS_LABELS.explained}</option>
                   <option value="resolved">{STATUS_LABELS.resolved}</option>
@@ -201,14 +201,14 @@ export function DiffRow({ brand, diff }: { brand: BrandSlug; diff: Reconciliatio
               <button
                 type="submit"
                 disabled={pending}
-                className="rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-40"
+                className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
               >
                 {tr.reconciliation.explain}
               </button>
-              <span className="text-xs text-ink-faint">{tr.reconciliation.explainHint}</span>
+              <span className="text-helper text-ink-muted">{tr.reconciliation.explainHint}</span>
             </form>
             {state.status === "error" ? (
-              <p className="mt-2 text-sm text-negative">{state.message}</p>
+              <p className="mt-2 text-cell text-negative">{state.message}</p>
             ) : null}
           </td>
         </tr>

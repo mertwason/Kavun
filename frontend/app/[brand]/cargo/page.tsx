@@ -26,8 +26,8 @@ export default async function CargoPage({ params }: { params: { brand: BrandSlug
 
   return (
     <>
-      <h1 className="text-lg font-medium">{tr.cargo.title}</h1>
-      <p className="-mt-4 text-xs text-ink-faint">{tr.cargo.subtitle}</p>
+      <h1 className="text-title font-medium">{tr.cargo.title}</h1>
+      <p className="-mt-4 text-helper text-ink-muted">{tr.cargo.subtitle}</p>
 
       <div className="grid gap-4 sm:grid-cols-4">
         <KpiCard
@@ -76,7 +76,7 @@ export default async function CargoPage({ params }: { params: { brand: BrandSlug
           >
             {invoices.data.map((invoice) => (
               <Tr key={invoice.id}>
-                <Td className="font-mono text-xs text-ink-muted">{invoice.invoice_no}</Td>
+                <Td className="font-mono text-helper text-ink-muted">{invoice.invoice_no}</Td>
                 <Td>{invoice.period}</Td>
                 <Td align="right">{formatMoney(invoice.total)}</Td>
                 <Td className="text-ink-muted">{formatDateTime(invoice.created_at)}</Td>

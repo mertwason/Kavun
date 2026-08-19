@@ -115,7 +115,7 @@ export function InvoiceUpload({
             dragging ? "border-ink-faint bg-canvas" : "border-hairline bg-surface hover:bg-canvas"
           }`}
         >
-          <Upload className="h-5 w-5 text-ink-faint" aria-hidden />
+          <Upload className="h-5 w-5 text-ink-muted" aria-hidden />
           <span className="text-cell font-medium">{tr.invoices.dropTitle}</span>
           <span className="text-helper text-ink-body">{tr.invoices.dropHint}</span>
           <span className="mt-1 text-micro text-ink-muted">{tr.invoices.dropSupport}</span>

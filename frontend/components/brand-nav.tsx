@@ -17,7 +17,7 @@ export function BrandNav({ items, accent }: { items: NavItem[]; accent: string }
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-wrap items-center gap-5 text-sm">
+    <nav className="flex flex-wrap items-center gap-5 text-cell">
       {items.map((item) => {
         const active =
           pathname === item.href ||

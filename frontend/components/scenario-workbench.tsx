@@ -73,13 +73,9 @@ export function ScenarioWorkbench({
         }}
       >
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <label className="flex flex-col gap-1 text-xs sm:col-span-2">
-            <span className="text-ink-faint">{tr.scenarios.product} *</span>
-            <select
-              name="product_id"
-              required
-              className="rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm"
-            >
+          <label className="flex flex-col gap-1 sm:col-span-2">
+            <span className="col-head">{tr.scenarios.product}</span>
+            <select name="product_id" required className="control">
               {products.map((product) => (
                 <option key={product.product_id} value={product.product_id}>
                   {product.sku} — {product.name}
@@ -110,13 +106,9 @@ export function ScenarioWorkbench({
             type="number"
             step="0.1"
           />
-          <label className="flex flex-col gap-1 text-xs">
-            <span className="text-ink-faint">{tr.scenarios.shipping}</span>
-            <select
-              name="kargo_kim_oder"
-              defaultValue="satici"
-              className="rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm"
-            >
+          <label className="flex flex-col gap-1">
+            <span className="col-head">{tr.scenarios.shipping}</span>
+            <select name="kargo_kim_oder" defaultValue="satici" className="control">
               <option value="satici">{tr.scenarios.payer.satici}</option>
               <option value="alici">{tr.scenarios.payer.alici}</option>
               <option value="platform">{tr.scenarios.payer.platform}</option>
@@ -136,7 +128,7 @@ export function ScenarioWorkbench({
           <button
             type="submit"
             disabled={pending}
-            className="rounded-card border border-hairline px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-canvas"
+            className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
           >
             {tr.scenarios.evaluate}
           </button>
@@ -147,7 +139,7 @@ export function ScenarioWorkbench({
               const form = event.currentTarget.form;
               if (form) run(form, saveAction);
             }}
-            className="rounded-card border border-ink bg-ink px-3 py-1.5 text-sm text-surface disabled:opacity-40"
+            className="h-[34px] rounded-control border border-ink bg-ink px-3 text-cell font-medium text-white hover:bg-ink-secondary disabled:opacity-40"
           >
             {tr.scenarios.save}
           </button>
@@ -166,40 +158,38 @@ export function ScenarioWorkbench({
                 const form = event.currentTarget.form;
                 if (form) run(form, targetMarginAction);
               }}
-              className="rounded-card border border-hairline px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-canvas"
+              className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
             >
               {tr.scenarios.solve}
             </button>
           </span>
         </div>
         {state.status === "error" ? (
-          <p className="text-sm text-negative">{state.message}</p>
+          <p className="text-cell text-negative">{state.message}</p>
         ) : null}
         {state.status === "saved" ? (
-          <p className="text-sm text-positive">{tr.scenarios.saved}</p>
+          <p className="text-cell text-positive-text">{tr.scenarios.saved}</p>
         ) : null}
       </form>
 
       {target ? (
         <div className="card flex flex-col gap-2 p-4">
-          <span className="text-xs uppercase tracking-wide text-ink-faint">
-            {tr.scenarios.solverTitle}
-          </span>
+          <span className="col-head">{tr.scenarios.solverTitle}</span>
           {target.reachable && target.price ? (
             <>
-              <p className="text-sm">
+              <p className="text-cell">
                 {tr.scenarios.solverAnswer
                   .replace("{marj}", formatPercent(target.target_margin_pct))
                   .replace("{fiyat}", formatMoney(target.price))}
               </p>
               {target.result ? (
-                <p className="text-xs text-ink-faint">
+                <p className="text-helper text-ink-muted">
                   {tr.scenarios.solverCheck} {formatPercent(target.result.marj_pct)}
                 </p>
               ) : null}
             </>
           ) : (
-            <p className="text-sm text-negative">{target.message}</p>
+            <p className="text-cell text-negative">{target.message}</p>
           )}
         </div>
       ) : null}
@@ -209,13 +199,13 @@ export function ScenarioWorkbench({
       {saved.length > 0 ? (
         <div className="flex flex-col gap-2 border-t border-hairline pt-4">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-medium">{tr.scenarios.savedTitle}</span>
-            <span className="text-xs text-ink-faint">{tr.scenarios.compareHint}</span>
+            <span className="text-body font-medium">{tr.scenarios.savedTitle}</span>
+            <span className="text-helper text-ink-muted">{tr.scenarios.compareHint}</span>
             <button
               type="button"
               onClick={compare}
               disabled={pending || selected.length < 2}
-              className="ml-auto rounded-card border border-hairline px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-canvas"
+              className="ml-auto h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
             >
               {tr.scenarios.compare} ({selected.length}/{MAX_COMPARE})
             </button>
@@ -224,7 +214,7 @@ export function ScenarioWorkbench({
             {saved.map((scenario) => (
               <li
                 key={scenario.scenario_id ?? scenario.name}
-                className="flex items-center gap-3 border-b border-hairline py-2 text-sm"
+                className="flex items-center gap-3 border-b border-hairline py-2.5 text-cell"
               >
                 <input
                   type="checkbox"
@@ -233,12 +223,12 @@ export function ScenarioWorkbench({
                   aria-label={scenario.name}
                 />
                 <span className="font-medium">{scenario.name}</span>
-                <span className="font-mono text-xs text-ink-faint">{scenario.sku}</span>
-                <span className="ml-auto tabular">{formatMoney(scenario.satis_fiyati)}</span>
-                <span className={`w-24 text-right tabular ${signClass(scenario.birim_kar)}`}>
+                <span className="font-mono text-micro text-ink-muted">{scenario.sku}</span>
+                <span className="ml-auto">{formatMoney(scenario.satis_fiyati)}</span>
+                <span className={`w-24 text-right ${signClass(scenario.birim_kar)}`}>
                   {formatMoney(scenario.birim_kar)}
                 </span>
-                <span className={`w-16 text-right tabular ${signClass(scenario.marj_pct)}`}>
+                <span className={`w-16 text-right font-semibold ${signClass(scenario.marj_pct)}`}>
                   {formatPercent(scenario.marj_pct)}
                 </span>
               </li>
@@ -274,25 +264,30 @@ function ResultTable({ results }: { results: ScenarioResult[] }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
+      <table className="w-full border-collapse text-cell">
         <thead>
-          <tr className="border-b border-hairline text-xs font-medium text-ink-faint">
-            <th className="px-3 py-2 text-left">{tr.scenarios.metric}</th>
+          <tr>
+            <th className="border-b border-hairline bg-canvas px-3 py-2.5 text-left">
+              <span className="col-head">{tr.scenarios.metric}</span>
+            </th>
             {results.map((result, index) => (
-              <th key={`${result.name}-${index}`} className="px-3 py-2 text-right">
-                {result.name}
+              <th
+                key={`${result.name}-${index}`}
+                className="border-b border-hairline bg-canvas px-3 py-2.5 text-right"
+              >
+                <span className="col-head">{result.name}</span>
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.label} className="border-b border-hairline">
-              <td className="px-3 py-1.5 text-ink-faint">{row.label}</td>
+            <tr key={row.label} className="border-b border-hairline hover:bg-canvas">
+              <td className="px-3 py-2 text-ink-body">{row.label}</td>
               {results.map((result, index) => (
                 <td
                   key={`${result.name}-${index}`}
-                  className={`px-3 py-1.5 text-right tabular ${
+                  className={`px-3 py-2 text-right ${
                     row.tone ? signClass(row.label === tr.table.margin ? result.marj_pct : result.birim_kar) : ""
                   }`}
                 >
@@ -323,18 +318,15 @@ function Field({
   defaultValue?: string;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-xs">
-      <span className="text-ink-faint">
-        {label}
-        {required ? " *" : ""}
-      </span>
+    <label className="flex flex-col gap-1">
+      <span className="col-head">{label}</span>
       <input
         name={name}
         type={type}
         step={step}
         required={required}
         defaultValue={defaultValue}
-        className="w-full rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm tabular"
+        className="control w-full"
       />
     </label>
   );

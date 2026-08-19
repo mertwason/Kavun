@@ -70,21 +70,21 @@ export default async function OrderDetailPage({
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <span className="text-xs uppercase tracking-wide text-ink-faint">
+          <span className="col-head">
             {tr.detail.orderTitle}
           </span>
-          <h1 className="font-mono text-lg font-medium">{order.external_order_id}</h1>
-          <p className="text-xs text-ink-faint">
+          <h1 className="font-mono text-title font-medium">{order.external_order_id}</h1>
+          <p className="text-helper text-ink-muted">
             {formatDateTime(order.order_date)} · {order.store_name} ·{" "}
             {STATUS_LABELS[order.status] ?? order.status}
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <span className="text-xs text-ink-faint">{tr.detail.netProfit}</span>
-          <span className={`tabular text-2xl font-medium ${signClass(order.profit)}`}>
+          <span className="text-helper text-ink-muted">{tr.detail.netProfit}</span>
+          <span className={`text-kpi ${signClass(order.profit)}`}>
             {formatMoney(order.profit)}
           </span>
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-3 text-helper">
             <span className={signClass(order.margin_pct)}>{formatPercent(order.margin_pct)}</span>
             <EstimateBadge isFinal={order.is_final} />
           </div>
@@ -176,10 +176,10 @@ export default async function OrderDetailPage({
               <Card key={line.order_line_id} className="grid gap-6 p-5 lg:grid-cols-[1fr_1.4fr]">
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-0.5">
-                    <span className="font-mono text-xs text-ink-faint">{line.sku ?? "—"}</span>
-                    <span className="text-sm font-medium">{line.name ?? tr.table.line}</span>
+                    <span className="font-mono text-helper text-ink-muted">{line.sku ?? "—"}</span>
+                    <span className="text-cell font-medium">{line.name ?? tr.table.line}</span>
                   </div>
-                  <dl className="flex flex-col gap-1.5 text-xs">
+                  <dl className="flex flex-col gap-1.5 text-helper">
                     <Row label={tr.table.qty} value={formatCount(line.qty)} />
                     <Row label={tr.table.total} value={formatMoney(line.line_gross)} />
                     <Row label={tr.table.vat} value={formatPercent(line.vat_rate)} />
@@ -220,7 +220,7 @@ function Row({
 }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-hairline pb-1.5">
-      <dt className="text-ink-faint">{label}</dt>
+      <dt className="col-head">{label}</dt>
       <dd className={`tabular ${className}`}>{value}</dd>
     </div>
   );

@@ -27,6 +27,8 @@ import tr from "@/locales/tr.json";
 export type FormState = {
   status: "idle" | "saved" | "error";
   message?: string;
+  /** Yeni oluşturulan mağazanın id'si — sihirbaz bir sonraki adımda credential yazıyor. */
+  storeId?: string;
 };
 
 export type ReestimateState = {
@@ -66,7 +68,7 @@ export async function addStoreAction(_previous: FormState, formData: FormData): 
   if (!result.ok) return { status: "error", message: result.detail ?? tr.error.unreachable };
 
   revalidatePath(`/${brand}/settings`);
-  return { status: "saved", message: tr.settings.saved };
+  return { status: "saved", message: tr.settings.saved, storeId: result.data.id };
 }
 
 export async function updateStoreAction(

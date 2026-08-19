@@ -2,7 +2,7 @@
 
 **TOPLAM: %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 **FAZ 2 (ek görevler): %69** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░
-Son güncelleme: 2026-08-19 17:00 · Aktif görev: KVN-EK-08 (Dashboard · SKU · sipariş detayı bitti)
+Son güncelleme: 2026-08-19 21:20 · Aktif görev: KVN-EK-08 (13 handoff ekranının tamamı geçti; kalan: onboarding/boş durum kalıpları)
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -88,6 +88,71 @@ Faz 2 ağırlığı: 51 · Biten: 35
 > birlikte kullanımı ayrıca doğrulanmalı.
 
 ## Oturum özetleri
+
+### 2026-08-19 (akşam) — KVN-EK-08 · handoff ekranlarının tamamı geçti
+
+**Ne bitti:** Handoff'taki 13 ekranın hepsi yeni tasarım sistemine geçti. Bu oturumda
+Fatura Yükleme, Uyarılar, Mutabakat, Ayarlar, Stok & Maliyet, Ürün Çalışma Alanı,
+Senaryolar, Komisyon Tarifeleri ve Holding tamamlandı; kalan ekranlar (siparişler,
+kargo, ithalat, D2B, taslaklar) ortak `ui.tsx` kalıpları üzerinden token setine taşındı.
+
+- **Fatura Yükleme:** bırakma alanı (boş durum), künye/satır split düzeni, satır
+  kartlarının üç durumu (otomatik eşleşti · öneri · eşleşmedi) ve **üç durumlu** yapışkan
+  doğrulama barı: toplam tutmuyor (kırmızı) → eşleşmemiş satır var (amber) → hazır (yeşil).
+- **Uyarılar:** tablo yerine seviyeye göre gruplanmış liste; sayılı filtre çipleri;
+  "İncele" bağlantısı uyarının çözüleceği ekrana gider (türü tanınmayan uyarıda basılmaz).
+- **Mutabakat:** dönem exec şeridi (eşleşme oranı · hakediş hacmi · açık fark · kayıt),
+  Açık/Çözülen/Tümü sekmeleri, fark satırında kalem türü + sipariş künyesi.
+- **Holding:** transpoze P&L (satır = kalem, kolon = marka + toplam), konsolide stok ve
+  açık döviz kartları.
+- **Yoğun tablolar TanStack Table'a taşındı:** ortak `components/data-table.tsx`
+  (yapışkan başlık, tıklanınca sıralayan kolon, `tabular-nums`, sağa hizalı rakam,
+  negatif satırda kırmızı zemin) + SKU marj listesi ve sipariş listesi bu desende.
+
+**Backend değişiklikleri (ekranların gerçek veriye dayanması için):**
+- `app/core/textfmt.py`: uyarı metinlerindeki sayılar Türkçe biçimleniyor. Ham `Decimal`
+  gömmek yanıltıcıydı — `-14.0000` Türkçe okuyanda "eksi on dört bin" oluyordu.
+- Uyarı özeti tür başına **açık** sayıyı döner (filtre şeridi "Marj · 2" yazabilsin).
+- Mutabakat: fark satırı kalem türü + sipariş referansı taşır; dönem özetine hakediş
+  hacmi, eşleşen kalem sayısı ve eşleşme oranı eklendi.
+- Holding: marka satırına satış maliyeti ve pazaryeri kesintileri eklendi (P&L satırları).
+- Demo seed: incelemedeki faturaya öneri gelen + hiç eşleşmeyen satır, toplamı tutmayan
+  bir fatura, iki komisyon değişikliği kaydı — üç ekranın "dolu" hâli gezilebilir oldu.
+
+**Kararlar / notlar:**
+- **Tremor Blocks kullanılmadı.** Görevin 2. maddesi Tremor desenlerini istiyordu; araya
+  giren handoff (`docs/design_handoff_kavun/`) kendi KPI kartı, sparkline ve data-bar
+  desenlerini piksel değerleriyle veriyor. Tremor'u alıp token setine boyamak, handoff'un
+  verdiği ölçüleri ikinci bir kütüphanenin varsayımlarıyla uzlaştırmak demekti; desenler
+  doğrudan token setiyle yazıldı. TanStack Table (madde 4) ise alındı: sıralama gerçek bir
+  yetenek katıyor.
+- Handoff'un istediği ama **veri karşılığı olmayan** üç blok bilinçli olarak yazılmadı ve
+  ilgili dosyanın başında gerekçesiyle not düşüldü: (a) fatura ekranında PDF önizlemesi —
+  Kavun PDF'i saklamıyor, o alana faturanın gerçek künyesi kondu; (b) tarife geçmişi
+  kartlarında "etkilenen SKU / negatif marja düşen" sayıları — `commission_changes`'te
+  saklanmıyor, kart canlı etki panelini o kategoriyle açıyor; (c) Holding'de "Aylık Net
+  Kâr Trendi" — aylık kâr serisi saklanmıyor. Üçü de uydurulmadı.
+- Marka guard'ı **dış birleşimi sessizce iç birleşime çeviriyor**: `outerjoin` ile eklenen
+  marka-kapsamlı tabloya `brand_id = …` koşulu düşünce NULL satırlar eleniyor. Mutabakat
+  fark listesi bu yüzden bağlantısı kopmuş farkları düşürüyordu; bağlam ayrı sorgularla
+  toplanacak şekilde yazıldı ve testi eklendi. Aynı kalıp başka yerde kullanılırsa dikkat.
+- `formatCount` ve backend mesajları artık gerçek eksi işareti (U+2212) kullanıyor.
+
+**Süreç dersi (preview kırıldı, düzeltildi):** `docker compose exec frontend npm install …`
+konteynerin içinde bağımlılık kurmak node_modules ağacını bozdu (iki React kopyası →
+"Invalid hook call", tüm sayfalar hata verdi). Doğru yol: **host'ta** `npm install`, sonra
+`docker compose build frontend` + node_modules/.next volume'lerini silip yeniden ayağa
+kaldırmak. Preview şu an sağlıklı; 51 Playwright testi ve backend paketi yeşil.
+
+**Onboarding ve kural denetimi (aynı oturum):**
+- Ayarlar'a handoff'un **üç adımlı mağaza bağlama sihirbazı** eklendi (kanal seç →
+  mağaza + bağlantı bilgileri → doğrulama). Doğrulama adımı gerçek bir senkron denemesi
+  yapar; sahte "bağlandı" rozeti göstermez. Bağlantı bilgileri boş bırakılabilir, mağaza
+  yine tanımlanır.
+- Brief'in **"Yapılmayacaklar" listesi lint'e bağlandı**: `frontend/tools/check-design-rules.mjs`
+  koyu tema sınıfı, gradyan, cam/blur efekti, emoji durum göstergesi ve handoff'ta tanımlı
+  olmayan gölge eklendiğinde CI'ı kırar. `npm run lint` içinde koşuyor; bilinçli istisna
+  `design-allow: <gerekçe>` işaretiyle (para/float kuralındaki kalıbın aynısı).
 
 ### 2026-08-19 — KVN-EK-06 bitti (Uyarılar ekranı + acknowledge)
 

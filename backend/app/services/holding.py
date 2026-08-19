@@ -43,6 +43,12 @@ class BrandLine:
     open_alert_count: int
 
     revenue: Decimal
+    cost_goods: Decimal
+    """Satılan malın maliyeti (COGS) — handoff'un "satış maliyeti" satırı."""
+
+    marketplace_deductions: Decimal
+    """Pazaryeri kesintileri: komisyon + kargo + hizmet bedeli + ceza (pozitif tutar)."""
+
     profit: Decimal
     margin_pct: Decimal
     stock_value: Decimal
@@ -76,6 +82,16 @@ class Consolidated:
         return sum((line.profit for line in self.brands), ZERO)
 
     @property
+    def total_cost_goods(self) -> Decimal:
+        """Markaların satış maliyeti toplamı."""
+        return sum((line.cost_goods for line in self.brands), ZERO)
+
+    @property
+    def total_marketplace_deductions(self) -> Decimal:
+        """Markaların pazaryeri kesintisi toplamı."""
+        return sum((line.marketplace_deductions for line in self.brands), ZERO)
+
+    @property
     def total_stock_value(self) -> Decimal:
         """Toplam stok değeri."""
         return sum((line.stock_value for line in self.brands), ZERO)
@@ -100,13 +116,38 @@ def _window(since: date | None, until: date | None) -> tuple[datetime, datetime]
     )
 
 
+@dataclass(frozen=True)
+class ProfitTotals:
+    """Dönem P&L satırları — hepsi motorun yazdığı `line_profit` kayıtlarından."""
+
+    revenue: Decimal
+    cost_goods: Decimal
+    marketplace_deductions: Decimal
+    profit: Decimal
+
+
 def _profit_totals(
     session: Session, brand_id: uuid.UUID, start: datetime, end: datetime
-) -> tuple[Decimal, Decimal]:
-    """Dönem cirosu ve net kârı — motorun yazdığı `line_profit` satırlarından."""
+) -> ProfitTotals:
+    """Dönem cirosu, mal maliyeti, pazaryeri kesintileri ve net kârı.
+
+    Kesintiler **pozitif** toplanır: ekranda eksi işaretini gösterim katmanı koyar,
+    böylece "kesinti toplamı" tek bir işaret kuralıyla okunur.
+    """
     row = session.execute(
         select(
             func.coalesce(func.sum(LineProfit.revenue_gross), 0),
+            func.coalesce(func.sum(LineProfit.cost_cogs), 0),
+            func.coalesce(
+                func.sum(
+                    LineProfit.cost_commission
+                    + LineProfit.cost_cargo
+                    + LineProfit.cost_service_fee
+                    + LineProfit.cost_penalty
+                    + LineProfit.cost_ad_alloc
+                ),
+                0,
+            ),
             func.coalesce(func.sum(LineProfit.profit), 0),
         )
         .join(OrderLine, OrderLine.id == LineProfit.order_line_id)
@@ -117,7 +158,12 @@ def _profit_totals(
             Order.order_date < end,
         )
     ).one()
-    return Decimal(row[0]), Decimal(row[1])
+    return ProfitTotals(
+        revenue=Decimal(row[0]),
+        cost_goods=Decimal(row[1]),
+        marketplace_deductions=Decimal(row[2]),
+        profit=Decimal(row[3]),
+    )
 
 
 def _stock_value(session: Session, brand_id: uuid.UUID) -> Decimal:
@@ -187,7 +233,8 @@ def consolidated(
 
     lines: list[BrandLine] = []
     for brand in brands:
-        revenue, profit = _profit_totals(session, brand.id, start, end)
+        totals = _profit_totals(session, brand.id, start, end)
+        revenue, profit = totals.revenue, totals.profit
         realized_fx, open_fx = _fx(session, brand.id)
         lines.append(
             BrandLine(
@@ -214,6 +261,8 @@ def consolidated(
                 )
                 or 0,
                 revenue=revenue,
+                cost_goods=totals.cost_goods,
+                marketplace_deductions=totals.marketplace_deductions,
                 profit=profit,
                 margin_pct=(
                     (profit / revenue * Decimal("100")).quantize(Decimal("0.01"))

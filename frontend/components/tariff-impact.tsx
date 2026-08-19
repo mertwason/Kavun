@@ -17,9 +17,12 @@ import tr from "@/locales/tr.json";
 export function TariffImpact({
   brand,
   categories,
+  initialCategory,
 }: {
   brand: BrandSlug;
   categories: string[];
+  /** Değişiklik geçmişinden gelen kategori — kart "etkisini hesapla" dediğinde seçili gelir. */
+  initialCategory?: string;
 }) {
   const [state, setState] = useState<ImpactState>({ status: "idle" });
   const [pending, startTransition] = useTransition();
@@ -44,12 +47,9 @@ export function TariffImpact({
           });
         }}
       >
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.table.category}</span>
-          <select
-            name="category"
-            className="rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm"
-          >
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.table.category}</span>
+          <select name="category" defaultValue={initialCategory ?? ""} className="control">
             <option value="">{tr.tariffs.allCategories}</option>
             {categories.map((category) => (
               <option key={category} value={category}>
@@ -58,86 +58,82 @@ export function TariffImpact({
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.tariffs.rateDelta} *</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.tariffs.rateDelta}</span>
           <input
             name="rate_delta"
             type="number"
             step="0.1"
             defaultValue="1.5"
             required
-            className="w-28 rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm tabular"
+            className="control w-28"
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.tariffs.targetMargin}</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.tariffs.targetMargin}</span>
           <input
             name="target_margin_pct"
             type="number"
             step="0.1"
             placeholder={tr.tariffs.targetHint}
-            className="w-32 rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm tabular"
+            className="control w-32"
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.drafts.cargo}</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.drafts.cargo}</span>
           <input
             name="kargo_tahmini"
             type="number"
             step="0.01"
-            className="w-28 rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm tabular"
+            className="control w-28"
           />
         </label>
         <button
           type="submit"
           disabled={pending}
-          className="rounded-card border border-hairline px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-canvas"
+          className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
         >
           {pending ? tr.pricelist.checking : tr.tariffs.analyze}
         </button>
       </form>
 
       {state.status === "error" ? (
-        <p className="text-sm text-negative">{state.message}</p>
+        <p className="text-cell text-negative">{state.message}</p>
       ) : null}
 
       {impact ? (
         <>
           <div className="flex flex-wrap items-baseline gap-6 border-t border-hairline pt-3">
-            <span className="flex flex-col">
-              <span className="text-xs text-ink-faint">{tr.tariffs.monthlyImpact}</span>
-              <span
-                className={`tabular text-2xl font-medium ${signClass(impact.monthly_profit_impact)}`}
-              >
+            <span className="flex flex-col gap-0.5">
+              <span className="col-head">{tr.tariffs.monthlyImpact}</span>
+              <span className={`text-kpi ${signClass(impact.monthly_profit_impact)}`}>
                 {formatMoney(impact.monthly_profit_impact)}
               </span>
             </span>
-            <span className="flex flex-col">
-              <span className="text-xs text-ink-faint">{tr.tariffs.affected}</span>
-              <span className="tabular text-lg">{affected.length}</span>
+            <span className="flex flex-col gap-0.5">
+              <span className="col-head">{tr.tariffs.affected}</span>
+              <span className="text-kpiSm">{affected.length}</span>
             </span>
-            <span className="flex flex-col">
-              <span className="text-xs text-ink-faint">{tr.tariffs.turningNegative}</span>
-              <span
-                className={`tabular text-lg ${negative.length > 0 ? "text-negative" : "text-ink"}`}
-              >
+            <span className="flex flex-col gap-0.5">
+              <span className="col-head">{tr.tariffs.turningNegative}</span>
+              <span className={`text-kpiSm ${negative.length > 0 ? "text-negative" : ""}`}>
                 {negative.length}
               </span>
             </span>
           </div>
 
           <div className="max-h-80 overflow-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead className="sticky top-0 bg-surface">
-                <tr className="border-b border-hairline text-xs font-medium text-ink-faint">
-                  <th className="px-3 py-2 text-left">{tr.table.sku}</th>
-                  <th className="px-3 py-2 text-left">{tr.table.product}</th>
-                  <th className="px-3 py-2 text-right">{tr.tariffs.oldRate}</th>
-                  <th className="px-3 py-2 text-right">{tr.tariffs.newRate}</th>
-                  <th className="px-3 py-2 text-right">{tr.tariffs.currentMargin}</th>
-                  <th className="px-3 py-2 text-right">{tr.tariffs.projectedMargin}</th>
-                  <th className="px-3 py-2 text-right">{tr.tariffs.requiredPrice}</th>
-                  <th className="px-3 py-2 text-right">{tr.tariffs.impact}</th>
+            <table className="w-full border-collapse text-cell">
+              <thead>
+                <tr>
+                  <Head align="left">{tr.table.sku}</Head>
+                  <Head align="left">{tr.table.product}</Head>
+                  <Head>{tr.tariffs.oldRate}</Head>
+                  <Head>{tr.tariffs.newRate}</Head>
+                  <Head>{tr.tariffs.currentMargin}</Head>
+                  <Head>{tr.tariffs.projectedMargin}</Head>
+                  <Head>{tr.tariffs.requiredPrice}</Head>
+                  <Head>{tr.tariffs.impact}</Head>
                 </tr>
               </thead>
               <tbody>
@@ -149,32 +145,32 @@ export function TariffImpact({
                     <tr
                       key={row.product_id}
                       className={`border-b border-hairline ${
-                        turnsNegative ? "bg-negative/[0.04]" : ""
+                        turnsNegative ? "bg-negative-row" : "hover:bg-canvas"
                       }`}
                     >
-                      <td className="px-3 py-1.5 font-mono text-xs text-ink-muted">{row.sku}</td>
-                      <td className="px-3 py-1.5">{row.name}</td>
-                      <td className="px-3 py-1.5 text-right tabular">
+                      <td className="px-3 py-2 font-mono text-micro text-ink-muted">{row.sku}</td>
+                      <td className="px-3 py-2">{row.name}</td>
+                      <td className="px-3 py-2 text-right">
                         {formatPercent(toNumber(row.old_rate) * 100)}
                       </td>
-                      <td className="px-3 py-1.5 text-right tabular">
+                      <td className="px-3 py-2 text-right">
                         {formatPercent(toNumber(row.new_rate) * 100)}
                       </td>
                       <td
-                        className={`px-3 py-1.5 text-right tabular ${signClass(row.current_margin_pct)}`}
+                        className={`px-3 py-2 text-right ${signClass(row.current_margin_pct)}`}
                       >
                         {formatPercent(row.current_margin_pct)}
                       </td>
                       <td
-                        className={`px-3 py-1.5 text-right tabular ${signClass(row.projected_margin_pct)}`}
+                        className={`px-3 py-2 text-right ${signClass(row.projected_margin_pct)}`}
                       >
                         {formatPercent(row.projected_margin_pct)}
                       </td>
-                      <td className="px-3 py-1.5 text-right tabular">
+                      <td className="px-3 py-2 text-right">
                         {row.required_price === null ? "—" : formatMoney(row.required_price)}
                       </td>
                       <td
-                        className={`px-3 py-1.5 text-right tabular ${signClass(row.profit_impact)}`}
+                        className={`px-3 py-2 text-right ${signClass(row.profit_impact)}`}
                       >
                         {formatMoney(row.profit_impact)}
                       </td>
@@ -187,5 +183,24 @@ export function TariffImpact({
         </>
       ) : null}
     </div>
+  );
+}
+
+function Head({
+  children,
+  align = "right",
+}: {
+  children: React.ReactNode;
+  /** Hizalama prop'tur, sınıfla ezilmez (bkz. `sku-table.tsx`). */
+  align?: "left" | "right";
+}) {
+  return (
+    <th
+      className={`sticky top-0 z-[5] border-b border-hairline bg-canvas px-3 py-2.5 ${
+        align === "left" ? "text-left" : "text-right"
+      }`}
+    >
+      <span className="col-head">{children}</span>
+    </th>
   );
 }

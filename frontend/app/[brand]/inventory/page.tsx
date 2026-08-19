@@ -182,7 +182,7 @@ export default async function InventoryPage({
           >
             {damage.data.map((row) => (
               <Tr key={row.product_id}>
-                <Td className="font-mono text-xs text-ink-muted">{row.sku}</Td>
+                <Td className="font-mono text-helper text-ink-muted">{row.sku}</Td>
                 <Td>{row.name}</Td>
                 <Td align="right">{formatCount(toNumber(row.qty))}</Td>
                 <Td align="right" className="text-negative">
@@ -247,7 +247,7 @@ export default async function InventoryPage({
                 return (
                   <Tr key={entry.id}>
                     <Td className="text-ink-muted">{formatDateTime(entry.moved_at)}</Td>
-                    <Td className="font-mono text-xs text-ink-muted">{product?.sku ?? "—"}</Td>
+                    <Td className="font-mono text-helper text-ink-muted">{product?.sku ?? "—"}</Td>
                     <Td>{MOVEMENT_LABELS[entry.movement] ?? entry.movement}</Td>
                     <Td align="right" className={delta < 0 ? "text-negative" : ""}>
                       {delta > 0 ? "+" : ""}
@@ -262,7 +262,7 @@ export default async function InventoryPage({
                       {formatCount(toNumber(entry.on_hand_after))} ·{" "}
                       {formatMoney(entry.avg_cost_after)}
                     </Td>
-                    <Td className="text-xs text-ink-faint">
+                    <Td className="text-helper text-ink-muted">
                       {entry.reason ?? entry.ref_type ?? "—"}
                     </Td>
                   </Tr>

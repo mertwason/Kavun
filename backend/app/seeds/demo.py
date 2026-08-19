@@ -377,6 +377,30 @@ def _seed_commission_rates(
         )
         summary.bump("commission_rates")
 
+    # Değişiklik geçmişi: günlük snapshot diff'i gerçek kurulumda yazar, demo'da iki örnek
+    # konur — biri kârı düşüren artış, biri kârı artıran indirim. Ekranın "geçmiş" sekmesi
+    # boş kalmasın (CLAUDE.md §6: her ekran dolu durumda gezilebilir olmalı).
+    ordered = sorted(categories)
+    for offset, (category, old_rate, new_rate, impact) in enumerate(
+        (
+            (ordered[0], "0.2100", "0.2300", "-4820.00"),
+            (ordered[-1], "0.1900", "0.1750", "960.00"),
+        )
+    ):
+        session.add(
+            CommissionChange(
+                store_id=store.id,
+                category_code=category,
+                old_rate=Decimal(old_rate),
+                new_rate=Decimal(new_rate),
+                detected_at=datetime.combine(
+                    today - timedelta(days=7 + offset * 12), datetime.min.time(), tzinfo=UTC
+                ),
+                monthly_profit_impact=Decimal(impact),
+            )
+        )
+        summary.bump("commission_changes")
+
 
 def _seed_orders(
     session: Session,

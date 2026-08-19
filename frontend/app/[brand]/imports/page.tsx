@@ -24,7 +24,7 @@ export default async function ImportsPage({ params }: { params: { brand: BrandSl
   if (!files.ok && files.status === 404) {
     return (
       <>
-        <h1 className="text-lg font-medium">{tr.imports.title}</h1>
+        <h1 className="text-title font-medium">{tr.imports.title}</h1>
         <Card>
           <EmptyState title={tr.imports.disabled} hint={tr.imports.disabledHint} />
         </Card>
@@ -34,8 +34,8 @@ export default async function ImportsPage({ params }: { params: { brand: BrandSl
 
   return (
     <>
-      <h1 className="text-lg font-medium">{tr.imports.title}</h1>
-      <p className="-mt-4 text-xs text-ink-faint">{tr.imports.subtitle}</p>
+      <h1 className="text-title font-medium">{tr.imports.title}</h1>
+      <p className="-mt-4 text-helper text-ink-muted">{tr.imports.subtitle}</p>
 
       <Card className="flex flex-col">
         <div className="p-5 pb-2">
@@ -102,7 +102,7 @@ export default async function ImportsPage({ params }: { params: { brand: BrandSl
                     {file.file_no}
                   </Link>
                 </Td>
-                <Td className="font-mono text-xs text-ink-muted">{file.beyanname_no ?? "—"}</Td>
+                <Td className="font-mono text-helper text-ink-muted">{file.beyanname_no ?? "—"}</Td>
                 <Td className="text-ink-muted">
                   {file.beyanname_date ? formatDate(file.beyanname_date) : "—"}
                 </Td>
@@ -118,7 +118,7 @@ export default async function ImportsPage({ params }: { params: { brand: BrandSl
             ))}
           </DataTable>
         )}
-        <p className="px-5 pb-4 text-xs text-ink-faint">{tr.imports.importVatNote}</p>
+        <p className="px-5 pb-4 text-helper text-ink-muted">{tr.imports.importVatNote}</p>
       </Card>
     </>
   );

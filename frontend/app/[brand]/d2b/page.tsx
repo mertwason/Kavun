@@ -20,7 +20,7 @@ export default async function D2bPage({ params }: { params: { brand: BrandSlug }
   if (!tiers.ok && tiers.status === 404) {
     return (
       <>
-        <h1 className="text-lg font-medium">{tr.d2b.title}</h1>
+        <h1 className="text-title font-medium">{tr.d2b.title}</h1>
         <Card>
           <EmptyState title={tr.d2b.disabled} hint={tr.d2b.disabledHint} />
         </Card>
@@ -30,8 +30,8 @@ export default async function D2bPage({ params }: { params: { brand: BrandSlug }
 
   return (
     <>
-      <h1 className="text-lg font-medium">{tr.d2b.title}</h1>
-      <p className="-mt-4 text-xs text-ink-faint">{tr.d2b.subtitle}</p>
+      <h1 className="text-title font-medium">{tr.d2b.title}</h1>
+      <p className="-mt-4 text-helper text-ink-muted">{tr.d2b.subtitle}</p>
 
       <Card className="flex flex-col gap-4 p-5">
         <SectionHeader title={tr.d2b.uploadTitle} subtitle={tr.d2b.uploadSubtitle} />

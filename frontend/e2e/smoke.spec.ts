@@ -94,6 +94,21 @@ test("SKU listesi doludur; arama ve negatif marj filtresi canlı çalışır", a
   await expect(page.locator("main")).toContainText("Sonuç yok");
 });
 
+test("SKU tablosu kolon başlığından sıralanır", async ({ page }) => {
+  await page.goto("/kahveji/sku");
+
+  // Varsayılan sıra: net kâr azalan. Başlığa tıklamak yönü çevirir.
+  const profitHeader = page.getByRole("button", { name: /^Net Kâr/ });
+  await expect(page.locator('th[aria-sort="descending"]')).toHaveCount(1);
+
+  const firstProfit = () => page.locator("table tbody tr").first().locator("td").nth(8).innerText();
+  const top = await firstProfit();
+
+  await profitHeader.click();
+  await expect(page.locator('th[aria-sort="ascending"]')).toHaveCount(1);
+  expect(await firstProfit()).not.toBe(top);
+});
+
 test("SKU marj listesi Excel'e aktarılır ve filtre dosyaya taşınır", async ({ page }) => {
   await page.goto("/kahveji/sku");
 
@@ -143,10 +158,14 @@ test("holding görünümü markaları yan yana verir", async ({ page }) => {
   await page.goto("/holding");
 
   await expect(page.locator("main h1")).toHaveText("Holding görünümü");
+
+  // Transpoze P&L: satırlar kalem, kolonlar marka + toplam (handoff).
   const rows = page.locator("table tbody tr");
-  await expect(rows).toHaveCount(2);
-  await expect(page.locator("main")).toContainText("Alessi");
-  await expect(page.locator("main")).toContainText("Kahveji");
+  await expect(rows).toHaveCount(5);
+  await expect(page.locator("table thead")).toContainText("Alessi");
+  await expect(page.locator("table thead")).toContainText("Kahveji");
+  await expect(page.locator("table thead")).toContainText("Toplam");
+  await expect(rows.filter({ hasText: "Net kâr" })).toHaveCount(1);
 });
 
 test("aktif menü öğesi vurgulanır", async ({ page }) => {
@@ -371,4 +390,23 @@ test("fatura toplamı tutmuyorsa onay kapalı ve fark yazılı", async ({ page }
   // Okunamayan satır yüzünden satır toplamı fatura toplamını tutmuyor.
   await expect(page.locator("main")).toContainText("fark var");
   await expect(page.getByRole("button", { name: "Onayla ve stoka işle" })).toBeDisabled();
+});
+
+test("mağaza bağlama sihirbazı üç adımda ilerler", async ({ page }) => {
+  await page.goto("/kahveji/settings");
+
+  await page.getByRole("button", { name: "Mağaza bağla" }).click();
+
+  // 1. adım: kanal seçimi — seçim aria-pressed ile taşınır.
+  const trendyol = page.getByRole("button", { name: /^Trendyol/ });
+  await expect(trendyol).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Devam" }).click();
+
+  // 2. adım: kanalın istediği bağlantı alanları çıkar (Trendyol → api_key/secret/seller).
+  await expect(page.locator("input[name=wizard_cred_api_key]")).toBeVisible();
+  await expect(page.locator("input[name=wizard_cred_seller_id]")).toBeVisible();
+
+  // Sihirbaz iptal edilince ekran ilk hâline döner; hiçbir kayıt yazılmaz.
+  await page.getByRole("button", { name: "İptal" }).click();
+  await expect(page.getByRole("button", { name: "Mağaza bağla" })).toBeVisible();
 });

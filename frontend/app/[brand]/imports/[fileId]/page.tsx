@@ -42,9 +42,9 @@ export default async function ImportFilePage({
   return (
     <>
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-lg font-medium">
+        <h1 className="text-title font-medium">
           {file.file_no}
-          <span className="ml-3 text-sm font-normal text-ink-faint">{detail.data.supplier_name}</span>
+          <span className="ml-3 text-helper font-normal text-ink-muted">{detail.data.supplier_name}</span>
         </h1>
         <TextLink href={`/${params.brand}/imports`}>{tr.imports.backToList}</TextLink>
       </div>

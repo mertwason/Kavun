@@ -126,6 +126,8 @@ class ConsolidatedBrandOut(BaseModel):
     order_count: int
     open_alert_count: int
     revenue: Decimal
+    cost_goods: Decimal
+    marketplace_deductions: Decimal
     profit: Decimal
     margin_pct: Decimal
     stock_value: Decimal
@@ -142,6 +144,8 @@ class ConsolidatedOut(BaseModel):
     until: date
     brands: list[ConsolidatedBrandOut]
     total_revenue: Decimal
+    total_cost_goods: Decimal
+    total_marketplace_deductions: Decimal
     total_profit: Decimal
     total_stock_value: Decimal
     total_damage_cost: Decimal

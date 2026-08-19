@@ -15,7 +15,7 @@ export default async function HomePage() {
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-20">
       <header className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-ink-faint">{tr.app.owner}</span>
+        <span className="text-cell font-medium text-ink-muted">{tr.app.owner}</span>
         <h1 className="text-3xl font-medium tracking-tight">{tr.app.name}</h1>
         <p className="text-ink-muted">{tr.app.tagline}</p>
       </header>
@@ -34,7 +34,7 @@ export default async function HomePage() {
             />
             <span className="flex flex-col">
               <span className="font-medium">{brand.name}</span>
-              <span className="text-xs text-ink-faint">{tr.nav.dashboard}</span>
+              <span className="text-helper text-ink-muted">{tr.nav.dashboard}</span>
             </span>
           </Link>
         ))}
@@ -46,13 +46,13 @@ export default async function HomePage() {
       >
         <span className="flex flex-col">
           <span className="font-medium">{tr.holding.title}</span>
-          <span className="text-xs text-ink-faint">{tr.holding.subtitle}</span>
+          <span className="text-helper text-ink-muted">{tr.holding.subtitle}</span>
         </span>
-        <span className="text-sm text-ink-muted">{tr.holding.open}</span>
+        <span className="text-cell text-ink-body">{tr.holding.open}</span>
       </Link>
 
       <Card className="p-5">
-        <h2 className="text-sm font-medium text-ink-muted">{tr.system.apiStatusTitle}</h2>
+        <h2 className="text-body font-medium text-ink-secondary">{tr.system.apiStatusTitle}</h2>
         <div className="mt-3 flex items-center gap-3">
           <span
             aria-hidden
@@ -62,13 +62,13 @@ export default async function HomePage() {
             {health.online ? tr.system.apiOnline : tr.system.apiOffline}
           </span>
           {health.environment ? (
-            <span className="tabular text-sm text-ink-faint">
+            <span className="tabular text-cell text-ink-muted">
               {tr.system.environment}: {health.environment}
             </span>
           ) : null}
         </div>
         <a
-          className="mt-4 inline-block text-sm text-ink-muted underline underline-offset-4 hover:text-ink"
+          className="mt-4 inline-block text-cell text-ink-body underline underline-offset-4 hover:text-ink"
           href="http://localhost:8000/docs"
         >
           {tr.system.apiDocs}

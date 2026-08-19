@@ -89,7 +89,10 @@ export function AlertListRow({ brand, alert }: { brand: BrandSlug; alert: AlertR
         <p className="text-cell">{alert.message}</p>
         <p className="mt-0.5 text-helper text-ink-muted">
           {TYPE_LABELS[alert.type] ?? alert.type}
-          {entity ? ` · ${entity}` : ""} · {formatRelativeTime(alert.created_at)}
+          {entity ? ` · ${entity}` : ""} ·{" "}
+          {/* Göreli zaman sunucuda ve istemcide farklı dakikaya düşebilir ("7 dk" vs
+              "8 dk"); bu bilinçli bir fark, hydration uyarısı üretmesin. */}
+          <span suppressHydrationWarning>{formatRelativeTime(alert.created_at)}</span>
         </p>
         {state.status === "error" ? (
           <p className="mt-1 text-helper text-negative">{state.message}</p>

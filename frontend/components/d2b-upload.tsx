@@ -40,11 +40,11 @@ export function D2bUpload({ brand }: { brand: BrandSlug }) {
       <div className="flex flex-wrap items-center gap-3">
         <a
           href={`/${brand}/d2b/template`}
-          className="rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas"
+          className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas"
         >
           {tr.d2b.downloadTemplate}
         </a>
-        <label className="cursor-pointer rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas">
+        <label className="flex h-[34px] cursor-pointer items-center rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas">
           <input
             type="file"
             accept=".xlsx"
@@ -56,12 +56,12 @@ export function D2bUpload({ brand }: { brand: BrandSlug }) {
           />
           {tr.d2b.chooseFile}
         </label>
-        <span className="text-xs text-ink-faint">{file ? file.name : tr.d2b.noFile}</span>
+        <span className="text-helper text-ink-muted">{file ? file.name : tr.d2b.noFile}</span>
         <button
           type="button"
           onClick={() => send(false)}
           disabled={!file || pending}
-          className="rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-40"
+          className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
         >
           {pending ? tr.d2b.checking : tr.d2b.preview}
         </button>
@@ -70,18 +70,18 @@ export function D2bUpload({ brand }: { brand: BrandSlug }) {
             type="button"
             onClick={() => send(true)}
             disabled={pending}
-            className="rounded-card border border-ink px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-40"
+            className="h-[34px] rounded-control border border-ink bg-ink px-3 text-cell font-medium text-white hover:bg-ink-secondary disabled:opacity-40"
           >
             {tr.d2b.apply}
           </button>
         ) : null}
       </div>
 
-      {state.status === "error" ? <p className="text-sm text-negative">{state.message}</p> : null}
+      {state.status === "error" ? <p className="text-cell text-negative">{state.message}</p> : null}
 
       {result ? (
         <div className="flex flex-col gap-3 border-t border-hairline pt-3">
-          <div className="flex flex-wrap items-baseline gap-6 text-sm">
+          <div className="flex flex-wrap items-baseline gap-6 text-cell">
             <Stat label={tr.d2b.rows} value={String(result.rows)} />
             <Stat label={tr.d2b.orders} value={String(result.orders)} />
             <Stat label={tr.d2b.lines} value={String(result.lines)} />
@@ -90,15 +90,15 @@ export function D2bUpload({ brand }: { brand: BrandSlug }) {
             <Stat label={tr.d2b.grossTotal} value={formatMoney(result.gross_total)} />
           </div>
 
-          <p className="text-xs text-ink-faint">
+          <p className="text-helper text-ink-muted">
             {state.status === "applied" ? tr.d2b.appliedNote : tr.d2b.previewNote}
           </p>
 
           {result.errors.length > 0 ? (
             <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-negative">{tr.d2b.errors}</span>
+              <span className="text-helper font-medium text-negative">{tr.d2b.errors}</span>
               {result.errors.map((error) => (
-                <span key={`${error.row_no}-${error.sku}`} className="text-xs text-ink-muted">
+                <span key={`${error.row_no}-${error.sku}`} className="text-helper text-ink-muted">
                   {error.row_no}. satır · {error.sku || "—"} · {error.reason}
                 </span>
               ))}
@@ -113,8 +113,8 @@ export function D2bUpload({ brand }: { brand: BrandSlug }) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <span className="flex flex-col">
-      <span className="text-xs text-ink-faint">{label}</span>
-      <span className="tabular text-lg">{value}</span>
+      <span className="text-helper text-ink-muted">{label}</span>
+      <span className="text-kpiSm">{value}</span>
     </span>
   );
 }

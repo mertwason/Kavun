@@ -28,11 +28,11 @@ export function DraftList({ brand, drafts }: { brand: BrandSlug; drafts: Draft[]
 
   return (
     <div className="flex flex-col gap-2">
-      {error ? <p className="px-3 text-sm text-negative">{error}</p> : null}
+      {error ? <p className="px-3 text-cell text-negative">{error}</p> : null}
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+        <table className="w-full border-collapse text-cell">
           <thead>
-            <tr className="border-b border-hairline text-xs font-medium text-ink-faint">
+            <tr className="border-b border-hairline text-column uppercase text-ink-muted">
               <th className="px-3 py-2 text-left">{tr.drafts.name}</th>
               <th className="px-3 py-2 text-left">{tr.drafts.sku}</th>
               <th className="px-3 py-2 text-right">{tr.drafts.cost}</th>
@@ -47,7 +47,7 @@ export function DraftList({ brand, drafts }: { brand: BrandSlug; drafts: Draft[]
             {drafts.map((draft) => (
               <tr key={draft.id} className="border-b border-hairline hover:bg-canvas">
                 <td className="px-3 py-2">{draft.name}</td>
-                <td className="px-3 py-2 font-mono text-xs text-ink-muted">
+                <td className="px-3 py-2 font-mono text-helper text-ink-muted">
                   {draft.sku_onerisi ?? "—"}
                 </td>
                 <td className="px-3 py-2 text-right tabular">
@@ -74,7 +74,7 @@ export function DraftList({ brand, drafts }: { brand: BrandSlug; drafts: Draft[]
                         type="button"
                         disabled={pending}
                         onClick={() => act(draft.id, true)}
-                        className="rounded-card border border-hairline px-2 py-1 text-xs disabled:opacity-40 hover:bg-surface"
+                        className="h-7 rounded-control border border-hairline bg-surface px-2.5 text-helper font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
                       >
                         {tr.drafts.promote}
                       </button>
@@ -82,7 +82,7 @@ export function DraftList({ brand, drafts }: { brand: BrandSlug; drafts: Draft[]
                         type="button"
                         disabled={pending}
                         onClick={() => act(draft.id, false)}
-                        className="rounded-card px-2 py-1 text-xs text-ink-faint disabled:opacity-40 hover:text-ink"
+                        className="rounded-card px-2 py-1 text-helper text-ink-muted disabled:opacity-40 hover:text-ink"
                       >
                         {tr.drafts.discard}
                       </button>

@@ -23,12 +23,12 @@ const ACTION_LABELS: Record<string, string> = tr.cargo.actions;
 
 const ACTION_TONE: Record<string, string> = {
   kesinlesti: "text-positive",
-  zaten_kesin: "text-ink-faint",
+  zaten_kesin: "text-ink-muted",
   eslesmedi: "text-negative",
   hata: "text-negative",
 };
 
-const FIELD = "rounded-card border border-hairline bg-surface px-2 py-1.5 text-sm";
+const FIELD = "control";
 
 export function CargoUpload({ brand }: { brand: BrandSlug }) {
   const [file, setFile] = useState<File | null>(null);
@@ -62,11 +62,11 @@ export function CargoUpload({ brand }: { brand: BrandSlug }) {
       <div className="flex flex-wrap items-end gap-3">
         <a
           href={`/${brand}/cargo/template`}
-          className="rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas"
+          className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas"
         >
           {tr.cargo.downloadTemplate}
         </a>
-        <label className="cursor-pointer rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas">
+        <label className="flex h-[34px] cursor-pointer items-center rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas">
           <input
             type="file"
             accept=".xlsx"
@@ -78,9 +78,9 @@ export function CargoUpload({ brand }: { brand: BrandSlug }) {
           />
           {tr.cargo.chooseFile}
         </label>
-        <span className="text-xs text-ink-faint">{file ? file.name : tr.cargo.noFile}</span>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.cargo.invoiceNo} *</span>
+        <span className="text-helper text-ink-muted">{file ? file.name : tr.cargo.noFile}</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.cargo.invoiceNo} *</span>
           <input
             name="invoice_no"
             type="text"
@@ -89,8 +89,8 @@ export function CargoUpload({ brand }: { brand: BrandSlug }) {
             className={`${FIELD} w-40`}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-ink-faint">{tr.cargo.period} *</span>
+        <label className="flex flex-col gap-1">
+          <span className="col-head">{tr.cargo.period} *</span>
           <input
             name="period"
             type="month"
@@ -103,7 +103,7 @@ export function CargoUpload({ brand }: { brand: BrandSlug }) {
           type="button"
           onClick={() => send(false)}
           disabled={!file || pending}
-          className="rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-40"
+          className="h-[34px] rounded-control border border-hairline bg-surface px-3 text-cell font-medium text-ink-secondary hover:border-ink-ghost hover:bg-canvas disabled:opacity-40"
         >
           {pending ? tr.cargo.checking : tr.cargo.preview}
         </button>
@@ -112,18 +112,18 @@ export function CargoUpload({ brand }: { brand: BrandSlug }) {
             type="button"
             onClick={() => send(true)}
             disabled={pending}
-            className="rounded-card border border-ink px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-40"
+            className="h-[34px] rounded-control border border-ink bg-ink px-3 text-cell font-medium text-white hover:bg-ink-secondary disabled:opacity-40"
           >
             {tr.cargo.apply}
           </button>
         ) : null}
       </div>
 
-      {state.status === "error" ? <p className="text-sm text-negative">{state.message}</p> : null}
+      {state.status === "error" ? <p className="text-cell text-negative">{state.message}</p> : null}
 
       {result ? (
         <div className="flex flex-col gap-3 border-t border-hairline pt-3">
-          <div className="flex flex-wrap items-baseline gap-6 text-sm">
+          <div className="flex flex-wrap items-baseline gap-6 text-cell">
             <Stat label={tr.cargo.rows} value={String(result.rows)} />
             <Stat label={tr.cargo.matched} value={String(result.kesinlesti)} tone="text-positive" />
             <Stat label={tr.cargo.already} value={String(result.zaten_kesin)} />
@@ -144,16 +144,16 @@ export function CargoUpload({ brand }: { brand: BrandSlug }) {
               tone={signClass(-toNumber(result.delta))}
             />
           </div>
-          <p className="text-xs text-ink-faint">
+          <p className="text-helper text-ink-muted">
             {state.status === "applied" ? tr.cargo.appliedNote : tr.cargo.previewNote} ·{" "}
             {tr.cargo.deltaHint}
           </p>
 
           {notable.length > 0 ? (
             <div className="max-h-64 overflow-auto">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse text-cell">
                 <thead className="sticky top-0 bg-surface">
-                  <tr className="border-b border-hairline text-xs font-medium text-ink-faint">
+                  <tr className="border-b border-hairline text-column uppercase text-ink-muted">
                     <th className="px-3 py-2 text-left">{tr.cargo.reference}</th>
                     <th className="px-3 py-2 text-left">{tr.table.status}</th>
                     <th className="px-3 py-2 text-right">{tr.cargo.newAmount}</th>
@@ -163,14 +163,14 @@ export function CargoUpload({ brand }: { brand: BrandSlug }) {
                 <tbody>
                   {notable.map((row) => (
                     <tr key={`${row.row_no}-${row.reference}`} className="border-b border-hairline">
-                      <td className="px-3 py-1.5 font-mono text-xs text-ink-muted">
+                      <td className="px-3 py-1.5 font-mono text-helper text-ink-muted">
                         {row.reference}
                       </td>
                       <td className={`px-3 py-1.5 ${ACTION_TONE[row.action] ?? ""}`}>
                         {ACTION_LABELS[row.action] ?? row.action}
                       </td>
                       <td className="px-3 py-1.5 text-right tabular">{formatMoney(row.amount)}</td>
-                      <td className="px-3 py-1.5 text-xs text-ink-faint">{row.message}</td>
+                      <td className="px-3 py-1.5 text-helper text-ink-muted">{row.message}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -186,8 +186,8 @@ export function CargoUpload({ brand }: { brand: BrandSlug }) {
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <span className="flex flex-col">
-      <span className="text-xs text-ink-faint">{label}</span>
-      <span className={`tabular text-lg ${tone ?? ""}`}>{value}</span>
+      <span className="text-helper text-ink-muted">{label}</span>
+      <span className={`text-kpiSm ${tone ?? ""}`}>{value}</span>
     </span>
   );
 }

@@ -44,8 +44,8 @@ export function PeriodPicker({
   activeDays: number;
 }) {
   return (
-    <div className="flex items-center gap-1 text-xs">
-      <span className="mr-1 text-ink-faint">{tr.period.label}</span>
+    <div className="flex items-center gap-1.5">
+      <span className="col-head mr-1">{tr.period.label}</span>
       {PERIOD_OPTIONS.map((option) => (
         <Link
           key={option.days}
@@ -53,8 +53,8 @@ export function PeriodPicker({
           aria-current={option.days === activeDays ? "page" : undefined}
           className={
             option.days === activeDays
-              ? "rounded-full border border-hairline bg-surface px-2.5 py-1 font-medium text-ink"
-              : "rounded-full px-2.5 py-1 text-ink-faint hover:text-ink"
+              ? "flex h-7 items-center rounded-pill border border-ink bg-ink px-2.5 text-helper font-medium text-white"
+              : "flex h-7 items-center rounded-pill border border-hairline bg-surface px-2.5 text-helper text-ink-secondary hover:border-ink-ghost hover:bg-canvas"
           }
         >
           {option.label}
