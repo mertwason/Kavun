@@ -66,6 +66,10 @@ Testler: 536 yeşil, motor coverage %94-100, genel %94.
 - Faz 2'nin kabul kriteri (gerçek hakediş dökümüyle %99+ satır eşleşmesi) kapsam dışı
   bırakıldı — gerçek veri ister, mutabakat modülü Faz 2'nin işi.
 
+**Süreç notu:** KVN-19'un CI'ı `mypy` adımında kırıldı — CI `mypy app tools tests`
+koşuyor, ben yerelde `app tools` koşuyordum ve testlerdeki bir tip hatası gözden kaçtı.
+Yerel kapı artık CI'ın komutunun aynısıdır (`mypy app tools tests`); commit `03031fa`.
+
 **Bilinen risk:** Frontend davranışı otomatik test edilmiyor (projede frontend test
 koşucusu yok; CI tsc/eslint/build koşuyor). Her görevde ekranlar gerçek tarayıcıda elle
 gezildi ama bu regresyona karşı koruma sağlamaz. Faz 2'ye geçmeden önce Playwright ile

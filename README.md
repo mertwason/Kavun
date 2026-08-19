@@ -55,7 +55,7 @@ make logs        # logları izle
 make check       # CI'nin çalıştırdığı her şey: lint + typecheck + test + frontend build
 make test        # pytest + coverage
 make lint        # ruff + para/float kuralı
-make typecheck   # mypy --strict
+make typecheck   # mypy --strict (app + tools + tests — CI ile aynı kapsam)
 make migrate     # alembic upgrade head
 make revision m="açıklama"   # yeni migration üret (autogenerate)
 make seed        # çekirdek veri: mokka tenant, 2 marka, kanallar, mağazalar
