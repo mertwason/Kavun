@@ -439,6 +439,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/reconciliation/periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fark kaydı olan dönemler
+         * @description Ekranın dönem seçicisi.
+         */
+        get: operations["list_periods__brand_slug__reconciliation_periods_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/reconciliation/diffs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hakediş farkları
+         * @description Dönem ve duruma göre fark listesi (spec §7.4).
+         */
+        get: operations["list_diffs__brand_slug__reconciliation_diffs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/reconciliation/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dönem özeti
+         * @description Açık/açıklanmış/çözülmüş fark sayıları ve toplam fark.
+         */
+        get: operations["summary__brand_slug__reconciliation_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/reconciliation/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mutabakatı çalıştır
+         * @description Dönemin hakediş kalemlerini bizim hesabımızla karşılaştırır (spec §7).
+         */
+        post: operations["run__brand_slug__reconciliation_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/reconciliation/diffs/{diff_id}/explain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Farkı açıkla/çöz
+         * @description Açıklamasız kapatma yoktur: not zorunludur (spec §7.4).
+         */
+        post: operations["explain__brand_slug__reconciliation_diffs__diff_id__explain_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/drafts/analyze": {
         parameters: {
             query?: never;
@@ -1964,6 +2064,41 @@ export interface components {
             brand?: string | null;
         };
         /**
+         * DiffOut
+         * @description Tek bir hakediş farkı.
+         */
+        DiffOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Period */
+            period: string;
+            /** Settlement Record Id */
+            settlement_record_id: string | null;
+            /** Expected */
+            expected: string;
+            /** Actual */
+            actual: string;
+            /** Diff */
+            diff: string;
+            status: components["schemas"]["DiffStatus"];
+            /** Note */
+            note: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * DiffStatus
+         * @description `reconciliation_diffs.status` (spec §5.4).
+         * @enum {string}
+         */
+        DiffStatus: "open" | "explained" | "resolved";
+        /**
          * DraftInput
          * @description Yeni ürün değerlendirme formu.
          */
@@ -2033,6 +2168,15 @@ export interface components {
          * @enum {string}
          */
         DraftStatus: "draft" | "promoted" | "discarded";
+        /**
+         * ExplainIn
+         * @description Farkı açıklama/çözme girdisi. Not zorunludur (spec §7.4).
+         */
+        ExplainIn: {
+            status: components["schemas"]["DiffStatus"];
+            /** Note */
+            note: string;
+        };
         /**
          * FxExposureOut
          * @description Açık döviz pozisyonu (spec §12C.8 raporu).
@@ -2599,6 +2743,24 @@ export interface components {
             end: string;
         };
         /**
+         * PeriodSummaryOut
+         * @description Dönem özeti — ekranın üst şeridi.
+         */
+        PeriodSummaryOut: {
+            /** Period */
+            period: string;
+            /** Diff Count */
+            diff_count: number;
+            /** Open Count */
+            open_count: number;
+            /** Explained Count */
+            explained_count: number;
+            /** Resolved Count */
+            resolved_count: number;
+            /** Total Diff */
+            total_diff: string;
+        };
+        /**
          * PriceRowOut
          * @description Ürün çalışma alanı tablosunun bir satırı (spec §12A.5).
          */
@@ -2712,6 +2874,34 @@ export interface components {
             changes: {
                 [key: string]: string;
             };
+        };
+        /**
+         * RunOut
+         * @description Mutabakat turunun özeti.
+         */
+        RunOut: {
+            /** Period */
+            period: string;
+            /** Records */
+            records: number;
+            /** Matched */
+            matched: number;
+            /** Unmatched */
+            unmatched: number;
+            /** Within Tolerance */
+            within_tolerance: number;
+            /** Diffs */
+            diffs: number;
+            /** Skipped */
+            skipped: number;
+            /** Total Diff */
+            total_diff: string;
+            /** Match Rate Pct */
+            match_rate_pct: string;
+            /** Unmatched Refs */
+            unmatched_refs: string[];
+            /** Dry Run */
+            dry_run: boolean;
         };
         /**
          * ScenarioInputIn
@@ -4112,6 +4302,190 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_periods__brand_slug__reconciliation_periods_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_diffs__brand_slug__reconciliation_diffs_get: {
+        parameters: {
+            query?: {
+                period?: string | null;
+                diff_status?: components["schemas"]["DiffStatus"] | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiffOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary__brand_slug__reconciliation_summary_get: {
+        parameters: {
+            query: {
+                period: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PeriodSummaryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run__brand_slug__reconciliation_run_post: {
+        parameters: {
+            query: {
+                period: string;
+                /** @description true iken hiçbir kayıt yazılmaz */
+                dry_run?: boolean;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    explain__brand_slug__reconciliation_diffs__diff_id__explain_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                diff_id: string;
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExplainIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiffOut"];
                 };
             };
             /** @description Validation Error */

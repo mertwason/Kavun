@@ -48,6 +48,7 @@ from app.models.enums import (
     InvoiceStatus,
     MatchStatus,
     OrderStatus,
+    SettlementRecordType,
     UserRole,
 )
 from app.models.identity import (
@@ -650,6 +651,102 @@ def _seed_customers(
     return created
 
 
+def _seed_settlements(
+    session: Session,
+    tenant: Tenant,
+    brand: Brand,
+    store: Store,
+    summary: DemoSummary,
+    rng: random.Random,
+    today: date,
+) -> None:
+    """Hakediş kalemleri (spec §7): satış, komisyon, kargo, hizmet bedeli, ceza.
+
+    Gerçek hayatta kalemlerin çoğu bizim hesabımızla tutar; küçük bir kısmı tutmaz —
+    mutabakat ekranının varlık sebebi o kısımdır. Demo veride bilinçli olarak üç tür
+    sapma var: komisyonu farklı kesilmiş satırlar, siparişi bulunamayan bir kalem ve
+    siparişe bağlanamayan bir ceza.
+    """
+    period_start = today.replace(day=1)
+    lines = list(
+        session.scalars(
+            select(OrderLine)
+            .join(Order, Order.id == OrderLine.order_id)
+            .where(Order.store_id == store.id, Order.status != OrderStatus.CANCELLED)
+            .order_by(OrderLine.external_line_id)
+            .limit(40)
+        ).all()
+    )
+    if not lines:
+        return
+
+    for index, line in enumerate(lines):
+        order = session.scalar(select(Order).where(Order.id == line.order_id))
+        assert order is not None
+        # Komisyon motorla aynı tabandan hesaplanır: iade edilen adedin geliri —
+        # dolayısıyla komisyonu — geri çevrilir. Aksi halde her iadeli satır sahte fark
+        # üretir ve mutabakat ekranı okunamaz hale gelir.
+        returned = sum(
+            (
+                item.qty
+                for item in session.scalars(
+                    select(Return).where(Return.order_line_id == line.id)
+                ).all()
+            ),
+            0,
+        )
+        sold_ratio = (
+            Decimal(max(line.qty - returned, 0)) / Decimal(line.qty) if line.qty else Decimal("0")
+        )
+        commission = _rounded(
+            line.line_gross * sold_ratio * (line.commission_rate_used or Decimal("0"))
+        )
+        # Her 7. satırda platform farklı kesmiş: mutabakat bunu yakalamalı.
+        if index % 7 == 6:
+            commission = _rounded(commission * Decimal("1.08"))
+
+        session.add(
+            SettlementRecord(
+                tenant_id=tenant.id,
+                brand_id=brand.id,
+                store_id=store.id,
+                external_ref=line.external_line_id,
+                record_type=SettlementRecordType.COMMISSION,
+                amount=-commission,
+                vat_amount=None,
+                transaction_date=period_start + timedelta(days=rng.randint(0, 20)),
+            )
+        )
+        summary.bump("settlement_records")
+
+    # Siparişi bulunamayan kalem: ayrı kuyrukta görünmeli (spec §7.5).
+    session.add(
+        SettlementRecord(
+            tenant_id=tenant.id,
+            brand_id=brand.id,
+            store_id=store.id,
+            external_ref="TY-BILINMEYEN-9999",
+            record_type=SettlementRecordType.COMMISSION,
+            amount=Decimal("-142.50"),
+            transaction_date=period_start + timedelta(days=5),
+        )
+    )
+    # Ceza: siparişe bağlanmaz, mağaza gideridir (spec §6.3.7).
+    session.add(
+        SettlementRecord(
+            tenant_id=tenant.id,
+            brand_id=brand.id,
+            store_id=store.id,
+            external_ref="CEZA-2026-08-01",
+            record_type=SettlementRecordType.PENALTY,
+            amount=Decimal("-350.00"),
+            transaction_date=period_start + timedelta(days=9),
+        )
+    )
+    summary.bump("settlement_records", 2)
+    session.flush()
+
+
 def _seed_cargo_invoice(
     session: Session,
     tenant: Tenant,
@@ -973,6 +1070,7 @@ def _seed_demo(session: Session) -> DemoSummary:
     summary.bump("inventory_ledger", sales.sale_out + returns.return_in + returns.return_out)
 
     _seed_cargo_invoice(session, tenant, kahveji, summary, rng, today)
+    _seed_settlements(session, tenant, kahveji, kahveji_store, summary, rng, today)
     _seed_alerts_and_workspace(
         session, tenant, kahveji, alessi, kahveji_products, alessi_products, summary
     )

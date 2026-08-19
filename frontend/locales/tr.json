@@ -38,7 +38,8 @@
     "imports": "İthalat dosyaları",
     "d2b": "D2B satışlar",
     "holding": "Holding",
-    "cargo": "Kargo faturaları"
+    "cargo": "Kargo faturaları",
+    "reconciliation": "Hakediş mutabakatı"
   },
   "period": {
     "label": "Dönem",
@@ -159,7 +160,9 @@
     "discipline": "Fiyat disiplini ihlali yok.",
     "disciplineHint": "MSRP altı fiyat ya da marj tabanının altı burada listelenir.",
     "cargo": "Henüz kargo faturası yüklenmedi.",
-    "cargoHint": "Kargo firmasının Excel dökümünü şablona doldurup yükleyin."
+    "cargoHint": "Kargo firmasının Excel dökümünü şablona doldurup yükleyin.",
+    "reconciliation": "Bu dönemde fark yok.",
+    "reconciliationHint": "Mutabakatı çalıştırın; eşik üstü sapma varsa burada listelenir."
   },
   "error": {
     "unreachable": "API'ye ulaşılamıyor.",
@@ -572,6 +575,45 @@
       "zaten_kesin": "Zaten kesin",
       "eslesmedi": "Eşleşmedi",
       "hata": "Hata"
+    }
+  },
+  "reconciliation": {
+    "title": "Hakediş mutabakatı",
+    "subtitle": "Platformun kestiği tutar ile bizim hesabımız aynı mı? Değilse fark nerede?",
+    "period": "Dönem",
+    "run": "Mutabakatı çalıştır",
+    "preview": "Önizle",
+    "apply": "Uygula",
+    "running": "Çalışıyor…",
+    "records": "Kalem",
+    "matched": "Eşleşen",
+    "unmatched": "Eşleşmeyen",
+    "withinTolerance": "Tutan",
+    "diffs": "Fark",
+    "matchRate": "Eşleşme oranı",
+    "totalDiff": "Toplam fark",
+    "previewNote": "Bu bir önizlemedir; hiçbir fark kaydı yazılmadı.",
+    "appliedNote": "Farklar kaydedildi; açık farkları aşağıdan açıklayabilirsiniz.",
+    "unmatchedRefs": "Eşleşmeyen referanslar",
+    "diffsTitle": "Farklar",
+    "diffsSubtitle": "Eşik: 0,05 TL. Altındaki sapma yuvarlama gürültüsüdür, kayıt üretmez.",
+    "expected": "Beklenen",
+    "actual": "Gerçek",
+    "diff": "Fark",
+    "status": "Durum",
+    "note": "Açıklama",
+    "explain": "Açıkla",
+    "explainTitle": "Farkı açıkla",
+    "explainHint": "Açıklamasız kapatılan fark, kapatılmamış farktan daha tehlikelidir.",
+    "noteRequired": "Açıklama en az 3 karakter olmalı.",
+    "saved": "Kaydedildi.",
+    "openCount": "Açık",
+    "explainedCount": "Açıklanmış",
+    "resolvedCount": "Çözülmüş",
+    "statuses": {
+      "open": "Açık",
+      "explained": "Açıklandı",
+      "resolved": "Çözüldü"
     }
   }
 }

@@ -57,6 +57,10 @@ export type Session = components["schemas"]["MeResponse"];
 export type CargoInvoice = components["schemas"]["CargoInvoiceOut"];
 export type CargoImportResult = components["schemas"]["CargoImportOut"];
 export type CargoCostState = components["schemas"]["CostStateOut"];
+export type ReconciliationDiff = components["schemas"]["DiffOut"];
+export type ReconciliationRun = components["schemas"]["RunOut"];
+export type ReconciliationSummary = components["schemas"]["PeriodSummaryOut"];
+export type ExplainInput = components["schemas"]["ExplainIn"];
 
 export type HealthStatus = {
   online: boolean;
@@ -567,4 +571,31 @@ export async function uploadCargoInvoice(
   } catch {
     return { ok: false, status: 0, reason: "unreachable" };
   }
+}
+
+export function fetchReconciliationPeriods(brand: string) {
+  return get<string[]>(brand, "/reconciliation/periods");
+}
+
+export function fetchReconciliationDiffs(brand: string, period?: string) {
+  const query = period ? `?period=${encodeURIComponent(period)}` : "";
+  return get<ReconciliationDiff[]>(brand, `/reconciliation/diffs${query}`);
+}
+
+export function fetchReconciliationSummary(brand: string, period: string) {
+  return get<ReconciliationSummary>(
+    brand,
+    `/reconciliation/summary?period=${encodeURIComponent(period)}`,
+  );
+}
+
+export function runReconciliation(brand: string, period: string, dryRun: boolean) {
+  return post<ReconciliationRun>(
+    brand,
+    `/reconciliation/run?period=${encodeURIComponent(period)}&dry_run=${dryRun ? "true" : "false"}`,
+  );
+}
+
+export function explainDiff(brand: string, diffId: string, input: ExplainInput) {
+  return post<ReconciliationDiff>(brand, `/reconciliation/diffs/${diffId}/explain`, input);
 }

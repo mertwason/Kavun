@@ -18,6 +18,7 @@ from app.api import (
     inventory,
     invoices,
     pricelist,
+    reconciliation,
     scenarios,
     stores,
     tariffs,
@@ -73,6 +74,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(stores.router)
     app.include_router(analytics.router)
     app.include_router(pricelist.router)
+    app.include_router(reconciliation.router)
     app.include_router(drafts.router)
     app.include_router(scenarios.router)
     app.include_router(tariffs.router)

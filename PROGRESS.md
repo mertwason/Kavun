@@ -1,8 +1,8 @@
 # KAVUN İlerleme
 
 **TOPLAM: %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-**FAZ 2 (ek görevler): %56** ▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░
-Son güncelleme: 2026-08-19 05:55 · Aktif görev: KVN-EK-03
+**FAZ 2 (ek görevler): %100** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+Son güncelleme: 2026-08-19 06:05 · Aktif görev: — (açık görev yok)
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -41,9 +41,9 @@ Toplam ağırlık: **110** · Biten ağırlık: 110 · **Faz 1 ve Faz 1.5 tamaml
 |-----------|-----------------------------------------------------------|---------|--------------|-----|
 | KVN-EK-01 | Ekran smoke testleri (Playwright) + CI adımı              | 4       | ✅ Bitti     | KVN-20'de yazılan risk: UI regresyona karşı korumasızdı |
 | KVN-EK-02 | Kargo faturası eşleştirme + `estimated → actual` + revizyon | 6       | ✅ Bitti     | spec §5.3, §6.2 |
-| KVN-EK-03 | Hakediş mutabakatı: eşleştirme + fark motoru + ekran       | 8       | 🔄 Yapılıyor | spec §7 — "katil özellik" |
+| KVN-EK-03 | Hakediş mutabakatı: eşleştirme + fark motoru + ekran       | 8       | ✅ Bitti     | spec §7 — "katil özellik" |
 
-Faz 2 ağırlığı: 18 · Biten: 10
+Faz 2 ağırlığı: 18 · Biten: 18 · **açılan Faz 2 görevleri tamamlandı**
 
 > **Düzeltme (2026-08-19):** CLAUDE.md §0'daki kanonik listenin başlığı "toplam ağırlık 100"
 > diyor ama tablodaki 20 görevin ağırlıkları **110** ediyor. §0 kuralı yüzdeyi "bitmiş
@@ -55,6 +55,42 @@ Faz 2 ağırlığı: 18 · Biten: 10
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-EK-03 bitti (Faz 2'nin açılan görevleri tamamlandı)
+
+**Ne bitti:** Hakediş mutabakatı (spec §7) — hakediş kalemlerinin sipariş/satırla
+eşleştirilmesi, kalem türüne göre beklenen tutarın üretilmesi, 0,05 TL eşiğiyle
+karşılaştırma, `reconciliation_diffs` + uyarı yazımı ve `/{marka}/reconciliation` ekranı
+(dönem turu, eşleşme oranı, fark listesi, açıklama akışı). Testler: 583 yeşil (backend,
++27 mutabakat) + 37 e2e; `app/reconciliation/engine.py` %100, mutabakat servisi %90,
+motor paketi toplam %99, genel %94. Ruff/format/para-float/`mypy app tools tests` temiz.
+
+**Kararlar / notlar:**
+- **Eşik tek yerden gelir (0,05 TL), mağaza bazında ayarlanabilir değil.** Spec §7.3 eşiği
+  veriyor ama nerede yaşayacağını söylemiyor; en muhafazakâr seçim eşiği tek yerde tutmak:
+  "eşiği büyüterek farkı gizleme" kolaylığı bilinçli olarak verilmedi.
+- **Karşılaştırma mutlak değer üzerinden.** Platform kesintileri hakedişte negatif geliyor;
+  işaret bilgisi kalem türünde zaten var, tutarda tekrarı karşılaştırmayı yanıltırdı.
+- **`refund` beklentisi siparişin iade tutarları toplamı.** Spec §6.1'in iki iade modeli
+  arasındaki çelişkisi burada da çıktı; motorun fiilen uyguladığı (tek) model esas alındı —
+  Mert'e sorulacaklar listesindeki madde hâlâ geçerli.
+- **Siparişe bağlanamayan kalem sessiz geçilmiyor.** Yalnızca ceza (`penalty`) ve reklam
+  (`ad_spend`) beklenensiz kabul edilir; diğerleri "eşleşmedi" kuyruğuna düşer ve uyarı
+  üretir. Çok satırlı siparişte satır referansı belirsizse eşleştirme yapılmaz — uydurma
+  eşleştirme yanlış farkı doğru gibi gösterirdi.
+- **Fark açıklamasız kapatılamaz** (en az 3 karakter not) ve `open` durumuna geri dönüş yok.
+- **Tarayıcıda bulunan hata:** dönem ikinci kez çalıştırıldığında eşleşme oranı %97,62'den
+  %81'e düşüyordu — önceki turda işlenmiş (`skipped`) kalemler eşleşmemiş sayılıyordu.
+  Oran artık `(matched + skipped) / records`; regresyon testi eklendi. Tur idempotent:
+  ikinci fark kaydı üretilmiyor.
+
+**Ne kaldı / risk:** Kalan iş gerçek veriye bağlı ve dışarıdan girdi bekliyor: (1) Trendyol
+mağaza anahtarlarıyla ilk canlı sync, (2) gerçek bir aylık hakediş dökümünün mutabakattan
+geçirilmesi — Faz 2'nin nihai kabul kriteri (§11), (3) `shipments.tracking_no` alan adı
+developers.trendyol.com'dan doğrulanmadığı için connector tarafından doldurulmuyor; kargo
+eşleştirmesi sipariş numarasına düşüyor (CLAUDE.md §4: tahmin yasak). Mert'e sorulacak iki
+karar hâlâ açık: spec §6.1 iade modelinin düzeltilmesi ve LLM tabanlı fatura ayrıştırmanın
+gerçekten istenip istenmediği.
 
 ### 2026-08-19 — KVN-EK-02 bitti
 

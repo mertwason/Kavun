@@ -370,6 +370,36 @@ kesinleştirir.
   Satır böylece "Tahmini" rozetinden "Kesinleşti"ye geçer (tasarım brief'i, kalıp 2).
 - Önizleme "tahmin farkı"nı gösterir: pozitifse tahmin düşük kalmış, kâr aşağı revize olur.
 
+### Hakediş mutabakatı (KVN-EK-03)
+
+Kâr motoru "olması gerekeni" hesaplar; hakediş dosyası platformun **gerçekten** ne kestiğini
+söyler. Mutabakat tek soruyu sorar: **ikisi aynı mı, değilse fark nerede?** (spec §7)
+
+```
+Dönem seç → Önizle (hiçbir şey yazılmaz) → Uygula → açık farkları açıkla
+```
+
+| Kalem türü    | Beklenen değerin kaynağı                          |
+|---------------|---------------------------------------------------|
+| `commission`  | motorun hesapladığı komisyon (`line_profit`)      |
+| `sale`        | satır brüt cirosu                                 |
+| `cargo`       | gönderinin kesinleşmiş/tahmini kargo maliyeti     |
+| `service_fee` | mağazanın sipariş başına hizmet bedeli            |
+| `refund`      | siparişin iade tutarları toplamı                  |
+| `penalty`, `ad_spend` | beklenen yok — tanımı gereği siparişten türetilemez |
+
+- **Eşik 0,05 TL** ve tek yerden gelir (`app/reconciliation/engine.py`). Mağaza bazında
+  ayarlanabilir yapılmadı: "eşiği büyüterek farkı gizleme" kolaylığı bilinçli olarak yok.
+- Platform kesintileri hakedişte negatif gelir; karşılaştırma **mutlak değer** üzerinden
+  yapılır — işaret bilgisi kalem türünde zaten var, tutarda tekrarı yanıltıcı olurdu.
+- Siparişe bağlanamayan kalem (ceza/reklam dışında) sessiz geçilmez, **eşleşmedi** olarak
+  raporlanır ve uyarı üretir. Çok satırlı siparişlerde satır referansı belirsizse kalem
+  eşleştirilmez — uydurma eşleştirme yapılmaz.
+- Tur **idempotenttir:** aynı dönem ikinci kez çalıştırılınca önceki turda işlenmiş kalemler
+  `skipped` sayılır ve eşleşme oranına eşleşmiş olarak girer; ikinci fark kaydı üretilmez.
+- Fark **açıklamasız kapatılamaz:** en az 3 karakterlik not zorunludur, `open` durumuna geri
+  dönüş yoktur. Açıklamasız kapatılan fark, kapatılmamış farktan daha tehlikelidir.
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -422,12 +452,13 @@ ekranın yalan söylediği buradan görülür.
 
 `frontend/e2e/` altındaki Playwright testleri **çalışan yığına** bağlanır (kendi sunucusunu
 başlatmaz): her ekran açılıyor mu, konsol temiz mi, demo veri görünüyor mu, kapalı modül
-menüde yok mu, formlar kayıt yazıyor mu. Ayrıntılı davranış backend testlerinde; buradaki
-ağ ekranların **sessizce** bozulmasını engeller.
+menüde yok mu, formlar kayıt yazıyor mu, önizleme gerçekten yazmadan gösteriyor mu.
+Ayrıntılı davranış backend testlerinde; buradaki ağ ekranların **sessizce** bozulmasını
+engeller.
 
 ```bash
 make dev && make seed-demo && make recompute   # yığın + dolu demo veri
-make e2e                                        # 30 smoke testi
+make e2e                                        # 37 smoke testi
 ```
 
 CI'da `docker compose smoke` işi ortamı kaldırır, demo veriyi yükler, kârı hesaplar ve
@@ -450,6 +481,7 @@ hazır Chromium farklı sürümdeyse `PLAYWRIGHT_CHROMIUM_PATH` ile yol verilebi
 | `/{marka}/invoices` | Alış faturaları — PDF yükleme + satır eşleştirme + onay |
 | `/{marka}/inventory` | Stok & maliyet — eldeki adet, ortalama maliyet, hareket defteri, açılış/düzeltme |
 | `/{marka}/cargo` | Kargo faturaları — kesinleşme durumu + fatura yükleme/eşleştirme |
+| `/{marka}/reconciliation` | Hakediş mutabakatı — dönem turu, eşleşme oranı, farklar + açıklama akışı |
 | `/{marka}/imports` | İthalat dosyaları + açık döviz pozisyonu (yalnızca bayrağı açık markada) |
 | `/{marka}/imports/{id}` | Dosya detayı — masraf kalemleri, dağıtım önizlemesi, ödemeler/kur farkı |
 | `/{marka}/d2b` | D2B satışlar — şablon indir/yükle + kademe bazlı özet (bayrağa bağlı) |
@@ -573,6 +605,12 @@ GET  /{brand}/cargo-invoices/cost-state  # kaç gönderi kesinleşti / tahmini k
 GET  /{brand}/cargo-invoices/template    # kargo faturası şablonu (xlsx)
 POST /{brand}/cargo-invoices/import      # eşleştir + kesinleştir (?dry_run)
 
+GET  /{brand}/reconciliation/periods  # hakediş kaydı olan dönemler
+GET  /{brand}/reconciliation/diffs    # eşik üstü farklar (?period&status)
+GET  /{brand}/reconciliation/summary  # dönem özeti: fark/açık/açıklanan + toplam fark
+POST /{brand}/reconciliation/run      # dönemi mutabakatla (?dry_run — önizleme yazmaz)
+POST /{brand}/reconciliation/diffs/{id}/explain  # farkı açıkla/çöz (not zorunlu)
+
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
 GET  /{brand}/import-files  # yalnızca `import_files` bayrağı açık markada (aksi halde 404)
@@ -638,8 +676,13 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Faz 1 ve Faz 1.5'in kanonik görev listesi (KVN-01…20) tamamlandı. Şimdi spec'in
-**Faz 2**'si sürüyor (`KVN-EK` görevleri, bkz. `PROGRESS.md`): kargo faturası eşleştirme
-bitti, sırada **hakediş mutabakatı** var (spec §7) — `settlement_records` eşleştirme,
-beklenen/gerçek farkı, mutabakat ekranı. Faz 2'nin nihai kabul kriteri gerçek bir aylık
-hakediş dökümü ister (§11).
+Faz 1 ve Faz 1.5'in kanonik görev listesi (KVN-01…20) ve şu ana kadar açılan Faz 2 ek
+görevleri (KVN-EK-01…03) tamamlandı: ekran smoke testleri, kargo faturası eşleştirme ve
+hakediş mutabakatı. Ürün artık "olması gereken"i hesaplamakla kalmıyor, platformun
+gerçekte ne kestiğini de karşılaştırıyor.
+
+Kalan iş **gerçek veriyle** ilgili ve dışarıdan girdi bekliyor (bkz. `PROGRESS.md` karar
+notları): Trendyol mağaza anahtarlarıyla ilk canlı sync, gerçek bir aylık hakediş
+dökümünün mutabakattan geçirilmesi (Faz 2'nin nihai kabul kriteri, §11) ve gönderi takip
+numarası alan adının developers.trendyol.com'dan doğrulanması — doğrulanana kadar kargo
+eşleştirmesi sipariş numarasına düşüyor.

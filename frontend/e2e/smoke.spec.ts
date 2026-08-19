@@ -22,6 +22,7 @@ const SHARED_PAGES = [
   { path: "/invoices", heading: "Alış faturaları" },
   { path: "/inventory", heading: "Stok & maliyet" },
   { path: "/cargo", heading: "Kargo faturaları" },
+  { path: "/reconciliation", heading: "Hakediş mutabakatı" },
 ] as const;
 
 /** Yalnızca bayrağı açık markada (Alessi) bulunan ekranlar. */
@@ -180,4 +181,40 @@ test("kargo ekranı kesinleşme durumunu gösterir", async ({ page }) => {
 
   // Yüklenen fatura listesi dolu.
   await expect(page.locator("table tbody tr").last()).toContainText("KRG-");
+});
+
+test("mutabakat turu: önizleme yazmaz, uygulama fark üretir, açıklamasız kapanmaz", async ({
+  page,
+}) => {
+  await page.goto("/kahveji/reconciliation");
+
+  // Önizleme: kalem sayısı gelmeli ama hiçbir fark kaydı yazılmamalı (spec §7.4).
+  await page.getByRole("button", { name: "Önizle" }).click();
+  await expect(page.getByText("Bu bir önizlemedir")).toBeVisible();
+  const records = await page.locator("span.tabular.text-lg").first().innerText();
+  expect(Number(records)).toBeGreaterThan(0);
+
+  // Uygulama: farklar kaydedilir ve tabloda "Açıkla" akışıyla listelenir.
+  await page.getByRole("button", { name: "Uygula" }).click();
+  await expect(page.getByText("Farklar kaydedildi")).toBeVisible();
+  await page.reload();
+  await page.getByRole("button", { name: "Açıkla" }).first().click();
+
+  const form = page.locator("form").filter({ has: page.locator("input[name=note]") });
+  const note = form.locator("input[name=note]");
+  await note.fill("ab"); // 3 karakterin altı: tarayıcı doğrulaması göndermeyi engeller
+  await form.getByRole("button", { name: "Açıkla" }).click();
+  await expect(note).toBeFocused();
+
+  await note.fill("Smoke testi — platform kesinti farkı incelendi");
+  await form.getByRole("button", { name: "Açıkla" }).click();
+  await page.waitForLoadState("networkidle");
+  await expect(page.locator("table")).toContainText("Açıklandı");
+});
+
+test("mutabakat ekranı veri yokken boş durumu gösterir", async ({ page }) => {
+  // Alessi'de hakediş kaydı yok: ekran hata değil, boş durum vermeli.
+  await page.goto("/alessi/reconciliation");
+
+  await expect(page.locator("main")).toContainText("Bu dönemde fark yok.");
 });
