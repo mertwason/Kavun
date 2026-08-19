@@ -6,7 +6,12 @@
  */
 
 import { KpiCard } from "@/components/kpi-card";
-import { AdjustmentForm, OpeningStockForm, type ProductOption } from "@/components/stock-forms";
+import {
+  AdjustmentForm,
+  DamageForm,
+  OpeningStockForm,
+  type ProductOption,
+} from "@/components/stock-forms";
 import {
   Card,
   DataTable,
@@ -17,9 +22,9 @@ import {
   Th,
   Tr,
 } from "@/components/ui";
-import { fetchLedger, fetchStock } from "@/lib/api";
+import { fetchDamageRows, fetchLedger, fetchStock } from "@/lib/api";
 import type { BrandSlug } from "@/lib/brands";
-import { formatCount, formatDateTime, formatMoney, toNumber } from "@/lib/format";
+import { formatCount, formatDateTime, formatMoney, formatPercent, toNumber } from "@/lib/format";
 import tr from "@/locales/tr.json";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +32,11 @@ export const dynamic = "force-dynamic";
 const MOVEMENT_LABELS: Record<string, string> = tr.inventory.movement;
 
 export default async function InventoryPage({ params }: { params: { brand: BrandSlug } }) {
-  const [stock, ledger] = await Promise.all([fetchStock(params.brand), fetchLedger(params.brand)]);
+  const [stock, ledger, damage] = await Promise.all([
+    fetchStock(params.brand),
+    fetchLedger(params.brand),
+    fetchDamageRows(params.brand),
+  ]);
 
   const rows = stock.ok ? stock.data : [];
   const totalValue = rows.reduce((sum, row) => sum + toNumber(row.stock_value), 0);
@@ -109,6 +118,44 @@ export default async function InventoryPage({ params }: { params: { brand: Brand
           <AdjustmentForm brand={params.brand} products={products} />
         </Card>
       </div>
+
+      <Card className="flex flex-col">
+        <div className="p-5 pb-2">
+          <SectionHeader title={tr.damage.title} subtitle={tr.damage.subtitle} />
+        </div>
+        {!damage.ok || damage.data.length === 0 ? (
+          <EmptyState title={tr.empty.damage} hint={tr.empty.damageHint} />
+        ) : (
+          <DataTable
+            head={
+              <>
+                <Th>{tr.table.sku}</Th>
+                <Th>{tr.table.product}</Th>
+                <Th align="right">{tr.damage.qty}</Th>
+                <Th align="right">{tr.damage.cost}</Th>
+                <Th align="right">{tr.damage.soldQty}</Th>
+                <Th align="right">{tr.damage.rate}</Th>
+              </>
+            }
+          >
+            {damage.data.map((row) => (
+              <Tr key={row.product_id}>
+                <Td className="font-mono text-xs text-ink-muted">{row.sku}</Td>
+                <Td>{row.name}</Td>
+                <Td align="right">{formatCount(toNumber(row.qty))}</Td>
+                <Td align="right" className="text-negative">
+                  {formatMoney(row.cost)}
+                </Td>
+                <Td align="right">{formatCount(toNumber(row.sold_qty))}</Td>
+                <Td align="right">{formatPercent(row.damage_rate_pct)}</Td>
+              </Tr>
+            ))}
+          </DataTable>
+        )}
+        <div className="border-t border-hairline p-5">
+          <DamageForm brand={params.brand} products={products} />
+        </div>
+      </Card>
 
       <Card className="flex flex-col">
         <div className="p-5 pb-2">

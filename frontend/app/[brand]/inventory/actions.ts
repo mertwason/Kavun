@@ -4,7 +4,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createAdjustment, createOpeningStock } from "@/lib/api";
+import { createAdjustment, createOpeningStock, recordDamage } from "@/lib/api";
 import { isBrandSlug } from "@/lib/brands";
 import tr from "@/locales/tr.json";
 
@@ -69,6 +69,30 @@ export async function adjustmentAction(
     reason,
     unit_cost: unitCost === "" ? null : unitCost,
   });
+  if (!result.ok) {
+    return { status: "error", message: result.detail ?? tr.error.unreachable };
+  }
+  revalidatePath(`/${brand}/inventory`);
+  return { status: "saved", message: tr.inventory.saved };
+}
+
+export async function damageAction(
+  _previous: MovementState,
+  formData: FormData,
+): Promise<MovementState> {
+  const brand = String(formData.get("brand") ?? "");
+  if (!isBrandSlug(brand)) return { status: "error", message: tr.error.notFound };
+
+  const productId = String(formData.get("product_id") ?? "").trim();
+  if (!productId) return { status: "error", message: tr.inventory.missingProduct };
+
+  const qty = decimal(formData.get("qty"));
+  if (!qty) return { status: "error", message: tr.inventory.missingQty };
+
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (reason.length < 3) return { status: "error", message: tr.inventory.missingReason };
+
+  const result = await recordDamage(brand, { product_id: productId, qty, reason });
   if (!result.ok) {
     return { status: "error", message: result.detail ?? tr.error.unreachable };
   }

@@ -87,6 +87,8 @@ class Order(Base, TimestampMixin):
     tenant_id: Mapped[uuid.UUID] = tenant_fk()
     brand_id: Mapped[uuid.UUID] = brand_fk()
     store_id: Mapped[uuid.UUID] = uuid_fk("stores.id")
+    # Yalnızca D2B/kurumsal satışta dolu: kademe bazlı marj analizinin bağı (spec §12C.9).
+    customer_id: Mapped[uuid.UUID | None] = uuid_fk_opt("customers.id")
     external_order_id: Mapped[str] = mapped_column(String(120), nullable=False)
     order_date: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, index=True

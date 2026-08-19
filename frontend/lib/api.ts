@@ -45,6 +45,11 @@ export type ImportFileDetail = components["schemas"]["ImportFileDetailOut"];
 export type ImportCostItemInput = components["schemas"]["CostItemIn"];
 export type ImportPaymentInput = components["schemas"]["PaymentIn"];
 export type FxExposure = components["schemas"]["FxExposureOut"];
+export type B2BImportResult = components["schemas"]["B2BImportOut"];
+export type TierMargin = components["schemas"]["TierMarginOut"];
+export type DamageRow = components["schemas"]["DamageRowOut"];
+export type DisciplineViolation = components["schemas"]["ViolationOut"];
+export type DamageInput = components["schemas"]["DamageIn"];
 
 export type HealthStatus = {
   online: boolean;
@@ -404,4 +409,64 @@ export function confirmImportFile(brand: string, fileId: string) {
     brand,
     `/imports/${fileId}/confirm`,
   );
+}
+
+export function fetchTierMargins(brand: string) {
+  return get<TierMargin[]>(brand, "/b2b/tiers");
+}
+
+export function fetchDamageRows(brand: string) {
+  return get<DamageRow[]>(brand, "/inventory/damage");
+}
+
+export function fetchViolations(brand: string) {
+  return get<DisciplineViolation[]>(brand, "/discipline");
+}
+
+export function recordDamage(brand: string, input: DamageInput) {
+  return post<LedgerEntry>(brand, "/inventory/damage", input);
+}
+
+/** D2B şablonunu indirir (tarayıcı token taşıyamadığı için sunucudan geçer). */
+export async function downloadD2bTemplate(
+  brand: string,
+): Promise<{ ok: true; body: ArrayBuffer; filename: string } | { ok: false; status: number }> {
+  const token = await issueToken(brand);
+  if (!token) return { ok: false, status: 401 };
+  const response = await fetch(`${API_URL}/${brand}/b2b/template`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!response.ok) return { ok: false, status: response.status };
+  return {
+    ok: true,
+    body: await response.arrayBuffer(),
+    filename: "kavun-d2b-sablon.xlsx",
+  };
+}
+
+/** D2B satış dosyasını yükler; `dryRun` iken hiçbir sipariş yazılmaz. */
+export async function uploadD2bSales(
+  brand: string,
+  file: File,
+  dryRun: boolean,
+): Promise<ApiResult<B2BImportResult> & { detail?: string }> {
+  const token = await issueToken(brand);
+  if (!token) return { ok: false, status: 401, reason: "no-session" };
+  const form = new FormData();
+  form.append("file", file, file.name);
+  try {
+    const response = await fetch(
+      `${API_URL}/${brand}/b2b/import?dry_run=${dryRun ? "true" : "false"}`,
+      { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form, cache: "no-store" },
+    );
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { detail?: unknown } | null;
+      const detail = typeof payload?.detail === "string" ? payload.detail : undefined;
+      return { ok: false, status: response.status, reason: "http-error", detail };
+    }
+    return { ok: true, data: (await response.json()) as B2BImportResult };
+  } catch {
+    return { ok: false, status: 0, reason: "unreachable" };
+  }
 }

@@ -90,6 +90,33 @@ def detect_commission_changes() -> dict[str, int]:
     return {"detected": detected, "alerts": alerts}
 
 
+@celery_app.task(name="kavun.check_price_discipline")
+def check_price_discipline() -> dict[str, int]:
+    """Günlük MSRP / marj tabanı taraması → uyarı (spec §12C.10).
+
+    Kural uyarır, engellemez: fiyat yazmayı durdurmaz, yalnızca görünür kılar. Tarama
+    marka bağlamında koşar; taban aktif markadan okunur.
+    """
+    from app.api.deps import is_feature_enabled
+    from app.core.context import brand_scope
+    from app.models.identity import Brand
+    from app.services import discipline
+
+    alerts = 0
+    with SessionLocal() as session:
+        with system_scope():
+            brands = list(session.scalars(select(Brand)).all())
+        for brand in brands:
+            if not is_feature_enabled(session, brand.id, "msrp_discipline"):
+                continue
+            with brand_scope(brand.tenant_id, brand.id, brand_slug=brand.slug):
+                alerts += discipline.raise_alerts(session)
+        session.commit()
+
+    log.info("discipline.daily_scan", alerts=alerts)
+    return {"alerts": alerts}
+
+
 @celery_app.task(name="kavun.record_stock_movements")
 def record_stock_movements() -> dict[str, int]:
     """Satış ve iade hareketlerini stok defterine yazar (spec §12C.1)."""

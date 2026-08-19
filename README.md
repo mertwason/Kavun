@@ -79,7 +79,8 @@ docker compose exec api python -m app.cli replay --store <uuid> --dry-run  # yal
 `replay` normalize kayıtları siler ve ham olaylardan yeniden üretir; ham veriye asla
 dokunmaz. Kesinleşmiş (`actual`) kargo maliyeti yeniden normalize'de ezilmez.
 Zamanlanmış işler (Celery beat): `normalize_pending` 15 dakikada bir,
-`recompute_pending_profits` 30 dakikada bir, `detect_commission_changes` her gece 03:00,
+`recompute_pending_profits` 30 dakikada bir, `record_stock_movements` 45 dakikada bir,
+`detect_commission_changes` her gece 03:00, `check_price_discipline` her gece 04:00,
 `ensure_raw_event_partitions` her gece 02:30
 (gelecek ayların partition'larını açar).
 
@@ -293,6 +294,38 @@ bayrağı açık markalarda görünür; kapalı markada uç ve ekran **404** dö
 Dağıtım mal bedeli ağırlıklıdır ve kuruş kaybetmez; testler elle hesaplanan örneği birebir
 doğrular (EUR mal + TL navlun + EUR sigorta + müşavirlik → 4.650,00 ve 13.950,00).
 
+### D2B kanal, fire/hasar ve fiyat disiplini (KVN-18)
+
+**D2B (kurumsal satış)** pazaryerinden gelmez ama Kavun'da **normal sipariş** olarak yazılır:
+stok düşer, kâr motoru aynı formülle hesaplar, satış marka P&L'ine girer. Tek fark
+kanaldır — komisyon 0, pazaryeri hizmet bedeli yok. Fiyat müşteri kademesine göre
+iskontoludur; "hangi kademe ne bırakıyor" özeti `customers.tier` üstünden çıkar.
+
+```
+Şablonu indir → doldur → Önizle (dry-run) → Uygula
+```
+
+Şablon disiplini fiyat listesindekiyle aynı: indirilen dosya = yüklenen şablon, sürüm
+hücresi tutmuyorsa dosya reddedilir. Yükleme idempotenttir — aynı dosya iki kez
+yüklenirse sipariş çoğalmaz, satır "zaten yazılmış" olarak raporlanır. Hatalı satır
+(bilinmeyen SKU, geçersiz KDV, aşırı iskonto) gerekçesiyle listelenir, diğer satırlar işlenir.
+
+**Fire/hasar** (`damage`) gerekçesiz yazılamaz. Hasar stoktan **o anki ortalama maliyetle**
+düşer ve ortalamayı değiştirmez; kayıtta o günün ortalaması saklandığı için fire gideri
+sonradan değişen maliyetle oynamaz. Rapor SKU bazında adet, fire gideri ve
+`hasar / (hasar + satış)` oranını verir — porselen-cam üründe kritik metrik.
+
+**Fiyat disiplini** iki kuraldan oluşur ve **uyarır, engellemez**:
+
+- **MSRP:** tavsiye fiyatının *altında* satış ihlaldir (marka değerini aşındırır); üstünde
+  fiyatlamak serbesttir.
+- **Marj tabanı:** ürün bazlı `min_margin_floor_pct` yoksa markanın varsayılanı geçerlidir.
+
+Tarama her gece 04:00'te koşar (`kavun.check_price_discipline`) ve ihlal başına günde en
+fazla bir uyarı yazar. Taban **aktif markadan** okunur: `brands` marka-kapsamlı bir tablo
+değildir, guard onu filtrelemez — yanlış markadan okunursa Alessi'nin tabanı Kahveji'nin
+değeriyle ölçülürdü.
+
 ### Veri: gerçek mi, demo mu
 
 İki tenant birbirinden tamamen ayrıdır:
@@ -328,6 +361,7 @@ fiyat senaryoları. Kâr sonuçları demo verisinde ÜRETİLMEZ; `make seed-demo
 | `/{marka}/inventory` | Stok & maliyet — eldeki adet, ortalama maliyet, hareket defteri, açılış/düzeltme |
 | `/{marka}/imports` | İthalat dosyaları + açık döviz pozisyonu (yalnızca bayrağı açık markada) |
 | `/{marka}/imports/{id}` | Dosya detayı — masraf kalemleri, dağıtım önizlemesi, ödemeler/kur farkı |
+| `/{marka}/d2b` | D2B satışlar — şablon indir/yükle + kademe bazlı özet (bayrağa bağlı) |
 
 Dönem seçimi URL'de taşınır (`?days=7|30|90|365`), böylece ekran paylaşılabilir ve geri
 tuşu çalışır. Kâr rakamlarının yanındaki amber "Tahmini" rozeti kargo/komisyon
@@ -435,6 +469,13 @@ POST /{brand}/imports/{id}/invoices/{invoice}  # mal faturasını dosyaya bağla
 POST /{brand}/imports/{id}/confirm             # ledger + WAC + maliyet versiyonu
 POST /{brand}/imports/{id}/payments            # ödeme + kur farkı
 
+GET  /{brand}/b2b/template         # D2B satış şablonu (xlsx)
+GET  /{brand}/b2b/tiers            # kademe bazlı satış özeti
+POST /{brand}/b2b/import           # D2B satışlarını yükle (?dry_run)
+POST /{brand}/inventory/damage     # fire/hasar kaydı (gerekçe zorunlu)
+GET  /{brand}/inventory/damage     # SKU bazlı hasar oranı ve fire gideri
+GET  /{brand}/discipline           # MSRP ve marj tabanı ihlalleri (bayrağa bağlı)
+
 GET  /{brand}/products      # marka kapsamlı ürün listesi
 GET  /{brand}/alerts        # marka kapsamlı uyarılar
 GET  /{brand}/import-files  # yalnızca `import_files` bayrağı açık markada (aksi halde 404)
@@ -499,5 +540,5 @@ Tam liste `CLAUDE.md` içinde; en kritik dördü:
 
 ## Sonraki adımlar
 
-Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-18 — D2B kanal,
-fire/hasar ve MSRP disiplini** (spec §12C.9-10).
+Görev sırası ve durumu `PROGRESS.md` dosyasındadır. Sıradaki iş: **KVN-19 — Workspace UI
+(Alessi/Kahveji modülleri + Holding)** (spec §3A, §10).

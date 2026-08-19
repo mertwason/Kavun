@@ -852,6 +852,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/b2b/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * D2B satış şablonu (xlsx)
+         * @description İndirilen dosya birebir yüklenebilir olmalıdır (KVN-10 disiplini).
+         */
+        get: operations["download_template__brand_slug__b2b_template_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/b2b/tiers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Kademe bazlı satış özeti
+         * @description Hangi müşteri kademesi ne bırakıyor (spec §12C.9).
+         */
+        get: operations["list_tiers__brand_slug__b2b_tiers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/b2b/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * D2B satışlarını yükle
+         * @description Satışlar normal sipariş olarak yazılır: stok düşer, kâr motoru komisyonsuz hesaplar.
+         */
+        post: operations["import_sales__brand_slug__b2b_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/{brand_slug}/discipline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * MSRP ve marj tabanı ihlali
+         * @description Kural uyarır, engellemez (spec §12C.10).
+         */
+        get: operations["list_violations__brand_slug__discipline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/imports": {
         parameters: {
             query?: never;
@@ -1076,6 +1156,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{brand_slug}/inventory/damage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SKU bazlı hasar oranı
+         * @description Porselen-cam üründe kritik metrik: hasar / (hasar + satış).
+         */
+        get: operations["damage_report__brand_slug__inventory_damage_get"];
+        put?: never;
+        /**
+         * Fire/hasar kaydı (gerekçe zorunlu)
+         * @description Hasar stoktan mevcut ortalama maliyetle düşer; ortalama değişmez (spec §12C.10).
+         */
+        post: operations["record_damage__brand_slug__inventory_damage_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{brand_slug}/inventory/rebuild": {
         parameters: {
             query?: never;
@@ -1240,6 +1344,28 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        /**
+         * B2BImportOut
+         * @description Yükleme özeti — `dry_run` iken hiçbir sipariş yazılmaz.
+         */
+        B2BImportOut: {
+            /** Rows */
+            rows: number;
+            /** Orders */
+            orders: number;
+            /** Lines */
+            lines: number;
+            /** Customers */
+            customers: number;
+            /** Skipped */
+            skipped: number;
+            /** Gross Total */
+            gross_total: string;
+            /** Errors */
+            errors: components["schemas"]["RowErrorOut"][];
+            /** Dry Run */
+            dry_run: boolean;
+        };
         /** Body_download_error_report__brand_slug__price_list_import_errors_post */
         Body_download_error_report__brand_slug__price_list_import_errors_post: {
             /** File */
@@ -1251,6 +1377,11 @@ export interface components {
              * File
              * @description Kavun şablonuyla üretilmiş xlsx
              */
+            file: string;
+        };
+        /** Body_import_sales__brand_slug__b2b_import_post */
+        Body_import_sales__brand_slug__b2b_import_post: {
+            /** File */
             file: string;
         };
         /** Body_import_scenarios__brand_slug__scenarios_import_post */
@@ -1520,6 +1651,44 @@ export interface components {
             revenue_gross: string;
             /** Profit */
             profit: string;
+        };
+        /**
+         * DamageIn
+         * @description Fire/hasar kaydı — gerekçe zorunlu (spec §12C.10).
+         */
+        DamageIn: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Qty */
+            qty: number | string;
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * DamageRowOut
+         * @description SKU bazlı hasar oranı.
+         */
+        DamageRowOut: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Sku */
+            sku: string;
+            /** Name */
+            name: string;
+            /** Qty */
+            qty: string;
+            /** Cost */
+            cost: string;
+            /** Sold Qty */
+            sold_qty: string;
+            /** Damage Rate Pct */
+            damage_rate_pct: string;
         };
         /**
          * DashboardOut
@@ -2262,6 +2431,18 @@ export interface components {
             dry_run: boolean;
         };
         /**
+         * RowErrorOut
+         * @description Reddedilen satır.
+         */
+        RowErrorOut: {
+            /** Row No */
+            row_no: number;
+            /** Sku */
+            sku: string;
+            /** Reason */
+            reason: string;
+        };
+        /**
          * RowResultOut
          * @description Diff önizlemesindeki bir satır.
          */
@@ -2741,6 +2922,24 @@ export interface components {
             monthly_profit_impact: string;
         };
         /**
+         * TierMarginOut
+         * @description Kademe bazlı satış özeti.
+         */
+        TierMarginOut: {
+            /** Tier */
+            tier: string;
+            /** Customers */
+            customers: number;
+            /** Orders */
+            orders: number;
+            /** Qty */
+            qty: number;
+            /** Revenue */
+            revenue: string;
+            /** Avg Discount Pct */
+            avg_discount_pct: string;
+        };
+        /**
          * TokenResponse
          * @description Giriş yanıtı.
          */
@@ -2797,6 +2996,35 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * ViolationOut
+         * @description MSRP / marj tabanı ihlali.
+         */
+        ViolationOut: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Sku */
+            sku: string;
+            /** Name */
+            name: string;
+            /** Channel */
+            channel: string;
+            /** Price */
+            price: string;
+            /** Msrp */
+            msrp: string | null;
+            /** Msrp Gap Pct */
+            msrp_gap_pct: string | null;
+            /** Margin Pct */
+            margin_pct: string;
+            /** Floor Pct */
+            floor_pct: string | null;
+            /** Kinds */
+            kinds: string[];
         };
         /**
          * WaterfallStep
@@ -4457,6 +4685,151 @@ export interface operations {
             };
         };
     };
+    download_template__brand_slug__b2b_template_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_tiers__brand_slug__b2b_tiers_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TierMarginOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_sales__brand_slug__b2b_import_post: {
+        parameters: {
+            query?: {
+                /** @description true iken hiçbir sipariş yazılmaz */
+                dry_run?: boolean;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_sales__brand_slug__b2b_import_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["B2BImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_violations__brand_slug__discipline_get: {
+        parameters: {
+            query?: {
+                today?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViolationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_files__brand_slug__imports_get: {
         parameters: {
             query?: never;
@@ -4871,6 +5244,78 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AdjustmentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEntryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    damage_report__brand_slug__inventory_damage_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DamageRowOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_damage__brand_slug__inventory_damage_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                /** @description Workspace: alessi | kahveji */
+                brand_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DamageIn"];
             };
         };
         responses: {

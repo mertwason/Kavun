@@ -52,6 +52,10 @@ celery_app.conf.beat_schedule = {
         "task": "kavun.detect_commission_changes",
         "schedule": crontab(hour=3, minute=0),
     },
+    "check-price-discipline": {
+        "task": "kavun.check_price_discipline",
+        "schedule": crontab(hour=4, minute=0),
+    },
     "ensure-raw-event-partitions": {
         "task": "kavun.ensure_raw_event_partitions",
         "schedule": crontab(hour=2, minute=30),

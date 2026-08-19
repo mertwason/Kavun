@@ -279,4 +279,5 @@ def test_worker_tasks_are_registered() -> None:
         "kavun.recompute_pending_profits",
         "kavun.detect_commission_changes",
         "kavun.record_stock_movements",
+        "kavun.check_price_discipline",
     } <= registered

@@ -11,6 +11,7 @@ from sqlalchemy import select
 from app.api.deps import Workspace, get_workspace, require_role
 from app.models.catalog import Product
 from app.models.enums import UserRole
+from app.schemas.b2b import DamageIn, DamageRowOut
 from app.schemas.inventory import (
     AdjustmentIn,
     LedgerEntryOut,
@@ -104,6 +105,41 @@ def create_adjustment(
         ) from exc
     workspace.session.commit()
     return LedgerEntryOut.model_validate(entry)
+
+
+@router.post(
+    "/damage",
+    response_model=LedgerEntryOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Fire/hasar kaydı (gerekçe zorunlu)",
+)
+def record_damage(
+    payload: DamageIn,
+    workspace: Workspace = Depends(require_role(UserRole.ADMIN, UserRole.EDITOR)),
+) -> LedgerEntryOut:
+    """Hasar stoktan mevcut ortalama maliyetle düşer; ortalama değişmez (spec §12C.10)."""
+    product = workspace.session.scalar(select(Product).where(Product.id == payload.product_id))
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ürün bulunamadı")
+    try:
+        entry = inventory.damage(
+            workspace.session, product=product, qty=payload.qty, reason=payload.reason
+        )
+    except inventory.InventoryError as exc:
+        workspace.session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+        ) from exc
+    workspace.session.commit()
+    return LedgerEntryOut.model_validate(entry)
+
+
+@router.get("/damage", response_model=list[DamageRowOut], summary="SKU bazlı hasar oranı")
+def damage_report(
+    workspace: Workspace = Depends(get_workspace),
+) -> list[DamageRowOut]:
+    """Porselen-cam üründe kritik metrik: hasar / (hasar + satış)."""
+    return [DamageRowOut.model_validate(row) for row in inventory.damage_rows(workspace.session)]
 
 
 @router.post("/rebuild", response_model=RebuildOut, summary="Durumu defterden yeniden kur")

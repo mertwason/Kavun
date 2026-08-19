@@ -99,7 +99,7 @@ from app.seeds.base import (
 )
 from app.seeds.catalog_data import ALESSI_PRODUCTS, KAHVEJI_PRODUCTS, DemoProduct
 from app.services.imports import add_cost_item, confirm_file, record_payment
-from app.services.inventory import record_returns, record_sales
+from app.services.inventory import damage, record_returns, record_sales
 
 IMPORT_FX_BEYANNAME = Decimal("37.500000")
 """Beyanname kuru — maliyet bu kurla sabitlenir (spec §12C.8)."""
@@ -340,6 +340,7 @@ def _seed_orders(
     *,
     prefix: str,
     with_returns: bool = True,
+    customers: list[Customer] | None = None,
 ) -> None:
     """Sipariş + satır + gönderi + iade üretir (farklı statüler dahil)."""
     statuses = (
@@ -362,6 +363,8 @@ def _seed_orders(
             tenant_id=tenant.id,
             brand_id=brand.id,
             store_id=store.id,
+            # D2B satışı kurumsal müşteriye bağlıdır; kademe analizi bunun üstünden yapılır.
+            customer_id=(customers[index % len(customers)].id if customers else None),
             external_order_id=f"{prefix}-{index + 1:05d}",
             order_date=order_date,
             status=status,
@@ -393,10 +396,15 @@ def _seed_orders(
                 unit_sale_price=unit_price,
                 line_gross=line_gross,
                 vat_rate=definition.vat_rate,
-                commission_rate_used=Decimal(
-                    CATEGORY_COMMISSION.get(definition.category, "0.2000")
+                # D2B/kurumsal satışta komisyon YOKTUR (spec §12C.9).
+                commission_rate_used=(
+                    Decimal("0")
+                    if prefix == "D2B"
+                    else Decimal(CATEGORY_COMMISSION.get(definition.category, "0.2000"))
                 ),
-                commission_source=CommissionSource.API_CATEGORY,
+                commission_source=(
+                    CommissionSource.MANUAL if prefix == "D2B" else CommissionSource.API_CATEGORY
+                ),
                 status=status,
             )
             session.add(line)
@@ -616,6 +624,30 @@ def _seed_purchasing(
     session.flush()
 
 
+def _seed_customers(
+    session: Session, tenant: Tenant, brand: Brand, summary: DemoSummary
+) -> list[Customer]:
+    """Kurumsal müşteriler — D2B siparişleri bunlara bağlanır (spec §12C.9)."""
+    created: list[Customer] = []
+    for name, tier, discount in (
+        ("Divan Otelcilik A.Ş.", "gold", Decimal("18.00")),
+        ("Mimarlar Kolektifi Ltd.", "silver", Decimal("12.00")),
+        ("Concept Store İstanbul", "bayi", Decimal("25.00")),
+    ):
+        customer = Customer(
+            tenant_id=tenant.id,
+            brand_id=brand.id,
+            name=name,
+            tier=tier,
+            default_discount_pct=discount,
+        )
+        session.add(customer)
+        created.append(customer)
+        summary.bump("customers")
+    session.flush()
+    return created
+
+
 def _seed_alerts_and_workspace(
     session: Session,
     tenant: Tenant,
@@ -715,16 +747,6 @@ def _seed_alerts_and_workspace(
         )
         summary.bump("pricing_scenarios")
 
-    session.add(
-        Customer(
-            tenant_id=tenant.id,
-            brand_id=alessi.id,
-            name="Divan Otelcilik A.Ş.",
-            tier="gold",
-            default_discount_pct=Decimal("18.00"),
-        )
-    )
-    summary.bump("customers")
     session.flush()
 
 
@@ -848,6 +870,7 @@ def _seed_demo(session: Session) -> DemoSummary:
         prefix="ALS",
     )
     # D2B: komisyonsuz kurumsal satış (spec §12C.9).
+    d2b_customers = _seed_customers(session, tenant, alessi, summary)
     _seed_orders(
         session,
         tenant,
@@ -860,11 +883,23 @@ def _seed_demo(session: Session) -> DemoSummary:
         now,
         prefix="D2B",
         with_returns=False,
+        customers=d2b_customers,
     )
 
     _seed_purchasing(
         session, tenant, kahveji, alessi, kahveji_products, alessi_products, summary, today, now
     )
+    # Fire/hasar (spec §12C.10): kırılgan ürünlerde gerçekçi birkaç kayıt.
+    for product, _definition in alessi_products[:2]:
+        damage(
+            session,
+            product=product,
+            qty=Decimal(2),
+            reason="Nakliyede kırıldı — sevk 2026/14",
+            moved_at=now - timedelta(days=20),
+        )
+        summary.bump("inventory_ledger")
+
     # Satış/iade stok hareketleri (spec §12C.1) — stok defteri ekranı boş kalmasın.
     sales = record_sales(session)
     returns = record_returns(session)

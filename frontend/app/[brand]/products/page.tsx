@@ -11,7 +11,7 @@ import {
   Th,
   Tr,
 } from "@/components/ui";
-import { fetchPriceRows } from "@/lib/api";
+import { fetchPriceRows, fetchViolations } from "@/lib/api";
 import type { BrandSlug } from "@/lib/brands";
 import { formatMoney, formatPercent, signClass, toNumber } from "@/lib/format";
 import tr from "@/locales/tr.json";
@@ -19,7 +19,13 @@ import tr from "@/locales/tr.json";
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage({ params }: { params: { brand: BrandSlug } }) {
-  const result = await fetchPriceRows(params.brand);
+  const [result, violations] = await Promise.all([
+    fetchPriceRows(params.brand),
+    fetchViolations(params.brand),
+  ]);
+
+  // Modül kapalıysa (404) disiplin kartı hiç gösterilmez — spec §3A.4.
+  const disciplineRows = violations.ok ? violations.data : [];
 
   return (
     <>
@@ -90,6 +96,59 @@ export default async function ProductsPage({ params }: { params: { brand: BrandS
           </DataTable>
         )}
       </Card>
+
+      {violations.ok ? (
+        <Card className="flex flex-col">
+          <div className="p-5 pb-2">
+            <SectionHeader title={tr.discipline.title} subtitle={tr.discipline.subtitle} />
+          </div>
+          {disciplineRows.length === 0 ? (
+            <EmptyState title={tr.empty.discipline} hint={tr.empty.disciplineHint} />
+          ) : (
+            <DataTable
+              head={
+                <>
+                  <Th>{tr.table.sku}</Th>
+                  <Th>{tr.table.product}</Th>
+                  <Th>{tr.discipline.channel}</Th>
+                  <Th align="right">{tr.discipline.price}</Th>
+                  <Th align="right">{tr.discipline.msrp}</Th>
+                  <Th align="right">{tr.discipline.gap}</Th>
+                  <Th align="right">{tr.discipline.margin}</Th>
+                  <Th align="right">{tr.discipline.floor}</Th>
+                  <Th>{tr.discipline.kind}</Th>
+                </>
+              }
+            >
+              {disciplineRows.map((row) => (
+                <Tr key={`${row.product_id}-${row.channel}`}>
+                  <Td className="font-mono text-xs text-ink-muted">{row.sku}</Td>
+                  <Td>{row.name}</Td>
+                  <Td className="text-ink-muted">{row.channel}</Td>
+                  <Td align="right">{formatMoney(row.price)}</Td>
+                  <Td align="right">{row.msrp === null ? "—" : formatMoney(row.msrp)}</Td>
+                  <Td align="right" className="text-negative">
+                    {row.msrp_gap_pct === null ? "—" : formatPercent(row.msrp_gap_pct)}
+                  </Td>
+                  <Td align="right" className={signClass(row.margin_pct)}>
+                    {formatPercent(row.margin_pct)}
+                  </Td>
+                  <Td align="right" className="text-ink-muted">
+                    {row.floor_pct === null ? "—" : formatPercent(row.floor_pct)}
+                  </Td>
+                  <Td className="text-xs text-ink-muted">
+                    {row.kinds
+                      .map((kind) =>
+                        kind === "msrp" ? tr.discipline.kindMsrp : tr.discipline.kindFloor,
+                      )
+                      .join(" · ")}
+                  </Td>
+                </Tr>
+              ))}
+            </DataTable>
+          )}
+        </Card>
+      ) : null}
     </>
   );
 }

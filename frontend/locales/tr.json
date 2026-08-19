@@ -35,7 +35,8 @@
     "tariffs": "Komisyon tarifeleri",
     "invoices": "Alış faturaları",
     "inventory": "Stok & maliyet",
-    "imports": "İthalat dosyaları"
+    "imports": "İthalat dosyaları",
+    "d2b": "D2B satışlar"
   },
   "period": {
     "label": "Dönem",
@@ -148,7 +149,13 @@
     "imports": "Bu markada ithalat dosyası yok.",
     "importsHint": "Dosya mal faturası + beyanname + masraf kalemlerinden oluşur.",
     "importLines": "Dosyaya bağlı mal faturası yok.",
-    "importLinesHint": "Önce alış faturasını yükleyip dosyaya bağlayın."
+    "importLinesHint": "Önce alış faturasını yükleyip dosyaya bağlayın.",
+    "d2b": "Henüz D2B satışı yok.",
+    "d2bHint": "Şablonu indirin, doldurun ve yükleyin.",
+    "damage": "Kayıtlı fire/hasar yok.",
+    "damageHint": "Kırılan ürünü stok ekranındaki hasar formundan düşün.",
+    "discipline": "Fiyat disiplini ihlali yok.",
+    "disciplineHint": "MSRP altı fiyat ya da marj tabanının altı burada listelenir."
   },
   "error": {
     "unreachable": "API'ye ulaşılamıyor.",
@@ -439,5 +446,61 @@
       "diger": "Diğer"
     },
     "missingAmount": "Tutar ve kur zorunlu."
+  },
+  "d2b": {
+    "title": "D2B satışlar",
+    "subtitle": "Kurumsal satış normal sipariş olarak yazılır: stok düşer, komisyon 0, marka P&L’ine girer.",
+    "uploadTitle": "Satış dosyası yükle",
+    "uploadSubtitle": "İndirilen şablon birebir yüklenir; önizlemede hiçbir sipariş yazılmaz.",
+    "downloadTemplate": "Şablonu indir",
+    "chooseFile": "Dosya seç",
+    "preview": "Önizle",
+    "apply": "Uygula",
+    "checking": "Kontrol ediliyor…",
+    "noFile": "Önce bir dosya seçin.",
+    "rows": "Satır",
+    "orders": "Sipariş",
+    "lines": "Kalem",
+    "customers": "Yeni müşteri",
+    "skipped": "Zaten yazılmış",
+    "grossTotal": "Toplam tutar",
+    "errors": "Hatalı satırlar",
+    "previewNote": "Bu bir önizlemedir; hiçbir sipariş yazılmadı.",
+    "appliedNote": "Satışlar yazıldı. Stok hareketleri sonraki turda deftere düşer.",
+    "tiersTitle": "Kademe bazlı özet",
+    "tiersSubtitle": "Hangi müşteri kademesi ne bırakıyor.",
+    "tier": "Kademe",
+    "customerCount": "Müşteri",
+    "qty": "Adet",
+    "revenue": "Ciro",
+    "avgDiscount": "Ort. iskonto",
+    "disabled": "Bu modül bu markada kapalı.",
+    "disabledHint": "D2B kanalı yalnızca kurumsal satış yapan markalarda açıktır."
+  },
+  "damage": {
+    "title": "Fire / hasar",
+    "subtitle": "Hasar stoktan mevcut ortalama maliyetle düşer; ortalama değişmez.",
+    "qty": "Adet",
+    "reason": "Gerekçe",
+    "record": "Hasar kaydet",
+    "cost": "Fire gideri",
+    "rate": "Hasar oranı",
+    "soldQty": "Satılan",
+    "movement": "Hareket türü",
+    "adjustment": "Düzeltme",
+    "damage": "Hasar / fire"
+  },
+  "discipline": {
+    "title": "Fiyat disiplini",
+    "subtitle": "MSRP altı fiyat ve marj tabanı ihlalleri. Kural uyarır, engellemez.",
+    "channel": "Kanal",
+    "price": "Fiyat",
+    "msrp": "MSRP",
+    "gap": "MSRP farkı",
+    "margin": "Marj",
+    "floor": "Taban",
+    "kind": "İhlal",
+    "kindMsrp": "MSRP altı",
+    "kindFloor": "Marj tabanı"
   }
 }

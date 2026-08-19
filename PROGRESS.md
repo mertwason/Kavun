@@ -1,7 +1,7 @@
 # KAVUN İlerleme
 
-**TOPLAM: %96** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░
-Son güncelleme: 2026-08-19 03:05 · Aktif görev: KVN-18
+**TOPLAM: %90** ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░
+Son güncelleme: 2026-08-19 03:35 · Aktif görev: KVN-19
 Preview: ✅ ayakta · localhost:3000
 
 | ID     | İş Akışı                                                    | Ağırlık | Durum       |
@@ -23,15 +23,55 @@ Preview: ✅ ayakta · localhost:3000
 | KVN-15 | PDF fatura ayrıştırma + öğrenen SKU eşleştirme + onay       | 7       | ✅ Bitti    |
 | KVN-16 | Inventory ledger + WAC motoru + açılış stoku                | 7       | ✅ Bitti    |
 | KVN-17 | İthalat dosyası modu + kur farkı takibi (Alessi)            | 5       | ✅ Bitti    |
-| KVN-18 | D2B kanal + fire/hasar + MSRP disiplini                     | 3       | 🔄 Yapılıyor|
-| KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | ⏳ Sırada   |
+| KVN-18 | D2B kanal + fire/hasar + MSRP disiplini                     | 3       | ✅ Bitti    |
+| KVN-19 | Workspace UI (Alessi/Kahveji modülleri + Holding)           | 5       | 🔄 Yapılıyor|
 | KVN-20 | Golden dataset doğrulama + uçtan uca kabul turu             | 6       | ⏳ Sırada   |
 
-Toplam ağırlık: 100 · Biten ağırlık: 96 · **Faz 1 (KVN-01…09) tamamlandı**
+Toplam ağırlık: **110** · Biten ağırlık: 99 · **Faz 1 (KVN-01…09) tamamlandı**
+
+> **Düzeltme (2026-08-19):** CLAUDE.md §0'daki kanonik listenin başlığı "toplam ağırlık 100"
+> diyor ama tablodaki 20 görevin ağırlıkları **110** ediyor. §0 kuralı yüzdeyi "bitmiş
+> ağırlık / TÜM ağırlık toplamı" olarak tanımladığı için payda 110 alındı. Önceki
+> oturumlarda 100'e bölünmüştü; bu yüzden bu satırın üstündeki yüzde bir önceki
+> güncellemeye göre düşük görünüyor — iş azalmadı, ölçü düzeldi. (Ör. KVN-17 sonunda
+> gerçek oran %96 değil %87'ydi.) CLAUDE.md'nin başlık satırı Mert onaylarsa düzeltilmeli.
 
 ---
 
 ## Oturum özetleri
+
+### 2026-08-19 — KVN-18 bitti
+
+**Ne bitti:** D2B kanalı, fire/hasar ve fiyat disiplini (spec §12C.9-10). D2B satışları
+xlsx ile yükleniyor ve normal sipariş olarak yazılıyor (komisyon 0, stok düşüyor, marka
+P&L'ine giriyor); yükleme idempotent ve önizlemeli. Hasar hareketi gerekçe zorunlu,
+stoktan o anki ortalama maliyetle düşüyor, ortalamayı değiştirmiyor; SKU bazlı hasar
+oranı raporu var. MSRP altı fiyat ve marj tabanı ihlalleri taranıp uyarıya çevriliyor
+(`kavun.check_price_discipline`, her gece 04:00). Testler: 469 yeşil, D2B servisi %94,
+disiplin %95, genel %94. Ekranlar tarayıcıda denendi: D2B yükleme uçtan uca (önizleme →
+uygula → kademe özeti güncellendi), hasar formu ve disiplin tablosu doğrulandı.
+
+**Kararlar / notlar:**
+- **MSRP ihlali "altında satış" olarak yorumlandı.** Spec "MSRP disiplinini bozuyorsa"
+  diyor, yönünü söylemiyor; Alessi gibi premium markada disiplin tavsiye fiyatının altına
+  inmemektir. Üstünde fiyatlamak ihlal sayılmıyor (pazaryeri fiyatı serbest).
+- **Marka ayarı aktif markadan okunmalı.** İlk yazımda marj tabanı `select(Brand)` ile
+  alınıyordu; `brands` marka-kapsamlı bir tablo olmadığı için guard onu filtrelemiyor ve
+  Alessi'nin tabanı Kahveji'nin değeriyle ölçülüyordu. Bağlamdaki marka çözülüyor artık;
+  aynı hata uyarı tekrar kontrolünü de bozuyordu (yanlış markaya yazılan uyarı görünmüyordu).
+- **`orders.customer_id` eklendi** (migration `a4fe24269be3`). Kademe analizi için sipariş
+  → müşteri bağı gerekliydi; ilk yazımda bağ sipariş numarasından türetiliyordu, hem
+  O(n²) hem kırılgandı.
+- Demo D2B siparişleri komisyonlu yazılıyordu — §12C.9'a aykırıydı, düzeltildi. Demoya üç
+  kademeli müşteri ve iki hasar kaydı eklendi.
+
+**Yüzde düzeltmesi:** Kanonik listenin ağırlıkları 110 ediyor, CLAUDE.md başlığı 100
+diyor. §0 kuralı paydayı "tüm ağırlık toplamı" olarak tanımladığı için 110'a bölündü;
+tablo üstündeki nota bakın. Bu bir gerileme değil, ölçü düzeltmesi.
+
+**Bilinen risk:** Fire gideri şu an marka P&L'inde ayrı satır olarak GÖSTERİLMİYOR; veri
+(`inventory_ledger.damage` + hasar raporu) hazır ama dashboard'a inmedi. Aynı şey kur
+farkı için de geçerli. İkisi de KVN-19'un workspace/holding özet ekranında yerini almalı.
 
 ### 2026-08-19 — KVN-17 bitti
 

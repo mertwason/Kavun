@@ -11,6 +11,7 @@ import { useState, useTransition } from "react";
 
 import {
   adjustmentAction,
+  damageAction,
   type MovementState,
   openingStockAction,
 } from "@/app/[brand]/inventory/actions";
@@ -172,6 +173,62 @@ export function AdjustmentForm({
         </button>
       </form>
       <p className="text-xs text-ink-faint">{tr.inventory.qtyDeltaHint}</p>
+      <Feedback state={state} />
+    </div>
+  );
+}
+
+export function DamageForm({
+  brand,
+  products,
+}: {
+  brand: BrandSlug;
+  products: ProductOption[];
+}) {
+  const [state, setState] = useState<MovementState>({ status: "idle" });
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <div className="flex flex-col gap-3">
+      <form
+        className="flex flex-wrap items-end gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const form = event.currentTarget;
+          const formData = new FormData(form);
+          formData.set("brand", brand);
+          startTransition(async () => {
+            const next = await damageAction({ status: "idle" }, formData);
+            setState(next);
+            if (next.status === "saved") form.reset();
+          });
+        }}
+      >
+        <ProductSelect options={products} />
+        <label className="flex flex-col gap-1 text-xs">
+          <span className="text-ink-faint">{tr.damage.qty} *</span>
+          <input
+            name="qty"
+            type="number"
+            step="1"
+            min="1"
+            required
+            className={`${FIELD} w-24 tabular`}
+          />
+        </label>
+        <label className="flex flex-1 flex-col gap-1 text-xs">
+          <span className="text-ink-faint">{tr.damage.reason} *</span>
+          <input name="reason" type="text" required minLength={3} className={`${FIELD} w-full`} />
+        </label>
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-card border border-hairline px-3 py-1.5 text-sm hover:bg-canvas disabled:opacity-40"
+        >
+          {pending ? tr.inventory.saving : tr.damage.record}
+        </button>
+      </form>
+      <p className="text-xs text-ink-faint">{tr.damage.subtitle}</p>
       <Feedback state={state} />
     </div>
   );

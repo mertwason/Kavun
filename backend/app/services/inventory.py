@@ -431,6 +431,103 @@ class RebuildSummary:
     mismatches: list[str] = field(default_factory=list)
 
 
+@dataclass(frozen=True)
+class DamageRow:
+    """SKU bazlı fire/hasar özeti (spec §12C.10)."""
+
+    product_id: uuid.UUID
+    sku: str
+    name: str
+    qty: Decimal
+    cost: Decimal
+    """Fire gideri: hasar anındaki ortalama maliyet × adet."""
+
+    sold_qty: Decimal
+    damage_rate_pct: Decimal
+    """Hasar / (hasar + satış) — porselen-cam üründe kritik metrik."""
+
+
+def damage(
+    session: Session,
+    *,
+    product: Product,
+    qty: Decimal,
+    reason: str,
+    moved_at: datetime | None = None,
+) -> InventoryLedger:
+    """Kırılma/hasar kaydı (spec §12C.10). Gerekçe ZORUNLU.
+
+    Hasar stoktan **mevcut ortalama maliyetle** düşer; ortalama değişmez (çıkış hareketi).
+    Marka P&L'inde "fire gideri" satırına bu hareketlerin maliyeti yazılır.
+    """
+    if not reason.strip():
+        raise InventoryError("Hasar kaydı gerekçesiz yazılamaz")
+    if qty <= ZERO:
+        raise InventoryError("Hasar adedi pozitif olmalı")
+
+    _, state = _state(session, product.id)
+    return record_movement(
+        session,
+        tenant_id=product.tenant_id,
+        brand_id=product.brand_id,
+        product_id=product.id,
+        movement=InventoryMovement.DAMAGE,
+        qty=qty,
+        # Kayıtta o anki ortalama saklanır: fire gideri sonradan değişen ortalamayla oynamaz.
+        unit_cost=state.avg_cost,
+        ref_type="damage",
+        reason=reason,
+        moved_at=moved_at,
+    )
+
+
+def damage_rows(
+    session: Session, *, since: datetime | None = None, until: datetime | None = None
+) -> list[DamageRow]:
+    """SKU/dönem bazlı hasar oranı raporu (spec §12C.10)."""
+    statement = select(InventoryLedger).where(
+        InventoryLedger.movement.in_((InventoryMovement.DAMAGE, InventoryMovement.SALE_OUT))
+    )
+    if since is not None:
+        statement = statement.where(InventoryLedger.moved_at >= since)
+    if until is not None:
+        statement = statement.where(InventoryLedger.moved_at < until)
+
+    damaged: dict[uuid.UUID, Decimal] = {}
+    cost: dict[uuid.UUID, Decimal] = {}
+    sold: dict[uuid.UUID, Decimal] = {}
+    for entry in session.scalars(statement).all():
+        qty = abs(entry.qty_delta)
+        if entry.movement is InventoryMovement.DAMAGE:
+            damaged[entry.product_id] = damaged.get(entry.product_id, ZERO) + qty
+            unit = entry.unit_cost_at_movement or entry.avg_cost_after
+            cost[entry.product_id] = cost.get(entry.product_id, ZERO) + qty * unit
+        else:
+            sold[entry.product_id] = sold.get(entry.product_id, ZERO) + qty
+
+    rows: list[DamageRow] = []
+    for product_id, qty in damaged.items():
+        product = session.scalar(select(Product).where(Product.id == product_id))
+        if product is None:
+            continue
+        sold_qty = sold.get(product_id, ZERO)
+        base = qty + sold_qty
+        rows.append(
+            DamageRow(
+                product_id=product_id,
+                sku=product.sku,
+                name=product.name,
+                qty=qty,
+                cost=cost.get(product_id, ZERO).quantize(Decimal("0.0001")),
+                sold_qty=sold_qty,
+                damage_rate_pct=(
+                    (qty / base * Decimal("100")).quantize(Decimal("0.01")) if base else ZERO
+                ),
+            )
+        )
+    return sorted(rows, key=lambda row: row.cost, reverse=True)
+
+
 def rebuild_state(session: Session, *, dry_run: bool = False) -> RebuildSummary:
     """`sku_cost_state`'i defterden yeniden kurar (spec §12C.11 kabul kriteri).
 
